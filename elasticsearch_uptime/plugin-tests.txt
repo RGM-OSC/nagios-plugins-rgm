@@ -1,0 +1,190 @@
+# During tests below, "Centos-3" returns valid values in default timerange and "Centos-4" doesn't return valid values in default timerange.
+
+########################################################################################################################### -> OK!!
+python uptime.py
+
+	OPTIONS:
+	   -V: Plugin version.
+	   -h: Plugin help.
+	   -H: Hostname.
+	   -t: Plugin timeout. Default value: 4 minutes. Expected unit: m (minute), s (second).
+	   -w: Warning threshold.
+	   -c: Critical threshold.
+	   -v: Verbose.
+
+	EXAMPLES:
+	   -> Get Uptime for machine srv3 only if monitored data is not anterior at 4 minutes (4: default value). Warning alert if Uptime < 10 minutes. Critical alert if Uptime < 5 minutes.
+		  python uptime.py -H srv3 -w 10 -c 5
+
+	   -> Get Uptime for machine srv3 only if monitored data is not anterior at 2 minutes.
+		  python uptime.py -H srv3 -w 10 -c 5 -t 2
+
+	   -> Get Uptime for machine srv3 with Verbose mode enabled.
+		  python uptime.py -H srv3 -w 10 -c 5 -v
+
+	   -> Get Uptime for machine srv3 with Verbose mode enabled and only if monitored data is not anterior at 2 minutes.
+		  python uptime.py -H srv3 -w 10 -c 5 -t 2 -v
+	  
+########################################################################################################################### -> OK!!
+python uptime.py -V
+	Version is: "0.1"
+	
+########################################################################################################################### -> OK!!
+python uptime.py -h
+
+	OPTIONS:
+	   -V: Plugin version.
+	   -h: Plugin help.
+	   -H: Hostname.
+	   -t: Plugin timeout. Default value: 4 minutes. Expected unit: m (minute), s (second).
+	   -w: Warning threshold.
+	   -c: Critical threshold.
+	   -v: Verbose.
+
+	EXAMPLES:
+	   -> Get Uptime for machine srv3 only if monitored data is not anterior at 4 minutes (4: default value). Warning alert if Uptime < 10 minutes. Critical alert if Uptime < 5 minutes.
+		  python uptime.py -H srv3 -w 10 -c 5
+
+	   -> Get Uptime for machine srv3 only if monitored data is not anterior at 2 minutes.
+		  python uptime.py -H srv3 -w 10 -c 5 -t 2
+
+	   -> Get Uptime for machine srv3 with Verbose mode enabled.
+		  python uptime.py -H srv3 -w 10 -c 5 -v
+
+	   -> Get Uptime for machine srv3 with Verbose mode enabled and only if monitored data is not anterior at 2 minutes.
+		  python uptime.py -H srv3 -w 10 -c 5 -t 2 -v
+	  
+########################################################################################################################### -> OK!!
+python uptime.py -V -h
+	Version is: "0.1"
+	
+########################################################################################################################### -> OK!!
+python uptime.py -h -V
+	Version is: "0.1"
+	
+########################################################################################################################### -> OK!!
+python uptime.py -H 
+	Options:
+	  -V: Plugin version.
+	  -h: Plugin help.
+	  -H: Hostname.
+	  -w: Warning threshold.
+	  -c: Critical threshold.
+	  -t: Plugin timeout. Default value: 4 minutes. Expected unit: m (minute), s (second).
+	  -v: Verbose.
+
+########################################################################################################################### -> OK!!
+python uptime.py -H centos-3
+	ERROR: Please specify a Warning threshold...
+	
+########################################################################################################################### -> OK!!
+python uptime.py -H centos-3 -w
+	Options:
+	  -V: Plugin version.
+	  -h: Plugin help.
+	  -H: Hostname.
+	  -w: Warning threshold.
+	  -c: Critical threshold.
+	  -t: Plugin timeout. Default value: 4 minutes. Expected unit: m (minute), s (second).
+	  -v: Verbose.
+  
+########################################################################################################################### -> OK!!
+python uptime.py -H centos-3 -w 10
+	ERROR: Please specify a Critical threshold...
+	
+########################################################################################################################### -> OK!!
+python uptime.py -H centos-3 -w 10 -c
+	Options:
+	  -V: Plugin version.
+	  -h: Plugin help.
+	  -H: Hostname.
+	  -w: Warning threshold.
+	  -c: Critical threshold.
+	  -t: Plugin timeout. Default value: 4 minutes. Expected unit: m (minute), s (second).
+	  -v: Verbose.
+  
+########################################################################################################################### -> OK!!
+python uptime.py -H centos-3 -w 10 -c 5
+	OK: "Uptime is: 0d:0h:41m:18s" | 'Uptime (Minutes)'=41;10;5
+
+########################################################################################################################### -> OK!!
+python uptime.py -H centos-3 -w 10 -v
+	ERROR: Please specify a Critical threshold...
+	
+########################################################################################################################### -> OK!!
+python uptime.py -H centos-3 -w 10 -c 5 -v
+	## VERBOSE MODE - API REST HTTP RESPONSE: ##########################################
+	{'took': 13, 'timed_out': False, '_shards': {'total': 6, 'successful': 6, 'skipped': 0, 'failed': 0}, 'hits': {'total': 46, 'max_score': None, 'hits': [{'_index': 'metricbeat-6.3.2-2018.09.01', '_type': 'doc', '_id': 'z7y4lWUBqMlYtbO_iiji', '_version': 1, '_score': None, '_source': {'@timestamp': '2018-09-01T15:20:23.035Z', 'system': {'uptime': {'duration': {'ms': 2528000}}}, 'metricset': {'name': 'uptime', 'module': 'system', 'rtt': 16}, 'beat': {'hostname': 'centos-3', 'version': '6.3.2', 'name': 'centos-3'}, 'host': {'name': 'centos-3'}}, 'sort': [1535815223035]}]}}
+	####################################################################################
+	OK: "Uptime is: 0d:0h:42m:8s" | 'Uptime (Minutes)'=42;10;5
+
+########################################################################################################################### -> OK!!
+python uptime.py -H centos-3 -w 10 -c 5 -t
+	Options:
+	  -V: Plugin version.
+	  -h: Plugin help.
+	  -H: Hostname.
+	  -w: Warning threshold.
+	  -c: Critical threshold.
+	  -t: Plugin timeout. Default value: 4 minutes. Expected unit: m (minute), s (second).
+	  -v: Verbose.
+  
+########################################################################################################################### -> OK!!
+python uptime.py -H centos-3 -w 10 -c 5 -t 10
+	OK: "Uptime is: 0d:1h:9m:18s" | 'Uptime (Minutes)'=69;10;5
+
+########################################################################################################################### -> OK!!
+python uptime.py -H centos-3 -w 10 -c 5 -t 10 -v
+	{'took': 4, 'timed_out': False, '_shards': {'total': 6, 'successful': 6, 'skipped': 0, 'failed': 0}, 'hits': {'total': 118, 'max_score': None, 'hits': [{'_index': 'metricbeat-6.3.2-2018.09.01', '_type': 'doc', '_id': '2bzRlWUBqMlYtbO_uEI1', '_version': 1, '_score': None, '_source': {'@timestamp': '2018-09-01T15:47:53.036Z', 'system': {'uptime': {'duration': {'ms': 4178000}}}, 'metricset': {'name': 'uptime', 'module': 'system', 'rtt': 11}, 'beat': {'name': 'centos-3', 'hostname': 'centos-3', 'version': '6.3.2'}, 'host': {'name': 'centos-3'}}, 'sort': [1535816873036]}]}}
+	####################################################################################
+	OK: "Uptime is: 0d:1h:9m:38s" | 'Uptime (Minutes)'=69;10;5
+
+########################################################################################################################### -> OK!!
+python uptime.py -H centos-4 -w 10 -c 5
+	Unknown: Uptime has not been returned...
+  
+########################################################################################################################### -> OK!!
+python uptime.py -H centos-4 -w 10 -c 5 -v
+	## VERBOSE MODE - API REST HTTP RESPONSE: ##########################################
+	{'took': 9, 'timed_out': False, '_shards': {'total': 6, 'successful': 6, 'skipped': 0, 'failed': 0}, 'hits': {'total': 0, 'max_score': None, 'hits': []}}
+	####################################################################################
+	Unknown: Uptime has not been returned...
+
+########################################################################################################################### -> OK!!
+python uptime.py -H centos-4 -w 10 -c 5 -t 10
+	Unknown: Uptime has not been returned...
+
+########################################################################################################################### -> OK!!
+python uptime.py -H centos-4 -w 10 -c 5 -t 10 -v
+	{'took': 1, 'timed_out': False, '_shards': {'total': 6, 'successful': 6, 'skipped': 0, 'failed': 0}, 'hits': {'total': 0, 'max_score': None, 'hits': []}}
+	####################################################################################
+	Unknown: Uptime has not been returned...
+
+########################################################################################################################### -> OK!!
+python uptime.py -H centos-4 -w 10 -c 5 -t 10 -v toto
+	ERROR - Too much arguments/options!!
+
+########################################################################################################################### -> OK!!
+python uptime.py -H centos-3 -w 10 -c 5 -t 10 -v toto
+	ERROR - Too much arguments/options!!
+	
+########################################################################################################################### -> OK!!
+python uptime.py -H centos-4 -w 10 -c 5 -t toto
+	ERROR: Use an INTEGER value for option: "-t"
+	Unknown: Uptime has not been returned...
+
+########################################################################################################################### -> OK!!
+python uptime.py -H centos-4 -w 10 -c 5 -t toto
+python uptime.py -H centos-4 -w 10 -c toto
+	ERROR: Use an INTEGER value for option: "-c"
+	ERROR: Please specify a Critical threshold...
+
+########################################################################################################################### -> OK!!
+python uptime.py -H centos-4 -w 10 -c 5 -t toto
+python uptime.py -H centos-4 -w toto -c 5
+	ERROR: Use an INTEGER value for option: "-w"
+	ERROR: Please specify a Warning threshold...
+
+## EOF ####################################################################################################################
+
+
