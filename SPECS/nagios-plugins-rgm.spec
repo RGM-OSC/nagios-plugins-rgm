@@ -5,8 +5,11 @@ Release: 0.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
+
 Requires: rgm-base nagios
 Requires: metricbeat
+Requires: python python-requests
+
 BuildRequires: rpm-macros-rgm
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
