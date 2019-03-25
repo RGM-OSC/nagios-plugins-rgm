@@ -29,9 +29,8 @@ Currently includes Nagios metricbeat plugins for ElasticSearch/metricbeat
 %install
 
 install -d -o %{rgm_user_nagios} -g %{rgm_group} -m 0755 %{buildroot}%{rgmdatadir}
-install -d -o root -g %{rgm_group} -m 0775 %{buildroot}%{rgmdocdir}
 
-cp -afv metricbeat %{buildroot}%{rgmdatadir}/
+cp -afv %{SOURCE1} %{buildroot}%{rgmdatadir}/
 
 %post
 ln -s %rgmdatadir "$(rpm -ql nagios | grep 'plugins$')/%{name}"
