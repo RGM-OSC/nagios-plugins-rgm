@@ -23,7 +23,6 @@ Currently includes Nagios metricbeat plugins for ElasticSearch/metricbeat
 %prep
 %setup -q
 
-
 %build
 
 %install
@@ -33,18 +32,21 @@ install -d -o %{rgm_user_nagios} -g %{rgm_group} -m 0755 %{buildroot}%{rgmdatadi
 cp -afv %{SOURCE1} %{buildroot}%{rgmdatadir}/
 
 %post
-ln -s %rgmdatadir "$(rpm -ql nagios | grep 'plugins$')/%{name}"
+ln -s %rgmdatadir "$(rpm -ql nagios | grep 'plugins$')/rgm"
+
+%preun
+rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 
 %clean
 rm -rf %{buildroot}
 
 
 %files
-%defattr(-, %{rgm_user_nagios}, %{rgm_group}, 0644)
-%attr(0755,%{rgm_user_nagios},%{rgm_group}) %{rgmdatadir}
-%attr(0755,%{rgm_user_nagios},%{rgm_group}) %{rgmdatadir}/metricbeat
+%defattr(0644, %{rgm_user_nagios}, %{rgm_group}, 0755)
+%{rgmdatadir}
+%{rgmdatadir}/metricbeat
+%{rgmdatadir}/metricbeat/*
 %attr(0754,%{rgm_user_nagios},%{rgm_group}) %{rgmdatadir}/metricbeat/*.py
-%attr(0644,%{rgm_user_nagios},%{rgm_group}) %{rgmdatadir}/metricbeat/*.md
 
 
 %changelog
