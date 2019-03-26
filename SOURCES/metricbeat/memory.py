@@ -28,7 +28,7 @@ __maintainer__ = "Julien Dumarchey"
 ## MODULES FEATURES #######################################################################################################
 
 # Import the following modules:
-import sys, re, argparse, requests, json
+import sys, argparse, requests, json
 from _rgmbeat import generic_api_call, generic_api_payload, get_data_validity_range, validate_elastichost, get_tuple_numeric_args
 
 NagiosRetCode = ('OK', 'WARNING', 'CRITICAL', 'UNKNOWN')
