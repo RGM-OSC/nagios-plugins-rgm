@@ -47,7 +47,7 @@ def custom_api_payload(plugin_hostname,data_validity):
         # Get Data Validity Epoch Timestamp:
         newest_valid_timestamp, oldest_valid_timestamp = get_data_validity_range(data_validity)
         # Build the generic part of the API Resquest Body:
-        generic_payload = generic_api_payload()
+        generic_payload = generic_api_payload(1)
         custom_payload = {}
         custom_payload.update(generic_payload)
         # Add the Query structure with ElasticSearch Variables:
@@ -59,9 +59,9 @@ def custom_api_payload(plugin_hostname,data_validity):
         custom_payload["query"]["bool"]["must"].append( {"match_phrase":{"beat.name":{"query":""+beat_name+""}}} )
         custom_payload["query"]["bool"]["must"].append( {"range":{"@timestamp":{"gte":""+str(oldest_valid_timestamp)+"","lte":""+str(newest_valid_timestamp)+"","format":"epoch_millis"}}} )
         return custom_payload
-    except:
-        print("Error calling \"custom_api_payload\"...")
-        sys.exit()
+    except Exception as e:
+        print("Error calling \"custom_api_payload\"... Exception {}".format(e))
+        sys.exit(3)
 
 # Request a custom ElasticSearch API REST Call (here: Get Memories: Used, Free, Swap for Linux distrib):
 def get_memory(elastichost, plugin_hostname,data_validity,verbose):
@@ -72,37 +72,27 @@ def get_memory(elastichost, plugin_hostname,data_validity,verbose):
        # Request the ElasticSearch API:
        results = requests.get(url=addr, headers=header, json=payload, verify=False)
        results_json = results.json()
+       if verbose:
+            print("## VERBOSE MODE - API REST HTTP RESPONSE: ##########################################")
+            print("request payload: {}".format(payload))
+            print("JSON output: {}".format(results_json))
+            print("####################################################################################")
        # Extract the "Total Hit" from results (= check if LOAD Value has been returned):
        total_hit = int(results_json["hits"]["total"])
        # If request hits: extract results (Memory Values in %) and display Verbose Mode if requested in ARGS ; otherwise return a static code (0):
-       if (total_hit != 0) and (verbose == "0") :
+       if total_hit != 0:
             mem_used_pct = float(results_json["hits"]["hits"][0]["_source"]["system"]["memory"]["actual"]["used"]["pct"]) * 100
             mem_used_bytes = float(results_json["hits"]["hits"][0]["_source"]["system"]["memory"]["actual"]["used"]["bytes"])
             mem_free_bytes = float(results_json["hits"]["hits"][0]["_source"]["system"]["memory"]["actual"]["free"])
             swap_used_pct = float(results_json["hits"]["hits"][0]["_source"]["system"]["memory"]["swap"]["used"]["pct"]) * 100
             swap_used_bytes = float(results_json["hits"]["hits"][0]["_source"]["system"]["memory"]["swap"]["used"]["bytes"])
             swap_free_bytes = float(results_json["hits"]["hits"][0]["_source"]["system"]["memory"]["swap"]["free"])
-       elif (total_hit != 0) and (verbose == "1") :
-            print("## VERBOSE MODE - API REST HTTP RESPONSE: ##########################################")
-            print(results_json)
-            print("####################################################################################")
-            mem_used_pct = float(results_json["hits"]["hits"][0]["_source"]["system"]["memory"]["actual"]["used"]["pct"]) * 100
-            mem_used_bytes = float(results_json["hits"]["hits"][0]["_source"]["system"]["memory"]["actual"]["used"]["bytes"])
-            mem_free_bytes = float(results_json["hits"]["hits"][0]["_source"]["system"]["memory"]["actual"]["free"])
-            swap_used_pct = float(results_json["hits"]["hits"][0]["_source"]["system"]["memory"]["swap"]["used"]["pct"]) * 100
-            swap_used_bytes = float(results_json["hits"]["hits"][0]["_source"]["system"]["memory"]["swap"]["used"]["bytes"])
-            swap_free_bytes = float(results_json["hits"]["hits"][0]["_source"]["system"]["memory"]["swap"]["free"])
-       elif (total_hit == 0) and (verbose == "0") :
-           mem_used_pct, mem_used_bytes, mem_free_bytes, swap_used_pct, swap_used_bytes, swap_free_bytes = 0, 0, 0, 0, 0, 0
-       elif (total_hit == 0) and (verbose == "1") :
-           print("## VERBOSE MODE - API REST HTTP RESPONSE: ##########################################")
-           print(results_json)
-           print("####################################################################################")
+       else:
            mem_used_pct, mem_used_bytes, mem_free_bytes, swap_used_pct, swap_used_bytes, swap_free_bytes = 0, 0, 0, 0, 0, 0
        return total_hit, mem_used_pct, mem_used_bytes, mem_free_bytes, swap_used_pct, swap_used_bytes, swap_free_bytes
-   except:
-       print("Error calling \"get_load\"...")
-       sys.exit()
+   except Exception as e:
+        print("Error calling \"get_memory\"... Exception {}".format(e))
+        sys.exit(3)
 
 # Convert Bytes in GigaBytes :
 def convert_bytes(elastichost, plugin_hostname,data_validity,verbose):
@@ -118,9 +108,9 @@ def convert_bytes(elastichost, plugin_hostname,data_validity,verbose):
         elif total_hit == 0 :
             mem_used_gb, mem_free_gb, swap_used_gb, swap_free_gb = 0, 0, 0, 0
         return total_hit, mem_used_pct, mem_used_gb, mem_free_gb, swap_used_pct, swap_used_gb, swap_free_gb
-    except:
-        print("Error calling \"convert_bytes\"...")
-        sys.exit()
+    except Exception as e:
+        print("Error calling \"convert_bytes\"... Exception {}".format(e))
+        sys.exit(3)
 
 # Display Memory (System Information + Performance Data) in a format compliant with RGM expectations:
 def rgm_memory_output(elastichost, plugin_hostname,warning_treshold,critical_treshold,data_validity,verbose):
@@ -140,8 +130,8 @@ def rgm_memory_output(elastichost, plugin_hostname,warning_treshold,critical_tre
         else:
             print("UNKNOWN: Memory has not been returned...")
             sys.exit(3)
-    except Exception:
-        print("Error calling \"rgm_memory_output\"...")
+    except Exception as e:
+        print("Error calling \"rgm_memory_output\"... Exception {}".format(e))
         sys.exit(3)
 
 ## Get Options/Arguments then Run Script ##################################################################################
@@ -173,8 +163,8 @@ if __name__ == '__main__':
         """,
         epilog="version {}, copyright {}".format(__version__, __copyright__))
     parser.add_argument('-H', '--hostname', type=str, help='hostname or IP address', required=True)
-    parser.add_argument('-w', '--warning', type=str, nargs='?', help='warning trigger', default=10)
-    parser.add_argument('-c', '--critical', type=str, nargs='?', help='critical trigger', default=5)
+    parser.add_argument('-w', '--warning', type=str, nargs='?', help='warning trigger', default=85)
+    parser.add_argument('-c', '--critical', type=str, nargs='?', help='critical trigger', default=95)
     parser.add_argument('-t', '--timeout', type=str, help='data validity timeout (in minutes)', default=4)
     parser.add_argument('-E', '--elastichost', type=str, help='connection URL of ElasticSearch server', default="http://localhost:9200")
     parser.add_argument('-v', '--verbose', help='be verbose', action='store_true')

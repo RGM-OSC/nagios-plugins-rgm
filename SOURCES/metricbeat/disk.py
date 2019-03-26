@@ -17,6 +17,13 @@ CHANGES :
                                                                         code factorization & mutualization
 '''
 
+__author__ = "Julien Dumarchey, Eric Belhomme"
+__copyright__ = "2018, SCC"
+__credits__ = ["Julien Dumarchey", "Eric Belhomme"]
+__license__ = "GPL"
+__version__ = "1.0.1"
+__maintainer__ = "Julien Dumarchey"
+
 ## MODULES FEATURES #######################################################################################################
 
 # Import the following modules:
@@ -40,7 +47,7 @@ def custom_api_payload(plugin_hostname,data_validity):
         # Get Data Validity Epoch Timestamp:
         newest_valid_timestamp, oldest_valid_timestamp = get_data_validity_range(data_validity)
         # Build the generic part of the API Resquest Body:
-        generic_payload = generic_api_payload()
+        generic_payload = generic_api_payload(100)
         custom_payload = {}
         custom_payload.update(generic_payload)
         # Add the Query structure with ElasticSearch Variables:
@@ -52,9 +59,9 @@ def custom_api_payload(plugin_hostname,data_validity):
         custom_payload["query"]["bool"]["must"].append( {"match_phrase":{"beat.name":{"query":""+beat_name+""}}} )
         custom_payload["query"]["bool"]["must"].append( {"range":{"@timestamp":{"gte":""+str(oldest_valid_timestamp)+"","lte":""+str(newest_valid_timestamp)+"","format":"epoch_millis"}}} )
         return custom_payload
-    except:
-        print("Error calling \"custom_api_payload\"...")
-        sys.exit()
+    except Exception as e:
+        print("Error calling \"custom_api_payload\"... Exception {}".format(e))
+        sys.exit(3)
 
 # Request a custom ElasticSearch API REST Call (here: Get space for all Disks with: Percentage Used, Quantity Used (GigaBytes), and Quantity Free (GigaBytes)):
 def get_disk(elastichost, plugin_hostname,data_validity,verbose):
@@ -65,10 +72,15 @@ def get_disk(elastichost, plugin_hostname,data_validity,verbose):
         # Request the ElasticSearch API:
         results = requests.get(url=addr, headers=header, json=payload, verify=False)
         results_json = results.json()
+        if verbose:
+            print("## VERBOSE MODE - API REST HTTP RESPONSE: ##########################################")
+            print("request payload: {}".format(payload))
+            print("JSON output: {}".format(results_json))
+            print("####################################################################################")
         # Extract the "Total Hit" from results (= check if Disk Value has been returned):
         total_hit = int(results_json["hits"]["total"])
         # If request hits: find out how many Items are required to get space for all disks:
-        if (total_hit != 0) :
+        if total_hit != 0:
             disks_names_list = []
             for index in (range(total_hit)) :
                 disk_name = results_json["hits"]["hits"][index]["_source"]["system"]["filesystem"]["device_name"]
@@ -79,7 +91,7 @@ def get_disk(elastichost, plugin_hostname,data_validity,verbose):
                     break
         # If request hits: for each Disk, extract results (Disk Values in %) and display Verbose Mode if requested in ARGS ; otherwise return a static code (0):
         disk_values_dic = {}
-        if (total_hit != 0) and (verbose == "0") :
+        if total_hit != 0:
             for position in (range(resp_entries_range)) :
                 disk_values_dic.update( {"disk_"+str(position)+"": []} )
                 disk_values_dic["disk_"+str(position)].append(results_json["hits"]["hits"][position]["_source"]["system"]["filesystem"]["device_name"])
@@ -87,28 +99,12 @@ def get_disk(elastichost, plugin_hostname,data_validity,verbose):
                 disk_values_dic["disk_"+str(position)].append(float(round(results_json["hits"]["hits"][position]["_source"]["system"]["filesystem"]["used"]["pct"] * (100),2)))
                 disk_values_dic["disk_"+str(position)].append(float(round(results_json["hits"]["hits"][position]["_source"]["system"]["filesystem"]["used"]["bytes"] / (1024*1024*1024),2)))
                 disk_values_dic["disk_"+str(position)].append(float(round(results_json["hits"]["hits"][position]["_source"]["system"]["filesystem"]["free"] / (1024*1024*1024),2)))
-        elif (total_hit != 0) and (verbose == "1") :
-            print("## VERBOSE MODE - API REST HTTP RESPONSE: ##########################################")
-            print(results_json)
-            print("####################################################################################")
-            for position in (range(resp_entries_range)) :
-                disk_values_dic.update( {"disk_"+str(position)+"": []} )
-                disk_values_dic["disk_"+str(position)].append(results_json["hits"]["hits"][position]["_source"]["system"]["filesystem"]["device_name"])
-                disk_values_dic["disk_"+str(position)].append(results_json["hits"]["hits"][position]["_source"]["system"]["filesystem"]["mount_point"])
-                disk_values_dic["disk_"+str(position)].append(float(round(results_json["hits"]["hits"][position]["_source"]["system"]["filesystem"]["used"]["pct"] * (100),2)))
-                disk_values_dic["disk_"+str(position)].append(float(round(results_json["hits"]["hits"][position]["_source"]["system"]["filesystem"]["used"]["bytes"] / (1024*1024*1024),2)))
-                disk_values_dic["disk_"+str(position)].append(float(round(results_json["hits"]["hits"][position]["_source"]["system"]["filesystem"]["free"] / (1024*1024*1024),2)))
-        elif (total_hit == 0) and (verbose == "0") :
-            disk_values_dic.update( {"0": [0, 0, 0, 0, 0]} )
-        elif (total_hit == 0) and (verbose == "1") :
-            print("## VERBOSE MODE - API REST HTTP RESPONSE: ##########################################")
-            print(results_json)
-            print("####################################################################################")
+        else:
             disk_values_dic.update( {"0": [0, 0, 0, 0, 0]} )
         return total_hit, resp_entries_range, disk_values_dic
-    except:
-        print("Error calling \"get_disk\"...")
-        sys.exit()
+    except Exception as e:
+        print("Error calling \"get_disk\"... Exception {}".format(e))
+        sys.exit(3)
 
 # Build Alerting lists (sorted by Severity with Disk Space used %) and Performance Data lists (sorted by Severity with: Disk Space used %, Quantity Used (GB), and Quantity Free (GB)) :
 def build_alerting_list(elastichost,plugin_hostname,warning_treshold,critical_treshold,data_validity,verbose):
@@ -159,9 +155,9 @@ def build_alerting_list(elastichost,plugin_hostname,warning_treshold,critical_tr
         # Return RGM System Information and Performance Data ready to display:
         return rgm_info_critical, rgm_info_warning, rgm_info_ok, rgm_info_unknown, rgm_perfdata_critical, rgm_perfdata_warning, rgm_perfdata_ok, rgm_perfdata_unknown
 
-    except:
-        print("Error calling \"build_alerting_list\"...")
-        sys.exit()
+    except Exception as e:
+        print("Error calling \"build_alerting_list\"... Exception {}".format(e))
+        sys.exit(3)
 
 # Display Disk space (System Information + Performance Data) in a format compliant with RGM expectations:
 def rgm_disk_output(elastichost, plugin_hostname,warning_treshold,critical_treshold,data_validity,verbose):
@@ -206,8 +202,8 @@ def rgm_disk_output(elastichost, plugin_hostname,warning_treshold,critical_tresh
             #print("Debug - \"rgm_disk_output\" -> Scenario: \"1 0 1\"")
             print("CRITICAL: "+str(rgm_info_critical)+""+str(rgm_perfdata_critical))
             sys.exit(2)
-    except Exception:
-        print("Error calling \"rgm_disk_output\"...")
+    except Exception as e:
+        print("Error calling \"rgm_disk_output\"... Exception {}".format(e))
         sys.exit(3)
 
 ## Get Options/Arguments then Run Script ##################################################################################
@@ -238,8 +234,8 @@ if __name__ == '__main__':
         """,
         epilog="version {}, copyright {}".format(__version__, __copyright__))
     parser.add_argument('-H', '--hostname', type=str, help='hostname or IP address', required=True)
-    parser.add_argument('-w', '--warning', type=str, nargs='?', help='warning trigger', default=10)
-    parser.add_argument('-c', '--critical', type=str, nargs='?', help='critical trigger', default=5)
+    parser.add_argument('-w', '--warning', type=str, nargs='?', help='warning trigger', default=85)
+    parser.add_argument('-c', '--critical', type=str, nargs='?', help='critical trigger', default=95)
     parser.add_argument('-t', '--timeout', type=str, help='data validity timeout (in minutes)', default=4)
     parser.add_argument('-E', '--elastichost', type=str, help='connection URL of ElasticSearch server', default="http://localhost:9200")
     parser.add_argument('-v', '--verbose', help='be verbose', action='store_true')
