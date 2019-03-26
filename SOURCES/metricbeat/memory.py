@@ -29,7 +29,9 @@ __maintainer__ = "Julien Dumarchey"
 
 # Import the following modules:
 import sys, re, argparse, requests, json
-from _rgmbeat import generic_api_call, generic_api_payload, get_data_validity_range, validate_elastichost
+from _rgmbeat import generic_api_call, generic_api_payload, get_data_validity_range, validate_elastichost, get_tuple_numeric_args
+
+NagiosRetCode = ('OK', 'WARNING', 'CRITICAL', 'UNKNOWN')
 
 # If required, disable SSL Warning Logging for "requests" library:
 #requests.packages.urllib3.disable_warnings()
@@ -116,20 +118,37 @@ def convert_bytes(elastichost, plugin_hostname,data_validity,verbose):
 def rgm_memory_output(elastichost, plugin_hostname,warning_treshold,critical_treshold,data_validity,verbose):
     try:
         # Get Memory values:
+        retcode = 3
         total_hit, mem_used_pct, mem_used_gb, mem_free_gb, swap_used_pct, swap_used_gb, swap_free_gb = convert_bytes(elastichost,plugin_hostname,data_validity,verbose)
         # Parse value for Alerting returns:
-        if total_hit != 0 and (mem_used_pct >= critical_treshold) :
-            print("CRITICAL - Memory Usage: "+str(round(mem_used_pct,2))+"% (Qty Used: "+str(round(mem_used_gb,2))+"GB, Qty Free: "+str(round(mem_free_gb,2))+"GB), Swap Usage: "+str(round(swap_used_pct,2))+"% (Qty Used: "+str(round(swap_used_gb,2))+"GB, Qty Free: "+str(round(swap_free_gb,2))+"GB) | 'Memory'="+str(round(mem_used_pct,2))+"%;"+str(warning_treshold)+";"+str(critical_treshold)+" | 'Swap'="+str(round(swap_used_pct,2))+"%;"+str(warning_treshold)+";"+str(critical_treshold)+"")
-            sys.exit(2)
-        elif total_hit != 0 and (mem_used_pct >= warning_treshold and mem_used_pct < critical_treshold) :
-            print("WARNING - Memory Usage: "+str(round(mem_used_pct,2))+"% (Qty Used: "+str(round(mem_used_gb,2))+"GB, Qty Free: "+str(round(mem_free_gb,2))+"GB), Swap Usage: "+str(round(swap_used_pct,2))+"% (Qty Used: "+str(round(swap_used_gb,2))+"GB, Qty Free: "+str(round(swap_free_gb,2))+"GB) | 'Memory'="+str(round(mem_used_pct,2))+"%;"+str(warning_treshold)+";"+str(critical_treshold)+" | 'Swap'="+str(round(swap_used_pct,2))+"%;"+str(warning_treshold)+";"+str(critical_treshold)+"")
-            sys.exit(1)
-        elif total_hit != 0 and (mem_used_pct < warning_treshold) :
-            print("OK - Memory Usage: "+str(round(mem_used_pct,2))+"% (Qty Used: "+str(round(mem_used_gb,2))+"GB, Qty Free: "+str(round(mem_free_gb,2))+"GB), Swap Usage: "+str(round(swap_used_pct,2))+"% (Qty Used: "+str(round(swap_used_gb,2))+"GB, Qty Free: "+str(round(swap_free_gb,2))+"GB) | 'Memory'="+str(round(mem_used_pct,2))+"%;"+str(warning_treshold)+";"+str(critical_treshold)+" | 'Swap'="+str(round(swap_used_pct,2))+"%;"+str(warning_treshold)+";"+str(critical_treshold)+"")
-            sys.exit(0)
-        else:
+        if total_hit == 0:
             print("UNKNOWN: Memory has not been returned...")
-            sys.exit(3)
+            sys.exit(retcode)
+
+        if mem_used_pct >= critical_treshold[0] or swap_used_pct >= critical_treshold[1]:
+            retcode = 2
+        elif (mem_used_pct >= warning_treshold[0] and mem_used_pct < critical_treshold[0]) or \
+            (swap_used_pct >= warning_treshold[1] and swap_used_pct < critical_treshold[1]):
+            retcode = 1
+        elif mem_used_pct < warning_treshold[0] and swap_used_pct < warning_treshold[1]:
+            retcode = 0
+
+        print("{rc} - Memory Usage: {mmem}% (Qty Used: {umem}GB, Qty Free: {fmem}GB)," \
+            " Swap Usage: {mswp}% (Qty Used: {uswp}GB, Qty Free: {fswp}GB) |" \
+            " 'Memory'={mmem}%;{mtw};{mtc} | 'swap'={mswp};{stw},{stc}".format(
+            rc=NagiosRetCode[retcode],
+            mmem=str(round(mem_used_pct,2)),
+            umem=str(round(mem_used_gb,2)),
+            fmem=str(round(mem_free_gb,2)),
+            mswp=str(round(swap_used_pct,2)),
+            uswp=str(round(swap_used_gb,2)),
+            fswp=str(round(swap_free_gb,2)),
+            mtw=warning_treshold[0],
+            mtc=critical_treshold[0],
+            stw=warning_treshold[1],
+            stc=critical_treshold[1]))
+        exit(retcode)
+
     except Exception as e:
         print("Error calling \"rgm_memory_output\"... Exception {}".format(e))
         sys.exit(3)
@@ -145,32 +164,40 @@ if __name__ == '__main__':
         """,
         usage="""
         Get Memory for machine "srv3" only if monitored data is not anterior at 4 minutes
-        (4: default value). Warning alert if Memory > 85%%. Critical alert if Memory > 95%%.
+        (4: default value).
+        Warning alert if Memory > 85%% or swap > 40%%.
+        Critical alert if Memory > 95%% or swap > 50%%.
 
-            python memory.py -H srv3 -w 85 -c 95
+            python memory.py -H srv3 -w 85,40 -c 95,50
 
         Get Memory for machine "srv3" only if monitored data is not anterior at 2 minutes. 
 
-            python memory.py -H srv3 -w 85 -c 95 -t 2
+            python memory.py -H srv3 -w 85,40 -c 95,50 -t 2
 
         Get Memory for machine "srv3" with Verbose mode enabled.
 
-            python memory.py -H srv3 -w 85 -c 95 -v
+            python memory.py -H srv3 -w 85,40 -c 95,50 -v
 
         Get Memory for machine "srv3" with Verbose mode enabled and only if monitored data is not anterior at 2 minutes. 
 
-            python memory.py -H srv3 -w 85 -c 95 -t 2 -v
+            python memory.py -H srv3 -w 85,40 -c 95,50 -t 2 -v
         """,
         epilog="version {}, copyright {}".format(__version__, __copyright__))
     parser.add_argument('-H', '--hostname', type=str, help='hostname or IP address', required=True)
-    parser.add_argument('-w', '--warning', type=str, nargs='?', help='warning trigger', default=85)
-    parser.add_argument('-c', '--critical', type=str, nargs='?', help='critical trigger', default=95)
+    parser.add_argument('-w', '--warning', type=str, nargs='?', help='warning trigger (physical,swap)', default='85,40')
+    parser.add_argument('-c', '--critical', type=str, nargs='?', help='critical trigger (physical,swap)', default='95,50')
     parser.add_argument('-t', '--timeout', type=str, help='data validity timeout (in minutes)', default=4)
     parser.add_argument('-E', '--elastichost', type=str, help='connection URL of ElasticSearch server', default="http://localhost:9200")
     parser.add_argument('-v', '--verbose', help='be verbose', action='store_true')
 
     args = parser.parse_args()
 
+    warn = get_tuple_numeric_args(args.warning)
+    crit = get_tuple_numeric_args(args.critical)
+    if not isinstance(warn, tuple) or not isinstance(crit, tuple):
+        parser.print_help()
+        exit(3)
+
     if validate_elastichost(args.elastichost):
-        rgm_memory_output(args.elastichost, args.hostname, args.warning, args.critical, args.timeout, args.verbose)
+        rgm_memory_output(args.elastichost, args.hostname, warn, crit, args.timeout, args.verbose)
 # EOF

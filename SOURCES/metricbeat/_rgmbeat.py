@@ -46,4 +46,12 @@ def validate_elastichost(elastichost):
     if not regex.search(elastichost):
         print("Error: invalid ElasticSearch connection URL (must be of the fomr \"http://hostname:port\"")
         exit(2)
-    return True;
+    return True
+
+def get_tuple_numeric_args(args):
+    regex =re.compile(r"^(\d+),(\d+)$")
+    match = regex.match(args)
+    if match:
+        return (float(match.group(1)), float(match.group(2)))
+    return False
+
