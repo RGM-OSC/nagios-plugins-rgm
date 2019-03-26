@@ -2,118 +2,40 @@
 # -*- coding: utf-8 -*-
 
 '''
-### DESCRIPTION :
+DESCRIPTION :
   * Nagios plugin used to return machine "Load Average (1 minute, 5 minutes, 15 minutes)" from ElasticSearch.
   * Load Average values are pushed from MetricBeat agent installed on the monitored machine.
   * Load Average resquest is handled by API REST againt ElasticSearch.
 
-### USAGE:
-  * Options:
-    * -V: Plugin version.
-    * -h: Plugin help.
-    * -H: Hostname.
-    * -w: Warning threshold.
-    * -c: Critical threshold.
-    * -t: Data validity timeout (in minutes). If Value used to calculate Load Average is older than x minutes, plugin returns Unknown state. Default value: 4 minutes.
-    * -v: Verbose.
-
-### EXAMPLES: 
-  * Get Load Average for machine "srv3 only if monitored data is not anterior at 4 minutes (4: default value). Warning alert if Load > 70%. Critical alert if Load > 80 %.
-    * python load.py -H srv3 -w 70 -c 80
-  * Get Load Average for machine "srv3 only if monitored data is not anterior at 2 minutes. 
-    * python load.py -H srv3 -w 70 -c 80 -t 2
-  * Get Load Average for machine "srv3 with Verbose mode enabled.
-    * python load.py -H srv3 -w 70 -c 80 -v
-  * Get Load Average for machine "srv3 with Verbose mode enabled and only if monitored data is not anterior at 2 minutes. 
-    * python load.py -H srv3 -w 70 -c 80 -t 2 -v
-
-### AUTHOR :
+AUTHOR :
   * Julien Dumarchey <jdumarchey@fr.scc.com>   START DATE :    Sep 03 11:00:00 2018 
               
-### CHANGES :
-  * VERSION   DATE    	   WHO                  					   DETAIL
-  * 0.0.1     03Sep18      Julien Dumarchey <jdumarchey@fr.scc.com>    Initial version
+CHANGES :
+  * VERSION     DATE        WHO                                         DETAIL
+  * 0.0.1       2018-09-03  Julien Dumarchey <jdumarchey@fr.scc.com>    Initial version
+  * 1.0.1       2019-03-26  Eric Belhomme <ebelhomme@fr.scc.com>        replace getopts by argparse module
+                                                                        code factorization & mutualization
+                                                                        added elastichost variable
 '''
+
+__author__ = "Julien Dumarchey, Eric Belhomme"
+__copyright__ = "2018, SCC"
+__credits__ = ["Julien Dumarchey", "Eric Belhomme"]
+__license__ = "GPL"
+__version__ = "1.0.1"
+__maintainer__ = "Julien Dumarchey"
 
 ## MODULES FEATURES #######################################################################################################
 
 # Import the following modules:
-import getopt, sys, requests, json, time
+import sys, re, argparse, requests, json
+from _rgmbeat import generic_api_call, generic_api_payload, get_data_validity_range, validate_elastichost
 
 # If required, disable SSL Warning Logging for "requests" library:
 #requests.packages.urllib3.disable_warnings()
 
 ## Declare Functions ######################################################################################################
 
-# Display Plugin Version:
-def display_version():
-    current_version = "1.0.0"
-    current_version_msg = "Version is: \"" +current_version+ "\""
-    return current_version_msg
-
-# Display Plugin Help:
-def display_help():
-    o = "\nOPTIONS:\n"
-    V = "   -V: Plugin version.\n"
-    h = "   -h: Plugin help.\n"
-    H = "   -H: Hostname.\n"
-    t = "   -t: Plugin timeout. Default value: 4 minutes. Expected unit: m (minute), s (second).\n"
-    w = "   -w: Warning threshold.\n"
-    c = "   -c: Critical threshold.\n"
-    v = "   -v: Verbose.\n\n"
-    e = "EXAMPLES:\n"
-    e1a = "   -> Get Load Average for machine srv3 only if monitored data is not anterior at 4 minutes (4: default value). Warning alert if Load > 70%. Critical alert if Load > 80 %. \n"
-    e1b = "      python load.py -H srv3 -w 70 -c 80\n\n"
-    e2a = "   -> Get Load Average for machine srv3 only if monitored data is not anterior at 2 minutes.\n"
-    e2b = "      python load.py -H srv3 -w 70 -c 80 -t 2\n\n"
-    e3a = "   -> Get Load Average for machine srv3 with Verbose mode enabled.\n"
-    e3b = "      python load.py -H srv3 -w 70 -c 80 -v\n\n"
-    e4a = "   -> Get Load Average for machine srv3 with Verbose mode enabled and only if monitored data is not anterior at 2 minutes. \n"
-    e4b = "      python load.py -H srv3 -w 70 -c 80 -t 2 -v\n"
-    help_msg = o + V + h + H + t + w + c + v + e + e1a + e1b + e2a + e2b + e3a + e3b + e4a + e4b
-    return help_msg
-
-# Build ElasticSearch URL for generic API Call:
-def generic_api_call():
-    try:
-        # Define ElasticSearch Features:
-        ip = "192.168.140.50"
-        proto = "http"
-        port = "9200"
-        # Build URL:
-        addr = proto+"://"+ip+":"+port+"/_search"
-        # Build HEADER:
-        header = {'Content-Type': 'application/json'}
-        return addr, header
-    except:
-        print("Error calling \"generic_api_call\"...")
-        sys.exit()
-
-# Build a generic Payload for ElasticSearch:
-def generic_api_payload():
-    try:
-        generic_payload = {}
-        # Sort / Request the Last Item:
-        response_list_size = "1"
-        generic_payload.update( {"version":"true","size":""+response_list_size+""} )
-        generic_payload.update( {"sort":[{"@timestamp":{"order":"desc","unmapped_type":"boolean"}}]} )
-        # Add Exclusion capability if needed later:
-        generic_payload.update( {"_source":{"excludes":[]}} )
-        return generic_payload
-    except:
-        print("Error calling \"generic_api_payload\"...")
-        sys.exit()
-
-# Return a range of time between 2x Epoch-Millisecond Timestamps:
-def get_data_validity_range(data_validity):
-    try:
-        newest_valid_timestamp = int(round(time.time() * 1000))
-        data_validity_ms = ( int(data_validity) * 60 * 1000 )
-        oldest_valid_timestamp = ( newest_valid_timestamp - data_validity_ms )
-        return newest_valid_timestamp, oldest_valid_timestamp
-    except:
-        print("Error calling \"get_data_validity_range\"...")
-        sys.exit()
 
 ## Build a custom Payload for ElasticSearch (here: HTTP Request Body for getting LOAD values for a specified hostname):
 def custom_api_payload(plugin_hostname,data_validity):
@@ -143,10 +65,10 @@ def custom_api_payload(plugin_hostname,data_validity):
         sys.exit()
 
 # Request a custom ElasticSearch API REST Call (here: Get Load Average for 1 minute, 5m and 15m):
-def get_load(plugin_hostname,data_validity,verbose):
+def get_load(elastichost, plugin_hostname,data_validity,verbose):
    try:
        # Get prerequisites for ElasticSearch API:
-       addr, header = generic_api_call()
+       addr, header = generic_api_call(elastichost)
        payload = custom_api_payload(plugin_hostname,data_validity)
        # Request the ElasticSearch API:
        results = requests.get(url=addr, headers=header, json=payload, verify=False)
@@ -178,10 +100,10 @@ def get_load(plugin_hostname,data_validity,verbose):
        sys.exit()
 
 # Display Load Average (System Information + Performance Data) in a format compliant with RGM expectations:
-def rgm_load_output(plugin_hostname,warning_treshold,critical_treshold,data_validity,verbose):
+def rgm_load_output(elastichost, plugin_hostname,warning_treshold,critical_treshold,data_validity,verbose):
     try:
         # Get Load Average values:
-        total_hit, load_1, load_5, load_15 = get_load(plugin_hostname,data_validity,verbose)
+        total_hit, load_1, load_5, load_15 = get_load(elastichost, plugin_hostname,data_validity,verbose)
         # Parse value for Alerting returns:
         if total_hit != 0 and (load_5 >= critical_treshold) :
             print("CRITICAL - Load Averages - 1 minute: "+str(round(load_1,2))+", 5 minutes: "+str(round(load_5,2))+", 15 minutes: "+str(round(load_15,2))+" | 'Load Average (1m)'="+str(round(load_1,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" | 'Load Average (5m)'="+str(round(load_5,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" | 'Load Average (15m)'="+str(round(load_15,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
@@ -200,104 +122,44 @@ def rgm_load_output(plugin_hostname,warning_treshold,critical_treshold,data_vali
         sys.exit(3)
 
 ## Get Options/Arguments then Run Script ##################################################################################
-
-def main_parse_script_command(argv):
-
-    # Define Variables:
-    try:
-        plugin_version
-        plugin_help
-        data_validity
-        plugin_hostname
-        warning_treshold
-        critical_treshold
-        plugin_verbose
-    except NameError:
-        plugin_version = None
-        plugin_help = None
-        data_validity = None
-        plugin_hostname = None
-        warning_treshold = None
-        critical_treshold = None
-        verbose = None
-
-    # Get Options and Arguments:
-    try:
-        options, arguments = getopt.getopt(argv,"VhH:w:c:t:v",["version","help","hostname=","warning=","critical=","timeout=","verbose"])
-    except getopt.GetoptError:
-        print("Options:")
-        print("  -V: Plugin version.")
-        print("  -h: Plugin help.")
-        print("  -H: Hostname.")
-        print("  -w: Warning threshold.")
-        print("  -c: Critical threshold.")
-        print("  -t: Plugin timeout. Default value: 4 minutes. Expected unit: m (minute), s (second).")
-        print("  -v: Verbose.")
-        sys.exit()
-
-    # Parsing + Sanity tests for Options and Arguments:
-    for opt, arg in options:
-        if opt in ("-V", "--version"):
-            plugin_version = "true"
-        elif opt in ("-h", "--help"):
-            plugin_help = "true"
-        elif opt in ("-H", "--hostname"):
-            try:
-                plugin_hostname = str(arg)
-            except ValueError:
-                print("ERROR: Use a STRING value for option: \"" +opt+ "\"")
-        elif opt in ("-w", "--warning"):
-            try:
-                warning_treshold = int(arg)
-            except ValueError:
-                print("ERROR: Use an INTEGER value for option: \"" +opt+ "\"")
-        elif opt in ("-c", "--critical"):
-            try:
-                critical_treshold = int(arg)
-            except ValueError:
-                print("ERROR: Use an INTEGER value for option: \"" +opt+ "\"")
-        elif opt in ("-t", "--timeout"):
-            try:
-                data_validity = int(arg)
-            except ValueError:
-                print("ERROR: Use an INTEGER value for option: \"" +opt+ "\"")
-        elif opt in ("-v", "--verbose"):
-            verbose = "true"
-
-    # Run script depending Options/Arguments:
-    if (len(sys.argv)) > 10:
-        print("ERROR - Too much arguments/options!!")
-    elif (len(sys.argv)) < 2:
-        help_msg = display_help()
-        print(help_msg)
-    elif plugin_version == "true":
-        version_msg = display_version()
-        print(version_msg)
-    elif plugin_help == "true":
-        help_msg = display_help()
-        print(help_msg)
-    elif (plugin_version != "true" or plugin_help != "true") and plugin_hostname is None:
-        print("ERROR: Please specify a valid Hostname...")  
-    elif (plugin_version != "true" or plugin_help != "true") and warning_treshold is None:
-        print("ERROR: Please specify a Warning threshold...") 
-    elif (plugin_version != "true" or plugin_help != "true") and critical_treshold is None:
-        print("ERROR: Please specify a Critical threshold...") 
-    elif (plugin_version != "true" or plugin_help != "true") and (data_validity is None and verbose is None):
-        data_validity = "4"
-        verbose = "0"
-        rgm_load_output(plugin_hostname,warning_treshold,critical_treshold,data_validity,verbose)
-    elif (plugin_version != "true" or plugin_help != "true") and (data_validity is None and verbose == "true"):
-        data_validity = "4"
-        verbose = "1"
-        rgm_load_output(plugin_hostname,warning_treshold,critical_treshold,data_validity,verbose)
-    elif (plugin_version != "true" or plugin_help != "true") and (data_validity and verbose is None):
-        verbose = "0"
-        rgm_load_output(plugin_hostname,warning_treshold,critical_treshold,data_validity,verbose)
-    elif (plugin_version != "true" or plugin_help != "true") and (data_validity and verbose):
-        verbose = "1"
-        rgm_load_output(plugin_hostname,warning_treshold,critical_treshold,data_validity,verbose)
-
 if __name__ == '__main__':
-    main_parse_script_command(sys.argv[1:])
 
-## EOF ####################################################################################################################
+    parser = argparse.ArgumentParser(description="""
+        Nagios plugin used to return machine "Load Average (1 minute, 5 minutes, 15 minutes)"
+        from ElasticSearch.
+        Load Average values are pushed from MetricBeat agent installed on the monitored machine.
+        Load Average resquest is handled by API REST againt ElasticSearch.
+        """,
+        usage="""
+        Get Load Average for machine "srv3" only if monitored data is not anterior at 4 minutes
+        (4: default value). Warning alert if Load > 70%%. Critical alert if Load > 80%%.
+
+            python load.py -H srv3 -w 70 -c 80
+
+        Get Load Average for machine "srv3" only if monitored data is not anterior at 2 minutes. 
+
+            python load.py -H srv3 -w 70 -c 80 -t 2
+
+        Get Load Average for machine "srv3" with Verbose mode enabled.
+
+            python load.py -H srv3 -w 70 -c 80 -v
+
+        Get Load Average for machine "srv3" with Verbose mode enabled and only if monitored data
+        is not anterior at 2 minutes. 
+
+            python load.py -H srv3 -w 70 -c 80 -t 2 -v
+        """,
+        epilog="version {}, copyright {}".format(__version__, __copyright__))
+    parser.add_argument('-H', '--hostname', type=str, help='hostname or IP address', required=True)
+    parser.add_argument('-w', '--warning', type=str, nargs='?', help='warning trigger', default=10)
+    parser.add_argument('-c', '--critical', type=str, nargs='?', help='critical trigger', default=5)
+    parser.add_argument('-t', '--timeout', type=str, help='data validity timeout (in minutes)', default=4)
+    parser.add_argument('-E', '--elastichost', type=str, help='connection URL of ElasticSearch server', default="http://localhost:9200")
+    parser.add_argument('-v', '--verbose', help='be verbose', action='store_true')
+
+    args = parser.parse_args()
+
+    if validate_elastichost(args.elastichost):
+        rgm_load_output(args.elastichost, args.hostname, args.warning, args.critical, args.timeout, args.verbose)
+# EOF
+
