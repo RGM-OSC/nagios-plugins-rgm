@@ -103,13 +103,13 @@ def rgm_cpu_output(elastic_host, plugin_hostname,warning_treshold,critical_tresh
         total_hit, cpu_total, cpu_user, cpu_system = get_cpu(elastic_host, plugin_hostname, data_validity, verbose)
         # Parse value for Alerting returns:
         if total_hit != 0 and cpu_total >= critical_treshold:
-            print("CRITICAL - Total CPU is: "+str(round(cpu_total,2))+"% (User CPU is: "+str(round(cpu_user,2))+"%, System CPU is: "+str(round(cpu_system,2))+"%) | 'Total CPU (%)'="+str(round(cpu_total,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
+            print("CRITICAL - Total CPU is: "+str(round(cpu_total,2))+"% (User CPU is: "+str(round(cpu_user,2))+"%, System CPU is: "+str(round(cpu_system,2))+"%) | 'Total CPU'="+str(round(cpu_total,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
             sys.exit(2)
         elif total_hit != 0 and cpu_total >= warning_treshold and cpu_total < critical_treshold:
-            print("WARNING - Total CPU is: "+str(round(cpu_total,2))+"% (User CPU is: "+str(round(cpu_user,2))+"%, System CPU is: "+str(round(cpu_system,2))+"%) | 'Total CPU (%)'="+str(round(cpu_total,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
+            print("WARNING - Total CPU is: "+str(round(cpu_total,2))+"% (User CPU is: "+str(round(cpu_user,2))+"%, System CPU is: "+str(round(cpu_system,2))+"%) | 'Total CPU'="+str(round(cpu_total,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
             sys.exit(1)
         elif total_hit != 0 and cpu_total < warning_treshold:
-            print("OK - Total CPU is: "+str(round(cpu_total,2))+"% (User CPU is: "+str(round(cpu_user,2))+"%, System CPU is: "+str(round(cpu_system,2))+"%) | 'Total CPU (%)'="+str(round(cpu_total,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
+            print("OK - Total CPU is: "+str(round(cpu_total,2))+"% (User CPU is: "+str(round(cpu_user,2))+"%, System CPU is: "+str(round(cpu_system,2))+"%) | 'Total CPU'="+str(round(cpu_total,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
             sys.exit(0)
         else:
             print("UNKNOWN: CPU has not been returned...")

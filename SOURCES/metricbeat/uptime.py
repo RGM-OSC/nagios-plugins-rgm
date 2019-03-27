@@ -116,13 +116,13 @@ def rgm_uptime_output(elastichost, plugin_hostname,warning_treshold,critical_tre
         uptime_mn = ( days * 24 * 60 ) + ( hours * 60) + minutes
         # Parse value for Alerting returns:
         if uptime_exists == 1 and uptime_mn < critical_treshold:
-            print("CRITICAL: \"" +converted_uptime+ "\" | 'Uptime (Minutes)'="+str(uptime_mn)+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
+            print("CRITICAL: \"" +converted_uptime+ "\" | 'Uptime Minutes'="+str(uptime_mn)+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
             sys.exit(2)
         elif uptime_exists == 1 and uptime_mn < warning_treshold and uptime_mn >= critical_treshold:
-            print("WARNING: \"" +converted_uptime+ "\" | 'Uptime (Minutes)'="+str(uptime_mn)+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
+            print("WARNING: \"" +converted_uptime+ "\" | 'Uptime Minutes'="+str(uptime_mn)+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
             sys.exit(1)
         elif uptime_exists == 1 and uptime_mn >= warning_treshold:
-            print("OK: \"" +converted_uptime+ "\" | 'Uptime (Minutes)'="+str(uptime_mn)+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
+            print("OK: \"" +converted_uptime+ "\" | 'Uptime Minutes'="+str(uptime_mn)+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
             sys.exit(0)
         else:
             print("UNKNOWN: Uptime has not been returned...")

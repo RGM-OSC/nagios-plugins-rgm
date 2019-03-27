@@ -117,13 +117,13 @@ def build_alerting_list(elastichost,plugin_hostname,warning_treshold,critical_tr
         for index in range(resp_entries_range) :
             if total_hit != 0 and (disk_values_dic["disk_"+str(index)][2] >= critical_treshold) :
                 alerting_dic.update( {"CRITICAL_"+str(index)+"": ""+str(disk_values_dic["disk_"+str(index)][1])+" : "+str(disk_values_dic["disk_"+str(index)][2])+"%"} )
-                perfdata_dic.update( {"CRITICAL_"+str(index)+"": " | 'Disk ("+str(disk_values_dic["disk_"+str(index)][1])+")'="+str(disk_values_dic["disk_"+str(index)][2])+"%;"+str(warning_treshold)+";"+str(critical_treshold)+""} )
+                perfdata_dic.update( {"CRITICAL_"+str(index)+"": " | 'Disk "+str(disk_values_dic["disk_"+str(index)][1])+"'="+str(disk_values_dic["disk_"+str(index)][2])+";"+str(warning_treshold)+";"+str(critical_treshold)+";0;100;"} )
             elif total_hit != 0 and (disk_values_dic["disk_"+str(index)][2]  >= warning_treshold and disk_values_dic["disk_"+str(index)][2] < critical_treshold) :
                 alerting_dic.update( {"WARNING_"+str(index)+"": ""+str(disk_values_dic["disk_"+str(index)][1])+" : "+str(disk_values_dic["disk_"+str(index)][2])+"%"} )    
-                perfdata_dic.update( {"WARNING_"+str(index)+"": " | 'Disk ("+str(disk_values_dic["disk_"+str(index)][1])+")'="+str(disk_values_dic["disk_"+str(index)][2])+"%;"+str(warning_treshold)+";"+str(critical_treshold)+""} )
+                perfdata_dic.update( {"WARNING_"+str(index)+"": " | 'Disk "+str(disk_values_dic["disk_"+str(index)][1])+"'="+str(disk_values_dic["disk_"+str(index)][2])+";"+str(warning_treshold)+";"+str(critical_treshold)+";0;100;"} )
             elif total_hit != 0 and (disk_values_dic["disk_"+str(index)][2] < warning_treshold) :  
                 alerting_dic.update( {"OK_"+str(index)+"": ""+str(disk_values_dic["disk_"+str(index)][1])+" : "+str(disk_values_dic["disk_"+str(index)][2])+"%"} )  
-                perfdata_dic.update( {"OK_"+str(index)+"": " | 'Disk ("+str(disk_values_dic["disk_"+str(index)][1])+")'="+str(disk_values_dic["disk_"+str(index)][2])+"%;"+str(warning_treshold)+";"+str(critical_treshold)+""} )
+                perfdata_dic.update( {"OK_"+str(index)+"": " | 'Disk "+str(disk_values_dic["disk_"+str(index)][1])+"'="+str(disk_values_dic["disk_"+str(index)][2])+";"+str(warning_treshold)+";"+str(critical_treshold)+";0;100;"} )
             else:     
                 alerting_dic.update( {"UNKNOWN_"+str(index)+"": "NA | NA"} ) 
                 perfdata_dic.update( {"UNKNOWN_"+str(index)+"": "NA | NA"} ) 

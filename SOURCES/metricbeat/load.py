@@ -99,13 +99,13 @@ def rgm_load_output(elastichost, plugin_hostname,warning_treshold,critical_tresh
         total_hit, load_1, load_5, load_15 = get_load(elastichost, plugin_hostname,data_validity,verbose)
         # Parse value for Alerting returns:
         if total_hit != 0 and (load_5 >= critical_treshold) :
-            print("CRITICAL - Load Averages - 1 minute: "+str(round(load_1,2))+", 5 minutes: "+str(round(load_5,2))+", 15 minutes: "+str(round(load_15,2))+" | 'Load Average (1m)'="+str(round(load_1,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" | 'Load Average (5m)'="+str(round(load_5,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" | 'Load Average (15m)'="+str(round(load_15,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
+            print("CRITICAL - Load Averages - 1 minute: "+str(round(load_1,2))+", 5 minutes: "+str(round(load_5,2))+", 15 minutes: "+str(round(load_15,2))+" | 'Load Average 1m'="+str(round(load_1,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" 'Load Average 5m'="+str(round(load_5,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" 'Load Average 15m'="+str(round(load_15,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
             sys.exit(2)
         elif total_hit != 0 and (load_5 >= warning_treshold and load_5 < critical_treshold) :
-            print("WARNING - Load Averages - 1 minute: "+str(round(load_1,2))+", 5 minutes: "+str(round(load_5,2))+", 15 minutes: "+str(round(load_15,2))+" | 'Load Average (1m)'="+str(round(load_1,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" | 'Load Average (5m)'="+str(round(load_5,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" | 'Load Average (15m)'="+str(round(load_15,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
+            print("WARNING - Load Averages - 1 minute: "+str(round(load_1,2))+", 5 minutes: "+str(round(load_5,2))+", 15 minutes: "+str(round(load_15,2))+" | 'Load Average 1m'="+str(round(load_1,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" 'Load Average 5m'="+str(round(load_5,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" 'Load Average 15m'="+str(round(load_15,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
             sys.exit(1)
         elif total_hit != 0 and (load_5 < warning_treshold) :
-            print("OK - Load Averages - 1 minute: "+str(round(load_1,2))+", 5 minutes: "+str(round(load_5,2))+", 15 minutes: "+str(round(load_15,2))+" | 'Load Average (1m)'="+str(round(load_1,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" | 'Load Average (5m)'="+str(round(load_5,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" | 'Load Average (15m)'="+str(round(load_15,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
+            print("OK - Load Averages - 1 minute: "+str(round(load_1,2))+", 5 minutes: "+str(round(load_5,2))+", 15 minutes: "+str(round(load_15,2))+" | 'Load Average 1m'="+str(round(load_1,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" 'Load Average 5m'="+str(round(load_5,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" 'Load Average 15m'="+str(round(load_15,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
             sys.exit(0)
         else:
             print("UNKNOWN: Load Average has not been returned...")
