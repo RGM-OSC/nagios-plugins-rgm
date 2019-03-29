@@ -3,6 +3,9 @@
 
 
 import sys, time, re, socket
+from datetime import datetime, timedelta
+from dateutil import relativedelta
+
 
 def generic_api_call(elastic_host):
     """
@@ -81,3 +84,22 @@ def get_fqdn(hostname):
             print("Error calling \"get_fqdn\"... Exception {}".format(e))
             sys.exit(3)
     return hostname
+
+
+def seconds_to_duration(seconds):
+    """
+    Converts a duratien provided in seconds into a tuple representation:
+    (year,month,days,hours,minutes,seconds)
+    """
+    if isinstance(seconds, str):
+        try:
+            seconds = int(seconds)
+        except:
+            return False
+    if seconds == 0 or seconds > 3153600000: # 100 years !
+        return (0,0,0,0,0,0)
+
+    now = datetime.now()
+    start = now - timedelta(seconds=seconds)
+    rel = relativedelta.relativedelta(now, start)
+    return (rel.years, rel.months, rel.days, rel.hours, rel.minutes, rel.seconds)

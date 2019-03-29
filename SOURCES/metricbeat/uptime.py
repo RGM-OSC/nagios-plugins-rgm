@@ -29,7 +29,9 @@ __maintainer__ = "Julien Dumarchey"
 
 # Import the following modules:
 import sys, re, argparse, requests, json
-from _rgmbeat import generic_api_call, generic_api_payload, get_data_validity_range, validate_elastichost
+from _rgmbeat import generic_api_call, generic_api_payload, get_data_validity_range, validate_elastichost, seconds_to_duration
+
+NagiosRetCode = ('OK', 'WARNING', 'CRITICAL', 'UNKNOWN')
 
 # If required, disable SSL Warning Logging for "requests" library:
 #requests.packages.urllib3.disable_warnings()
@@ -83,50 +85,52 @@ def get_uptime(elastichost, plugin_hostname,data_validity,verbose):
             uptime_ms = results_json["hits"]["hits"][0]["_source"]["system"]["uptime"]["duration"]["ms"]
         else:
             uptime_ms = 0
-        return uptime_ms
+        return uptime_ms/1000
     except Exception as e:
         print("Error calling \"get_uptime\"... Exception {}".format(e))
         sys.exit(3)
 
-# Convert Uptime in milliseconds in a human-readable format -> Days:Hours:Minutes:Seconds:
-def convert_uptime(elastichost, plugin_hostname,data_validity,verbose):
-    try:
-        uptime = int(get_uptime(elastichost, plugin_hostname,data_validity,verbose))
-        # If Uptime has been returned in API Response, return converted values:
-        if uptime != 0 :
-            uptime_exists = 1
-            seconds = int((uptime/1000)%60)
-            minutes = int((uptime/(1000*60))%60)
-            hours = int((uptime/(1000*60*60))%24)
-            days = int((uptime/(24*60*60*1000)))
-            converted_uptime = "Uptime is: "+str(days)+"d:"+str(hours)+"h:"+str(minutes)+"m:"+str(seconds)+"s"
-        # If Uptime has not been returned in API Response, return a static code (0):
-        elif uptime == 0 :
-            uptime_exists, days, hours, minutes, converted_uptime = 0, 0, 0, 0, 0
-        return uptime_exists, days, hours, minutes, converted_uptime
-    except Exception as e:
-        print("Error calling \"convert_uptime\"... Exception {}".format(e))
-        sys.exit(3)
 
 # Display Uptime (System Information + Performance Data) in a format compliant with RGM expectations:
 def rgm_uptime_output(elastichost, plugin_hostname,warning_treshold,critical_treshold,data_validity,verbose):
     try:
+        rc = 3
+        upstr = []
+        # convert minutes into seconds
+        warning_treshold = 60 * int(warning_treshold)
+        critical_treshold = 60 * int(critical_treshold)
         # Get Uptime values:
-        uptime_exists, days, hours, minutes, converted_uptime = convert_uptime(elastichost,plugin_hostname,data_validity,verbose)
-        uptime_mn = ( days * 24 * 60 ) + ( hours * 60) + minutes
-        # Parse value for Alerting returns:
-        if uptime_exists == 1 and uptime_mn < critical_treshold:
-            print("CRITICAL: \"" +converted_uptime+ "\" | 'Uptime Minutes'="+str(uptime_mn)+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
-            sys.exit(2)
-        elif uptime_exists == 1 and uptime_mn < warning_treshold and uptime_mn >= critical_treshold:
-            print("WARNING: \"" +converted_uptime+ "\" | 'Uptime Minutes'="+str(uptime_mn)+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
-            sys.exit(1)
-        elif uptime_exists == 1 and uptime_mn >= warning_treshold:
-            print("OK: \"" +converted_uptime+ "\" | 'Uptime Minutes'="+str(uptime_mn)+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
-            sys.exit(0)
-        else:
-            print("UNKNOWN: Uptime has not been returned...")
-            sys.exit(3)
+        uptime = int(get_uptime(elastichost, plugin_hostname, data_validity, verbose))
+        if uptime > 0:
+            years, months, days, hours, minutes, seconds = seconds_to_duration(uptime)
+            upstr.append('Device up since')
+            if years > 0:
+                upstr.append("{} years,".format(str(years)))
+            if months > 0:
+                upstr.append("{} months,".format(str(months)))
+            if days > 0:
+                upstr.append("{} days,".format(str(days)))
+            if hours > 0:
+                upstr.append("{} hours,".format(str(hours)))
+            if minutes > 0:
+                upstr.append("{} minutes,".format(str(minutes)))
+            if seconds > 0:
+                upstr.append("{} seconds,".format(str(seconds)))
+            if uptime <= warning_treshold:
+                rc = 1
+            if uptime <= critical_treshold:
+                rc = 2
+            else:
+                rc = 0
+
+        if rc == 3:
+            upstr = ['Uptime has not been returned']
+        print("{} - {} | 'uptime': {}s".format(
+            NagiosRetCode[rc],
+            " ".join(upstr),
+            str(uptime)))
+        sys.exit(rc)
+
     except Exception as e:
         print("Error calling \"rgm_uptime_output\"... Exception {}".format(e))
         sys.exit(3)
