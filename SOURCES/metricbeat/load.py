@@ -31,6 +31,8 @@ __maintainer__ = "Julien Dumarchey"
 import sys, re, argparse, requests, json
 from _rgmbeat import generic_api_call, generic_api_payload, get_data_validity_range, validate_elastichost
 
+NagiosRetCode = ('OK', 'WARNING', 'CRITICAL', 'UNKNOWN')
+
 # If required, disable SSL Warning Logging for "requests" library:
 #requests.packages.urllib3.disable_warnings()
 
@@ -97,19 +99,34 @@ def rgm_load_output(elastichost, plugin_hostname,warning_treshold,critical_tresh
     try:
         # Get Load Average values:
         total_hit, load_1, load_5, load_15 = get_load(elastichost, plugin_hostname,data_validity,verbose)
+        rc = 3
         # Parse value for Alerting returns:
         if total_hit != 0 and (load_5 >= critical_treshold) :
-            print("CRITICAL - Load Averages - 1 minute: "+str(round(load_1,2))+", 5 minutes: "+str(round(load_5,2))+", 15 minutes: "+str(round(load_15,2))+" | 'Load Average 1m'="+str(round(load_1,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" 'Load Average 5m'="+str(round(load_5,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" 'Load Average 15m'="+str(round(load_15,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
-            sys.exit(2)
+            rc = 2
         elif total_hit != 0 and (load_5 >= warning_treshold and load_5 < critical_treshold) :
-            print("WARNING - Load Averages - 1 minute: "+str(round(load_1,2))+", 5 minutes: "+str(round(load_5,2))+", 15 minutes: "+str(round(load_15,2))+" | 'Load Average 1m'="+str(round(load_1,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" 'Load Average 5m'="+str(round(load_5,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" 'Load Average 15m'="+str(round(load_15,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
-            sys.exit(1)
+            rc = 1
         elif total_hit != 0 and (load_5 < warning_treshold) :
-            print("OK - Load Averages - 1 minute: "+str(round(load_1,2))+", 5 minutes: "+str(round(load_5,2))+", 15 minutes: "+str(round(load_15,2))+" | 'Load Average 1m'="+str(round(load_1,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" 'Load Average 5m'="+str(round(load_5,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+" 'Load Average 15m'="+str(round(load_15,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
-            sys.exit(0)
+            rc = 0
         else:
-            print("UNKNOWN: Load Average has not been returned...")
-            sys.exit(3)
+            print("UNKNOWN: Load Average has not been returned")
+            sys.exit(rc)
+
+        print("{}: Load Average 1 minute: {}, 5 minutes: {}, 15 minutes: {} | 'Load Average 1m'={};{};{} 'Load Average 5m'={};{};{} 'Load Average 15m'={};{};{}".format(
+            NagiosRetCode[rc],
+            str(round(load_1,2)),
+            str(round(load_5,2)),
+            str(round(load_15,2)),
+            str(round(load_1,2)),
+            str(warning_treshold),
+            str(critical_treshold),
+            str(round(load_5,2)),
+            str(warning_treshold),
+            str(critical_treshold),
+            str(round(load_15,2)),
+            str(warning_treshold),
+            str(critical_treshold)))
+        sys.exit(rc)
+
     except Exception as e:
         print("Error calling \"rgm_load_output\"... Exception {}".format(e))
         sys.exit(3)
