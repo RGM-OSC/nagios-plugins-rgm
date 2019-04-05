@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 0.1
-Release: 1.rgm
+Release: 2.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -53,6 +53,10 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Fri Apr 05 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 0.1.2.rgm
+- rewrite of disk.py elastic check
+- initial write of interfaces.py elastic plugin
+
 * Tue Mar 26 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 0.1.1.rgm
 - code factorization & mutualization
 - add elastichost cmd line argument
