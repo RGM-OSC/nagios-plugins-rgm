@@ -11,12 +11,31 @@ Requires: coreutils, fping
 Requires: python python-requests
 Requires: perl perl-libwww-perl-old perl-LWP-Protocol-https perl-Mail-Sendmail perl-Module-Load perl-Nagios-Plugin perl-Time-Duration
 
-BuildRequires: rpm-macros-rgm
+BuildRequires: rpm-macros-rgm autoconf automake gawk perl
+
+
+### Consol.Labs plugins
+# https://labs.consol.de/assets/downloads/nagios/check_db2_health-1.1.2.2.tar.gz
+# https://labs.consol.de/assets/downloads/nagios/check_hpasm-4.8.tar.gz
+# https://labs.consol.de/assets/downloads/nagios/check_logfiles-3.11.0.2.tar.gz
+# https://labs.consol.de/assets/downloads/nagios/check_mailbox_health-1.7.2.tar.gz
+# https://labs.consol.de/assets/downloads/nagios/check_mssql_health-2.6.4.14.tar.gz
+# https://labs.consol.de/assets/downloads/nagios/check_ntp_health-1.3.tar.gz
+# https://labs.consol.de/assets/downloads/nagios/check_nwc_health-7.6.tar.gz
+# https://labs.consol.de/assets/downloads/nagios/check_oracle_health-3.1.2.2.tar.gz
+# https://labs.consol.de/assets/downloads/nagios/check_pdu_health-2.4.tar.gz
+# https://labs.consol.de/assets/downloads/nagios/check_printer_health-1.0.1.1.tar.gz
+# https://labs.consol.de/assets/downloads/nagios/check_sap_health-2.0.0.5.tar.gz
+# https://labs.consol.de/assets/downloads/nagios/check_sqlbase_health-1.0.0.2.tar.gz
+# https://labs.consol.de/assets/downloads/nagios/check_ups_health-2.8.3.3.tar.gz
+
+./configure --prefix=/srv/rgm/test --with-nagios-user=nagios --with-nagios-group=rgm
 
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
-Source1: metricbeat
+Source0: metricbeat
+Source1: check_nwc_health-7.6.tar.gz
 
 %define	rgmdatadir		%{rgm_path}/lib/%{name}-%{version}
 
@@ -30,11 +49,17 @@ Currently includes Nagios metricbeat plugins for ElasticSearch/metricbeat
 
 %build
 
+# build check_nwc_health
+./configure --libexecdir=%{rgmdatadir}/network --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group}
+
 %install
 
+# copy contrib & metricbeat plugins
 install -d -o %{rgm_user_nagios} -g %{rgm_group} -m 0755 %{buildroot}%{rgmdatadir}
-
 cp -afv %{SOURCE1} %{buildroot}%{rgmdatadir}/
+
+# install check_nwc_health
+#install %{buildroot}%{rgmdatadir}/network/check_nwc_health 
 
 %post
 ln -s %rgmdatadir "$(rpm -ql nagios | grep 'plugins$')/rgm"
