@@ -1,16 +1,18 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
-Version: 0.1
-Release: 2.rgm
+Version: 0.2
+Release: 0.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
 
-Requires: rgm-base nagios
-Requires: metricbeat
+Requires: rgm-base nagios-plugins
+Requires: coreutils, fping
 Requires: python python-requests
+Requires: perl perl-libwww-perl-old perl-LWP-Protocol-https perl-Mail-Sendmail perl-Module-Load perl-Nagios-Plugin perl-Time-Duration
 
 BuildRequires: rpm-macros-rgm
+
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
@@ -53,6 +55,9 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Mon Apr 08 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 0.2-0.rgm
+- imported contrib plugins
+
 * Fri Apr 05 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 0.1.2.rgm
 - rewrite of disk.py elastic check
 - initial write of interfaces.py elastic plugin
