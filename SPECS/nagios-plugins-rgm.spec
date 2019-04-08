@@ -34,6 +34,11 @@ BuildRequires: rpm-macros-rgm autoconf automake gawk perl
 BuildRoot: /tmp/test
 
 Source1: check_nwc_health-7.6.tar.gz
+Source2: check_db2_health-1.1.2.2.tar.gz
+Source3: check_mssql_health-2.6.4.14.tar.gz
+Source4: check_oracle_health-3.1.2.2.tar.gz
+Source5: check_sap_health-2.0.0.5.tar.gz
+Source6: check_sqlbase_health-1.0.0.2.tar.gz
 
 
 %define	rgmdatadir		%{rgm_path}/lib/%{name}-%{version}
@@ -46,13 +51,28 @@ Currently includes Nagios metricbeat plugins for ElasticSearch/metricbeat
 %prep
 %setup -q
 %setup -D -a 1
+%setup -D -a 2
+%setup -D -a 3
+%setup -D -a 4
+%setup -D -a 5
+%setup -D -a 6
 
 %build
 
-# build check_nwc_health
+# build Consol.Labs plugins
 cd check_nwc_health-7.6
-./configure --libexecdir=%{rgmdatadir}/network --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group}
-make
+./configure --libexecdir=%{rgmdatadir}/network --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
+cd ../check_db2_health-1.1.2.2
+./configure --libexecdir=%{rgmdatadir}/database --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
+cd ../check_mssql_health-2.6.4.14
+./configure --libexecdir=%{rgmdatadir}/database --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
+cd ../check_oracle_health-3.1.2.2
+./configure --libexecdir=%{rgmdatadir}/database --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
+cd ../check_sap_health-2.0.0.5
+./configure --libexecdir=%{rgmdatadir}/database --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
+cd ../check_sqlbase_health-1.0.0.2
+./configure --libexecdir=%{rgmdatadir}/database --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
+
 
 %install
 
@@ -75,9 +95,16 @@ cp -afv ups %{buildroot}%{rgmdatadir}/
 cp -afv virtu %{buildroot}%{rgmdatadir}/
 cp -afv windows %{buildroot}%{rgmdatadir}/
 
-# install check_nwc_health
+# install Consol.Labs plugins
 install -d -o %{rgm_user_nagios} -g %{rgm_group} -m 0755 %{buildroot}%{rgmdatadir}/network
 install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_nwc_health-7.6/plugins-scripts/check_nwc_health %{buildroot}%{rgmdatadir}/network/
+install -d -o %{rgm_user_nagios} -g %{rgm_group} -m 0755 %{buildroot}%{rgmdatadir}/database
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_db2_health-1.1.2.2/plugins-scripts/check_db2_health %{buildroot}%{rgmdatadir}/database/
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_mssql_health-2.6.4.14/plugins-scripts/check_mssql_health %{buildroot}%{rgmdatadir}/database/
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_oracle_health-3.1.2.2/plugins-scripts/check_oracle_health %{buildroot}%{rgmdatadir}/database/
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_sap_health-2.0.0.5/plugins-scripts/check_sap_health %{buildroot}%{rgmdatadir}/database/
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_sqlbase_health-1.0.0.2/plugins-scripts/check_sqlbase_health %{buildroot}%{rgmdatadir}/database/
+
 
 %post
 ln -s %rgmdatadir "$(rpm -ql nagios | grep 'plugins$')/rgm"
