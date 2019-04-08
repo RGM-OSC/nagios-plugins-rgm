@@ -33,9 +33,7 @@ BuildRequires: rpm-macros-rgm autoconf automake gawk perl
 #BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildRoot: /tmp/test
 
-Source1: metricbeat
-Source2: network
-Source3: check_nwc_health-7.6.tar.gz
+Source1: check_nwc_health-7.6.tar.gz
 
 
 %define	rgmdatadir		%{rgm_path}/lib/%{name}-%{version}
@@ -47,7 +45,7 @@ Currently includes Nagios metricbeat plugins for ElasticSearch/metricbeat
 
 %prep
 %setup -q
-%setup -D -a 3
+%setup -D -a 1
 
 %build
 
@@ -60,7 +58,22 @@ make
 
 # copy contrib & metricbeat plugins
 install -d -o %{rgm_user_nagios} -g %{rgm_group} -m 0755 %{buildroot}%{rgmdatadir}
-cp -afv %{SOURCE1} %{buildroot}%{rgmdatadir}/
+cp -afv aix %{buildroot}%{rgmdatadir}/
+cp -afv as400 %{buildroot}%{rgmdatadir}/
+cp -afv backup %{buildroot}%{rgmdatadir}/
+cp -afv database %{buildroot}%{rgmdatadir}/
+cp -afv downtime %{buildroot}%{rgmdatadir}/
+cp -afv hardware %{buildroot}%{rgmdatadir}/
+cp -afv metricbeat %{buildroot}%{rgmdatadir}/
+cp -afv MIBS %{buildroot}%{rgmdatadir}/
+cp -afv nagios %{buildroot}%{rgmdatadir}/
+cp -afv network %{buildroot}%{rgmdatadir}/
+cp -afv snmp %{buildroot}%{rgmdatadir}/
+cp -afv storage %{buildroot}%{rgmdatadir}/
+cp -afv system %{buildroot}%{rgmdatadir}/
+cp -afv ups %{buildroot}%{rgmdatadir}/
+cp -afv virtu %{buildroot}%{rgmdatadir}/
+cp -afv windows %{buildroot}%{rgmdatadir}/
 
 # install check_nwc_health
 install -d -o %{rgm_user_nagios} -g %{rgm_group} -m 0755 %{buildroot}%{rgmdatadir}/network
