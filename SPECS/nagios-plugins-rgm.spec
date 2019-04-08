@@ -29,13 +29,14 @@ BuildRequires: rpm-macros-rgm autoconf automake gawk perl
 # https://labs.consol.de/assets/downloads/nagios/check_sqlbase_health-1.0.0.2.tar.gz
 # https://labs.consol.de/assets/downloads/nagios/check_ups_health-2.8.3.3.tar.gz
 
-./configure --prefix=/srv/rgm/test --with-nagios-user=nagios --with-nagios-group=rgm
 
+#BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
+BuildRoot: /tmp/test
 
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
+Source1: metricbeat
+Source2: network
+Source3: check_nwc_health-7.6.tar.gz
 
-Source0: metricbeat
-Source1: check_nwc_health-7.6.tar.gz
 
 %define	rgmdatadir		%{rgm_path}/lib/%{name}-%{version}
 
@@ -46,11 +47,14 @@ Currently includes Nagios metricbeat plugins for ElasticSearch/metricbeat
 
 %prep
 %setup -q
+%setup -D -a 3
 
 %build
 
 # build check_nwc_health
+cd check_nwc_health-7.6
 ./configure --libexecdir=%{rgmdatadir}/network --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group}
+make
 
 %install
 
@@ -59,7 +63,8 @@ install -d -o %{rgm_user_nagios} -g %{rgm_group} -m 0755 %{buildroot}%{rgmdatadi
 cp -afv %{SOURCE1} %{buildroot}%{rgmdatadir}/
 
 # install check_nwc_health
-#install %{buildroot}%{rgmdatadir}/network/check_nwc_health 
+install -d -o %{rgm_user_nagios} -g %{rgm_group} -m 0755 %{buildroot}%{rgmdatadir}/network
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_nwc_health-7.6/plugins-scripts/check_nwc_health %{buildroot}%{rgmdatadir}/network/
 
 %post
 ln -s %rgmdatadir "$(rpm -ql nagios | grep 'plugins$')/rgm"
@@ -68,7 +73,7 @@ ln -s %rgmdatadir "$(rpm -ql nagios | grep 'plugins$')/rgm"
 rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 
 %clean
-rm -rf %{buildroot}
+#rm -rf %{buildroot}
 
 
 %files
