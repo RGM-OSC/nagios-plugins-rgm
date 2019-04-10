@@ -1,0 +1,261 @@
+#! /usr/bin/perl -w
+#
+################################################################
+# Changelog
+################################################################
+# Version 1.0.2
+# 2014.06.10
+# added smart info to plugin output
+# thanks to
+# http://exchange.nagios.org/directory/Reviews/dit_w/1#/
+################################################################
+# Version 1.0.1
+# 2014.02.19
+# change some vars from my to our
+# thanks to
+# http://exchange.nagios.org/directory/Reviews/navi/1
+################################################################
+# Version 1.0
+# 2013.01.19
+################################################################
+
+use strict ;
+use warnings ;
+use Nagios::Plugin ;
+use Net::SNMP qw(oid_lex_sort oid_base_match) ;
+
+	our $PROGNAME = "check_qnapdisk" ;
+	our $VERSION = "1.0.2" ;
+
+	#instantiate Nagios::Plugin
+	our $np = Nagios::Plugin->new(
+	usage => "Usage: $PROGNAME [-h] [-V] -H hostname [-t timeout] [-r retries] [-C community] [-p port] [-w warning] [-c critical] [-T C | F ] [-g temp_warning] [-l temp_critical] [-v verbose]",
+	version => $VERSION,
+	blurb => 'This plugin checks all disk slots on your QNAP NAS host with snmp and will output OK, UNKNOWN, WARNING or CRITICAL if the resulting number is over the specified thresholds. Enable on your QNAP NAS the snmpd (see the QNAP adminguide too).',
+	shortname => "QNAPDISK",
+	extra => "THRESHOLDs for -w and -c are specified 'min:max' or 'min:' or ':max' (or 'max'). If specified '\@min:max', a warning status will be generated if the count *is* inside the specified range. \nExample: $PROGNAME -H 'ip-address or [DNS,host]name' -t 5 -r 2 -C public -p 161 -w 2: -c 1: -T C -g 25 -l 35 -v"
+	);
+
+	$np->add_arg(
+        spec => 'warning|w=s',
+        help => qq{-w, --warning=INTEGER,[INTEGER] Maximum number of allowable result, outside of which a warning will be generated.  If omitted, no warning is generated.},
+	default => '0:',
+        required => 0,
+	);
+
+	$np->add_arg(
+        spec => 'critical|c=s',
+        help => qq{-c, --critical=INTEGER,[INTEGER] Maximum number of the generated result, outside of which a critical will be generated. },
+	default => '0:',
+        required => 0,
+	);
+
+	$np->add_arg(
+        spec => 'temperature|T=s',
+        help => qq{-T, --temperature=STRING, Specify to use Celsius (default) or Fahrenheit on the command line. Use Temp.},
+        default => 'C',
+        required => 0,
+	);
+
+	$np->add_arg(
+        spec => 'temp_warning|g=s',
+        help => qq{-g, --temp_warning=INTEGER,[INTEGER] Specify the warning maximum degrees on the command line. Use Temp.},
+        default => "0:",
+        required => 0,
+	);
+
+	$np->add_arg(
+        spec => 'temp_critical|l=s',
+        help => qq{-l, --temp_critical=INTEGER,[INTEGER] Specify the critical maximum degrees on the command line. Use Temp.},
+        default => "0:",
+        required => 0,
+	);
+
+	$np->add_arg(
+        spec => 'port|p=s',
+        help => qq{-p, --port=INTEGER, Specify the snmp port on the command line, default 161.},
+	default => 161,
+        required => 1,
+	);
+
+	$np->add_arg(
+        spec => 'retries|r=s',
+        help => qq{-r, --retries=INTEGER,  Specify the number of retries the command line, default 2.},
+	default => 2,
+        required => 1,
+	);
+
+	$np->add_arg(
+        spec => 'community|C=s',
+        help => qq{-C, --community=STRING, Specify the community name on the command line, default public.},
+	default => "public",
+        required => 1,
+	);
+
+	$np->add_arg(
+        spec => 'host|H=s',
+        help => qq{-H, --host=STRING, Specify the host on the command line.},
+        required => 1,
+	);
+
+	$np->getopts;
+
+
+# start counting down to timeout
+	alarm $np->opts->timeout;
+
+	sub open_snmp_session {
+	my ($session, $error) = Net::SNMP->session(
+		-hostname  => shift || $np->opts->host,
+		-community => shift || $np->opts->community,
+		-port      => shift || $np->opts->port,
+		-timeout   => shift || $np->opts->timeout,
+		-retries   => shift || $np->opts->retries, 
+		);
+		return ($session,$error)
+		}
+
+
+	##==============main=============##
+
+	my $mibthree_stat  = '.1.3.6.1.4.1.24681.1.2.11.1.4' ;
+	my $mibthree_temp  = '.1.3.6.1.4.1.24681.1.2.11.1.3' ;
+	my $mibthree_type  = '.1.3.6.1.4.1.24681.1.2.11.1.5' ;
+	my $mibthree_size  = '.1.3.6.1.4.1.24681.1.2.11.1.6' ;
+	my $mibthree_smart = '.1.3.6.1.4.1.24681.1.2.11.1.7' ;
+	my $OID_Sysname    = '.1.3.6.1.2.1.1.5.0' ; 
+	my $OID_Hardware   = '.1.3.6.1.2.1.1.1.0' ;
+	
+	# let's see if the qnap wants to speak with us
+	my ($session,$error)=open_snmp_session($np->opts->host);
+	if ( ! defined ($session)) {
+		print "ERROR1: Could not open connection: $error \n";
+		exit 2;
+		}
+
+	if (!defined $session) {
+		printf "ERROR2: %s.\n", $error;
+		exit 1;
+		}
+
+	# open the connection
+	# ask your qnap
+	my @oids_sgos4 = ($OID_Hardware,$OID_Sysname) ;
+	my $result  = $session->get_request(-varbindlist => \@oids_sgos4,) ;
+	my $result1 = $session->get_table(-baseoid => $mibthree_stat ) ;
+	my $result2 = $session->get_table(-baseoid => $mibthree_temp ) ;
+	my $result3 = $session->get_table(-baseoid => $mibthree_type ) ;
+	my $result4 = $session->get_table(-baseoid => $mibthree_size ) ;
+	my $result5 = $session->get_table(-baseoid => $mibthree_smart ) ;
+	my $msg = $result->{$OID_Sysname}.", ".$result->{$OID_Hardware} ;
+	my %qnap_states = ( 0 => "ready" , -5 => "no Disk" , -6 => "invalid" , -9 => "rwError" , -4 => "unknown" );
+	my (@state,$min_disk,$real_disk,$max_disk)=0;
+	my $nagios_view=""; my $temp_disk_max="0"; my $temp_disk_min="0";
+
+	foreach (oid_lex_sort(keys(%{$result1}))) {
+		$min_disk= 1 ; # yes is min 1 Disk available :-)
+		my $disk_id=substr($_,30,2); 
+		$nagios_view .= "\nDisk $disk_id Status: $qnap_states{$result1->{$_}}";
+		if ( $result1->{$_} eq 0 ) {
+			$real_disk++;
+			$msg .= ", Disk$disk_id:$qnap_states{$result1->{$_}}";
+			$state[$disk_id-1]=0;
+			foreach (oid_lex_sort(keys(%{$result5}))) {
+				if ( $disk_id == substr($_,30,2)) {
+		    			$result5->{$_} =~ s/\s+$//;
+		    			$nagios_view .= ", SmartInfo: $result5->{$_}";
+		    			foreach (oid_lex_sort(keys(%{$result3}))) {
+		        			if ( $disk_id == substr($_,30,2)) {
+		        				$result3->{$_} =~ s/\s+$//;
+		        				$nagios_view .= ", Typ: $result3->{$_}";
+		        				foreach (oid_lex_sort(keys(%{$result4}))) {
+			    					if ( $disk_id == substr($_,30,2)) {
+				 					$nagios_view .= ", Size: $result4->{$_}";
+				 					foreach (oid_lex_sort(keys(%{$result2}))) {
+										if ( $disk_id == substr($_,30,2)) {
+											my @temp_diskid=split(/ /,$result2->{$_});
+											if ($np->opts->temperature eq "C") {
+												if ($temp_disk_max < $temp_diskid[0]) { $temp_disk_max = $temp_diskid[0]; }
+												if ($temp_disk_min > $temp_diskid[0] )	{ $temp_disk_min = $temp_diskid[0]; }
+												if ($temp_disk_min eq "0") { $temp_disk_min = $temp_diskid[0]; }
+												}
+											if ($np->opts->temperature eq "F") {
+												my @temp_diskid=split(/ /,$result2->{$_});
+												$temp_diskid[1] =~ s/C\///;
+												if ($temp_disk_max < $temp_diskid[1]) { $temp_disk_max = $temp_diskid[1];}
+												if ($temp_disk_min > $temp_diskid[1] )	{ $temp_disk_min = $temp_diskid[1]; }
+												if ($temp_disk_min eq "0") { $temp_disk_min = $temp_diskid[1]; }
+												}	
+											$nagios_view .= ", Temp: $result2->{$_}";
+											}	
+										}	
+									}	
+								}
+							}
+						}
+					}
+	    			}
+			} else {
+			$real_disk++;
+	$msg .= ", Disk$disk_id:$qnap_states{$result1->{$_}}";
+	if ( $result1->{$_} != -5 || $result1->{$_} != 0 ) { 
+		$state[$disk_id-1]=2;
+		}
+	if ( $result1->{$_} == -5 ) {
+		$real_disk--;
+		$state[$disk_id-1]=0;
+		}
+		
+	}
+	$max_disk=$disk_id;
+	}
+	$session->close();
+	$msg .= ", max. Temperature:".$temp_disk_max.$np->opts->temperature;
+	if ($np->opts->verbose) {
+	    $msg .= "\n=================$nagios_view\n\n";
+	   }	
+	# Perfdata methods disk
+	my $perfdata_code_disk = $np->add_perfdata( 
+		label => "Disk",
+		value => $real_disk,
+		#uom => "kB",
+     		warning => $np->opts->warning,
+     		critical => $np->opts->critical,
+		min => $min_disk,
+		max => $max_disk,
+		) ;
+	# Perfdata methods temperature
+	my $perfdata_code_temp = $np->add_perfdata( 
+		label => "Temp",
+		value => $temp_disk_max,
+		uom => $np->opts->temperature,
+		warning => $np->opts->temp_warning,
+		critical => $np->opts->temp_critical,
+		min => $temp_disk_min,
+		max => $temp_disk_max,
+   		) ;
+
+	# Threshold methods disks
+	my $threshold_code_disk = $np->check_threshold(
+     		check => $real_disk,
+     		warning => $np->opts->warning,
+     		critical => $np->opts->critical,
+   		) ;
+	$np->nagios_exit( $threshold_code_disk, "$msg" ) if $threshold_code_disk != 0 ;
+	
+	# Threshold methods temperature
+	my $threshold_code_temp = $np->check_threshold(
+     		check => $temp_disk_max,
+     		warning => $np->opts->temp_warning,
+     		critical => $np->opts->temp_critical,
+   		) if defined $np->opts->temperature;
+	 $np->nagios_exit( $threshold_code_temp, "$msg" ) if $threshold_code_temp != 0 ;
+	
+        foreach (@state){
+                if ($threshold_code_disk < $_) {$threshold_code_disk=$_;}
+                }
+	
+   	$np->nagios_exit( $threshold_code_disk, "$msg" ) ;
+
+	# thanks
+

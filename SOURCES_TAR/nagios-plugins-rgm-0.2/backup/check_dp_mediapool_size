@@ -1,0 +1,48 @@
+#!/bin/bash
+# Script: check_dp_mediapool_size
+# Version: 0.1
+# License: GPL
+# Written by Dennis Hamczyk, Systemadministrator/ Lenord + Bauer, www.lenord.de
+# E-Mail: dhamczyk@lenord.de
+# This script checks the mediapool size and gives the administrator
+# a hint if there's a full mediapool.
+# Many thanks to Christian K. & Mario B. who give good hints!!!
+# This script is written for Nagios III but it must also run under version II.
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/omni/bin
+
+mediapool=$1
+freesize=0
+warningsize=500000
+criticalsize=250000
+exitstatus=3
+
+if [ -z "$1" ]; then
+	echo "Usage: check_dp_mediapool_size <Mediapool>"
+	echo "Remember data protector client tools must be installed."
+	exit 3
+fi
+
+# dataprotector command which detects the free media pool size
+freesize=`/usr/omni/bin/omnicellinfo -mm | grep $mediapool | tac | tail -n 1 | awk '{print $5}'`
+
+if [ $freesize -lt $warningsize ]; then
+        echo "Pool Warning"
+        echo "There are $freesize blocks in $mediapool available"
+        exitstatus=1
+fi
+
+if [ $freesize -lt $criticalsize ]; then
+        echo "Pool Critical"
+        echo "There are $freesize blocks in $mediapool available"
+        exitstatus=2
+fi
+
+if [ $freesize -gt $warningsize ]; then
+        echo "Pool OK"
+        echo "There are $freesize blocks in $mediapool available"
+        exitstatus=0
+fi
+
+exit $exitstatus
+

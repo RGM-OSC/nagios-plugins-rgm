@@ -1,0 +1,758 @@
+#!/bin/bash 
+#########################################################################
+# Usage: ./check_compellent -H host -C community -t type [-w warning] [-c critical]
+#########################################################################
+help="check_compellent\n
+Usage: ./check_compellent -H host -C community -t type [-w warning] [-c critical]\n
+Options:\n-H Hostname\n-C SNMP-Community name (at least read-only)\n-t Type to check, see list below\n-w Warning Threshold\n-c Critical Threshold\n
+Requirements: snmpwalk, awk, grep, wc\n
+types:\nhealth -> checks overall health
+controller -> checks status of controllers
+power -> checks status of power supplies
+volume -> checks status of volumes
+server -> checks status of connected servers
+disks -> checks status of physical disks
+enclosure -> checks status of enclosure
+temp1 -> checks temperature
+psufans -> checks PSU Fans
+folder -> checks status of folders
+cache -> checks status of controller cache
+cachebat -> checks status of controller cache battery
+folderspace -> checks utilization of all storage folders (if no thresholds are given, outputs information)"
+
+STATE_OK=0              # define the exit code if status is OK
+STATE_WARNING=1         # define the exit code if status is Warning
+STATE_CRITICAL=2        # define the exit code if status is Critical
+STATE_UNKNOWN=3         # define the exit code if status is Unknown
+PATH=/usr/local/bin:/usr/bin:/bin # Set path
+
+for cmd in snmpwalk awk grep wc [
+do
+ if ! `which ${cmd} 1>/dev/null`
+ then
+ echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
+ exit ${STATE_UNKNOWN}
+ fi
+done
+
+# Check for people who need help - aren't we all nice ;-)
+#########################################################################
+if [ "${1}" = "--help" -o "${#}" = "0" ];
+       then
+       echo -e "${help}";
+       exit 1;
+fi
+
+# Get user-given variables
+#########################################################################
+while getopts "H:C:t:v:w:c:" Input;
+do
+       case ${Input} in
+       H)      host=${OPTARG};;
+       C)      community=${OPTARG};;
+       t)      type=${OPTARG};;
+       v)      volume=${OPTARG};;
+       w)      warning=${OPTARG};;
+       c)      critical=${OPTARG};;
+       *)      echo "Wrong option given. Please use options -H for host, -C for SNMP-Community, -t for type, -w for warning and -c for critical"
+               exit 1
+               ;;
+       esac
+done
+
+
+# Check Different Types
+#########################################################################
+       case ${type} in
+       health)
+               healthstatus=$(snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.674.11000.2000.500.1.2.29.1.3)
+
+               s_crit=0; s_warn=0; s_ok=0; s_unknown=0
+               for s in $healthstatus
+               do
+                       if [ "$s" = "3" ]; then s_crit=$((s_crit + 1)); fi
+                       if [ "$s" = "2" ]; then s_warn=$((s_warn + 1)); fi
+                       if [ "$s" = "1" ]; then s_ok=$((s_ok + 1)); fi
+                       if [ "$s" = "0" ]; then s_unkown=$((s_unknown + 1)); fi
+               done
+
+               if [ $s_crit -gt 0 ]; then echo "OVERALL HEALTH CRITICAL"; exit ${STATE_CRITICAL}; fi
+               if [ $s_warn -gt 0 ]; then echo "OVERALL HEALTH WARNING"; exit ${STATE_WARNING}; fi
+               if [ $s_unknown -gt 0 ]; then echo "OVERALL HEALTH UNKNOWN"; exit ${STATE_UNKNOWN}; fi
+               if [ $s_ok -gt 0 ]; then echo "OVERALL HEALTH OK"; exit ${STATE_OK}; fi
+               ;;
+
+      
+       controller)
+	      declare -a controllernames=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.13.1.4 | tr '\n' ' '))
+
+		declare -a controllercrit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.13.1.3 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${controllercrit[@]}
+                do controllercrit[$c]=`expr ${controllercrit[$c]} - 1`
+                let c++
+                done
+                # find the corresponding names of the critical fans
+                c=0
+                for line in ${controllercrit[@]}
+                do controllerfinalcrit[${c}]=${controllernames[$line]}
+                let c++
+                done
+              
+       		declare -a controllerwarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.13.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${controllerwarn[@]}
+                do controllerwarn[$c]=`expr ${controllerwarn[$c]} - 1`
+                let w++
+                done
+                # find the corresponding names of the warning fans
+                c=0
+                for line in ${controllerwarn[@]}
+                do controllerfinalwarn[${c}]=${controllernames[$line]}
+                let w++
+                done
+
+		declare -a controllerunknown=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.13.1.3 | grep -n "0" | awk -F : '{print $1}' | tr '\n' ' '))
+
+		declare -a controllerok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.13.1.3 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${controllerok[@]}
+                do controllerok[$o]=`expr ${controllerok[$o]} - 1`
+                let o++
+                done
+                # find the corresponding names of the ok controllers
+                c=0
+                for line in ${controllerok[@]}
+                do controllerfinalok[${o}]=${controllernames[$line]}
+                let o++
+                done
+
+	        
+		if [[ ${#controllerfinalcrit[*]} -gt 0 ]]
+                then echo "CRITICAL Controllers: ${controllerfinalcrit[*]}"; exit ${STATE_CRITICAL}
+                elif [[ ${#controllerfinalwarn[*]} -gt 0 ]]
+                then echo "WARNING Controllers: ${controllerfinalwarn[*]}"; exit ${STATE_WARNING}
+                elif [[ ${#controllerunknown[*]} -gt 0 ]]
+                then echo "UNKNOWN Check Controllers, an unknown error occured"; exit ${STATE_UNKNOWN}
+                elif [[ ${#controllerfinalok[*]} -gt 0 ]]
+                then echo "Controllers OK"; exit ${STATE_OK}
+                fi
+		;;
+
+       power)
+               powerstatus=$(snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.674.11000.2000.500.1.2.21.1.3)
+
+               s_crit=0; s_warn=0; s_ok=0; s_unknown=0
+               for s in $powerstatus
+               do
+                       if [ "$s" = "3" ]; then s_crit=$((s_crit + 1)); fi
+                       if [ "$s" = "2" ]; then s_warn=$((s_warn + 1)); fi
+                       if [ "$s" = "1" ]; then s_ok=$((s_ok + 1)); fi
+                       if [ "$s" = "0" ]; then s_unkown=$((s_unknown + 1)); fi
+               done
+
+               if [ $s_crit -gt 0 ]; then echo "Power CRITICAL"; exit ${STATE_CRITICAL}; fi
+               if [ $s_warn -gt 0 ]; then echo "Power WARNING"; exit ${STATE_WARNING}; fi
+               if [ $s_unknown -gt 0 ]; then echo "Power UNKNOWN"; exit ${STATE_UNKNOWN}; fi
+               if [ $s_ok -gt 0 ]; then echo "Power OK"; exit ${STATE_OK}; fi
+               ;;
+
+	volume)
+	      declare -a volumenames=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.26.1.4 | tr '\n' ' '))
+
+		declare -a vulumecrit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.26.1.3 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${volumecrit[@]}
+                do volumecrit[$c]=`expr ${volumecrit[$c]} - 1`
+                let c++
+                done
+                # find the corresponding names of the critical volume
+                c=0
+                for line in ${volumecrit[@]}
+                do volumefinalcrit[${c}]=${volumenames[$line]}
+                let c++
+                done
+              
+       		declare -a volumewarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.26.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${volumewarn[@]}
+                do volumewarn[$w]=`expr ${volumewarn[$w]} - 1`
+                let w++
+                done
+                # find the corresponding names of the warning volume
+                c=0
+                for line in ${volumewarn[@]}
+                do volumefinalwarn[${w}]=${volumenames[$line]}
+                let w++
+                done
+
+		declare -a volumeunknown=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.26.1.3 | grep -n "0" | awk -F : '{print $1}' | tr '\n' ' '))
+
+	        declare -a volumeok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.26.1.3 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${volumeok[@]}
+                do volumeok[$o]=`expr ${volumeok[$o]} - 1`
+                let o++
+                done
+                # find the corresponding names of the ok volume
+                c=0
+                for line in ${volumeok[@]}
+                do volumefinalok[${o}]=${volumenames[$line]}
+                let o++
+                done
+
+
+		if [[ ${#volumefinalcrit[*]} -gt 0 ]]
+                then echo "CRITICAL Volumes: ${volumefinalcrit[*]}"; exit ${STATE_CRITICAL}
+                elif [[ ${#volumefinalwarn[*]} -gt 0 ]]
+                then echo "WARNING Volumes: ${volumefinalwarn[*]}"; exit ${STATE_WARNING}
+                elif [[ ${#volumeunknown[*]} -gt 0 ]]
+                then echo "UNKNOWN Check Volumes, an unknown error occured"; exit ${STATE_UNKNOWN}
+		elif [[ ${#volumefinalok[*]} -gt 0 ]]
+		then echo "OK Volumes: ${volumefinalok[*]}"; exit ${STATE_OK}
+                fi
+		;;
+
+	server)
+	      declare -a servernames=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.27.1.4 | tr '\n' ' '))
+
+		declare -a servercrit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.27.1.3 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${servercrit[@]}
+                do servercrit[$c]=`expr ${servercrit[$c]} - 1`
+                let c++
+                done
+                # find the corresponding names of the critical server
+                c=0
+                for line in ${servercrit[@]}
+                do serverfinalcrit[${c}]=${servernames[$line]}
+                let c++
+                done
+              
+       		declare -a serverwarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.27.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${serverwarn[@]}
+                do serverwarn[$w]=`expr ${serverwarn[$w]} - 1`
+                let c++
+                done
+                # find the corresponding names of the warning server
+                c=0
+                for line in ${serverwarn[@]}
+                do serverfinalwarn[${w}]=${servernames[$line]}
+                let w++
+                done
+
+		declare -a serverunknown=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.27.1.3 | grep -n "0" | awk -F : '{print $1}' | tr '\n' ' '))
+
+	        declare -a serverok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.27.1.3 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${serverok[@]}
+                do serverok[$o]=`expr ${serverok[$o]} - 1`
+                let o++
+                done
+                # find the corresponding names of the ok servers
+                c=0
+                for line in ${serverok[@]}
+                do serverfinalok[${o}]=${servernames[$line]}
+                let o++
+                done
+
+
+		if [[ ${#serverfinalcrit[*]} -gt 0 ]]
+                then echo "Degrated Servers: ${serverfinalcrit[*]}"; exit ${STATE_CRITICAL}
+                elif [[ ${#serverfinalwarn[*]} -gt 0 ]]
+                then echo "Down Servers: ${serverfinalwarn[*]}"; exit ${STATE_WARNING}
+                elif [[ ${#serverunknown[*]} -gt 0 ]]
+                then echo "UNKNOWN Check Servers, an unknown error occured"; exit ${STATE_UNKNOWN}
+		elif [[ ${#serverfinalok[*]} -gt 0 ]]
+		then echo "OK Servers: ${serverfinalok[*]}"; exit ${STATE_OK}
+                fi
+		;;
+
+	disks)
+	      declare -a disknames=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.14.1.4 | tr '\n' ' '))
+
+		declare -a diskcrit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.14.1.3 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${diskcrit[@]}
+                do diskcrit[$c]=`expr ${diskcrit[$c]} - 1`
+                let c++
+                done
+                # find the corresponding names of the critical disks
+                c=0
+                for line in ${diskcrit[@]}
+                do diskfinalcrit[${c}]=${disknames[$line]}
+                let c++
+                done
+              
+       		declare -a diskwarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.14.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${diskwarn[@]}
+                do diskwarn[$w]=`expr ${diskwarn[$w]} - 1`
+                let c++
+                done
+                # find the corresponding names of the warning disk
+                c=0
+                for line in ${diskwarn[@]}
+                do diskfinalwarn[${w}]=${disknames[$line]}
+                let w++
+                done
+
+		declare -a diskunknown=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.14.1.3 | grep -n "0" | awk -F : '{print $1}' | tr '\n' ' '))
+
+	        declare -a diskok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.14.1.3 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${diskok[@]}
+                do diskok[$o]=`expr ${diskok[$o]} - 1`
+                let o++
+                done
+                # find the corresponding names of the ok disk
+                c=0
+                for line in ${diskok[@]}
+                do diskfinalok[${o}]=${disknames[$line]}
+                let o++
+                done
+
+
+		if [[ ${#diskfinalcrit[*]} -gt 0 ]]
+                then echo "Degrated Disks: ${diskfinalcrit[*]}"; exit ${STATE_CRITICAL}
+                elif [[ ${#diskfinalwarn[*]} -gt 0 ]]
+                then echo "Failed Disks: ${diskfinalwarn[*]}"; exit ${STATE_WARNING}
+                elif [[ ${#serverunknown[*]} -gt 0 ]]
+                then echo "UNKNOWN Check Servers, an unknown error occured"; exit ${STATE_UNKNOWN}
+		elif [[ ${#diskfinalok[*]} -gt 0 ]]
+		then echo "Disks OK"; exit ${STATE_OK}
+                fi
+		;;
+
+	enclosure)
+	      declare -a enclosurenames=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.15.1.4 | tr '\n' ' '))
+
+		declare -a enclosurecrit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.15.1.3 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${enclosurecrit[@]}
+                do enclosurecrit[$c]=`expr ${enclosurecrit[$c]} - 1`
+                let c++
+                done
+                # find the corresponding names of the critical enclosures
+                c=0
+                for line in ${enclosurecrit[@]}
+                do enclosurefinalcrit[${c}]=${enclosurenames[$line]}
+                let c++
+                done
+              
+       		declare -a enclosurewarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.15.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${enclosurewarn[@]}
+                do enclosurewarn[$w]=`expr ${enclosurewarn[$w]} - 1`
+                let c++
+                done
+                # find the corresponding names of the warning enclosure
+                c=0
+                for line in ${enclosurewarn[@]}
+                do enclosurefinalwarn[${w}]=${enclosurenames[$line]}
+                let w++
+                done
+
+		declare -a enclosureunknown=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.15.1.3 | grep -n "0" | awk -F : '{print $1}' | tr '\n' ' '))
+
+	        declare -a enclosureok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.15.1.3 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${enclosureok[@]}
+                do enclosureok[$o]=`expr ${enclosureok[$o]} - 1`
+                let o++
+                done
+                # find the corresponding names of the ok enclosure
+                c=0
+                for line in ${enclosureok[@]}
+                do enclosurefinalok[${o}]=${enclosurenames[$line]}
+                let o++
+                done
+
+
+		if [[ ${#enclosurefinalcrit[*]} -gt 0 ]]
+                then echo "Degrated Enclosures: ${enclosurefinalcrit[*]}"; exit ${STATE_CRITICAL}
+                elif [[ ${#enclosurefinalwarn[*]} -gt 0 ]]
+                then echo "Down Enclosure: ${enclosurefinalwarn[*]}"; exit ${STATE_WARNING}
+                elif [[ ${#enclosureunknown[*]} -gt 0 ]]
+                then echo "UNKNOWN Check Enclosures, an unknown error occured"; exit ${STATE_UNKNOWN}
+		elif [[ ${#enclosurefinalok[*]} -gt 0 ]]
+		then echo "Enclosures OK"; exit ${STATE_OK}
+                fi
+		;;
+
+	temp1)
+	      declare -a temp1names=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.19.1.4 | tr '\n' ' '))
+
+		declare -a temp1crit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.19.1.3 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${temp1crit[@]}
+                do temp1crit[$c]=`expr ${temp1crit[$c]} - 1`
+                let c++
+                done
+                # find the corresponding names of the critical Temps
+                c=0
+                for line in ${temp1crit[@]}
+                do temp1finalcrit[${c}]=${temp1names[$line]}
+                let c++
+                done
+              
+       		declare -a temp1warn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.19.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${temp1warn[@]}
+                do temp1warn[$w]=`expr ${temp1warn[$w]} - 1`
+                let c++
+                done
+                # find the corresponding names of the warning Temps
+                c=0
+                for line in ${temp1warn[@]}
+                do temp1finalwarn[${w}]=${temp1names[$line]}
+                let w++
+                done
+
+		declare -a temp1unknown=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.19.1.3 | grep -n "0" | awk -F : '{print $1}' | tr '\n' ' '))
+
+	        declare -a temp1ok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.19.1.3 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${temp1ok[@]}
+                do temp1ok[$o]=`expr ${temp1ok[$o]} - 1`
+                let o++
+                done
+                # find the corresponding names of the ok Temps
+                c=0
+                for line in ${temp1ok[@]}
+                do temp1finalok[${o}]=${temp1names[$line]}
+                let o++
+                done
+
+
+		if [[ ${#temp1finalcrit[*]} -gt 0 ]]
+                then echo "Critical Temps: ${temp1finalcrit[*]}"; exit ${STATE_CRITICAL}
+                elif [[ ${#temp1finalwarn[*]} -gt 0 ]]
+                then echo "Warning Temps: ${temp1finalwarn[*]}"; exit ${STATE_WARNING}
+                elif [[ ${#temp1unknown[*]} -gt 0 ]]
+                then echo "UNKNOWN Check Temps, an unknown error occured"; exit ${STATE_UNKNOWN}
+		elif [[ ${#temp1finalok[*]} -gt 0 ]]
+		then echo "All Temps OK"; exit ${STATE_OK}
+                fi
+		;;
+
+	psufans)
+	      declare -a psufansnames=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.20.1.4 | tr '\n' ' '))
+
+		declare -a psufanscrit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.20.1.3 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${psufanscrit[@]}
+                do psufanscrit[$c]=`expr ${psufanscrit[$c]} - 1`
+                let c++
+                done
+                # find the corresponding names of the critical psufans
+                c=0
+                for line in ${psufanscrit[@]}
+                do psufansfinalcrit[${c}]=${psufansnames[$line]}
+                let c++
+                done
+              
+       		declare -a psufanswarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.20.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${psufanswarn[@]}
+                do psufanswarn[$w]=`expr ${psufanswarn[$w]} - 1`
+                let c++
+                done
+                # find the corresponding names of the warning psufans
+                c=0
+                for line in ${psufanswarn[@]}
+                do psufansfinalwarn[${w}]=${psufansnames[$line]}
+                let w++
+                done
+
+		declare -a psufansunknown=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.20.1.3 | grep -n "0" | awk -F : '{print $1}' | tr '\n' ' '))
+
+	        declare -a psufansok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.20.1.3 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${psufansok[@]}
+                do psufansok[$o]=`expr ${psufansok[$o]} - 1`
+                let o++
+                done
+                # find the corresponding names of the ok psufans
+                c=0
+                for line in ${psufansok[@]}
+                do psufansfinalok[${o}]=${psufansnames[$line]}
+                let o++
+                done
+
+
+		if [[ ${#psufansfinalcrit[*]} -gt 0 ]]
+                then echo "Critical psufans: ${psufansfinalcrit[*]}"; exit ${STATE_CRITICAL}
+                elif [[ ${#psufansfinalwarn[*]} -gt 0 ]]
+                then echo "Warning psufans: ${psufansfinalwarn[*]}"; exit ${STATE_WARNING}
+                elif [[ ${#psufansunknown[*]} -gt 0 ]]
+                then echo "UNKNOWN Check psufans, an unknown error occured"; exit ${STATE_UNKNOWN}
+		elif [[ ${#psufansfinalok[*]} -gt 0 ]]
+		then echo "PSU-Fans OK"; exit ${STATE_OK}
+                fi
+		;;
+
+	folder)
+	      declare -a foldernames=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.25.1.4 | grep -v "Unassigned" | tr '\n' ' '| sed -e :a -e 's/^\(\([^"]*"[^"]*"[^"]*\)*[^"]*"[^"]*\) /\1/;ta'))
+
+		declare -a foldercrit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.25.1.3 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${foldercrit[@]}
+                do foldercrit[$c]=`expr ${foldercrit[$c]} - 1`
+                let c++
+                done
+                # find the corresponding names of the critical folders
+                c=0
+                for line in ${foldercrit[@]}
+                do folderfinalcrit[${c}]=${foldernames[$line]}
+                let c++
+                done
+              
+       		declare -a folderwarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.25.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${folderwarn[@]}
+                do folderwarn[$w]=`expr ${folderwarn[$w]} - 1`
+                let c++
+                done
+                # find the corresponding names of the warning folders
+                c=0
+                for line in ${folderwarn[@]}
+                do folderfinalwarn[${w}]=${foldernames[$line]}
+                let w++
+                done
+
+		declare -a folderunknown=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.25.1.3 | grep -n "0" | awk -F : '{print $1}' | tr '\n' ' '))
+
+	        declare -a folderok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.25.1.3 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${folderok[@]}
+                do folderok[$o]=`expr ${folderok[$o]} - 1`
+                let o++
+                done
+                # find the corresponding names of the ok folder
+                c=0
+                for line in ${folderok[@]}
+                do folderfinalok[${o}]=${foldernames[$line]}
+                let o++
+                done
+
+
+		if [[ ${#folderfinalcrit[*]} -gt 0 ]]
+                then echo "Critical folder: ${folderfinalcrit[*]}"; exit ${STATE_CRITICAL}
+                elif [[ ${#folderfinalwarn[*]} -gt 0 ]]
+                then echo "Warning folder: ${folderfinalwarn[*]}"; exit ${STATE_WARNING}
+                elif [[ ${#folderunknown[*]} -gt 0 ]]
+                then echo "UNKNOWN Check folder, an unknown error occured"; exit ${STATE_UNKNOWN}
+		elif [[ ${#folderfinalok[*]} -gt 0 ]]
+		then echo "Folders OK: ${folderfinalok[*]}"; exit ${STATE_OK}
+                fi
+		;;
+
+	cache)
+	      declare -a cachenames=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.28.1.4 | tr '\n' ' '))
+
+		declare -a cachecrit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.28.1.3 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${cachecrit[@]}
+                do cachecrit[$c]=`expr ${cachecrit[$c]} - 1`
+                let c++
+                done
+                # find the corresponding names of the critical cache
+                c=0
+                for line in ${cachecrit[@]}
+                do cachefinalcrit[${c}]=${cachenames[$line]}
+                let c++
+                done
+              
+       		declare -a cachewarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.28.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${cachewarn[@]}
+                do cachewarn[$w]=`expr ${cachewarn[$w]} - 1`
+                let c++
+                done
+                # find the corresponding names of the warning cache
+                c=0
+                for line in ${cachewarn[@]}
+                do cachefinalwarn[${w}]=${cachenames[$line]}
+                let w++
+                done
+
+		declare -a cacheunknown=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.28.1.3 | grep -n "0" | awk -F : '{print $1}' | tr '\n' ' '))
+
+	        declare -a cacheok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.28.1.3 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${cacheok[@]}
+                do cacheok[$o]=`expr ${cacheok[$o]} - 1`
+                let o++
+                done
+                # find the corresponding names of the ok cache
+                c=0
+                for line in ${cacheok[@]}
+                do cachefinalok[${o}]=${cachenames[$line]}
+                let o++
+                done
+
+
+		if [[ ${#cachefinalcrit[*]} -gt 0 ]]
+                then echo "Critical Cache Status: ${cachefinalcrit[*]}"; exit ${STATE_CRITICAL}
+                elif [[ ${#cachefinalwarn[*]} -gt 0 ]]
+                then echo "Warning Cache Status: ${cachefinalwarn[*]}"; exit ${STATE_WARNING}
+                elif [[ ${#cacheunknown[*]} -gt 0 ]]
+                then echo "UNKNOWN Check cache, an unknown error occured"; exit ${STATE_UNKNOWN}
+		elif [[ ${#cachefinalok[*]} -gt 0 ]]
+		then echo "Cache Status OK"; exit ${STATE_OK}
+                fi
+		;;
+	cachebat)
+	      declare -a cachebatnames=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.28.1.4 | tr '\n' ' '))
+
+		declare -a cachebatcrit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.28.1.5 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${cachebatcrit[@]}
+                do cachebatcrit[$c]=`expr ${cachebatcrit[$c]} - 1`
+                let c++
+                done
+                # find the corresponding names of the critical cachebat
+                c=0
+                for line in ${cachebatcrit[@]}
+                do cachebatfinalcrit[${c}]=${cachebatnames[$line]}
+                let c++
+                done
+              
+       		declare -a cachebatwarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.28.1.5 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${cachebatwarn[@]}
+                do cachebatwarn[$w]=`expr ${cachebatwarn[$w]} - 1`
+                let c++
+                done
+                # find the corresponding names of the warning cachebat
+                c=0
+                for line in ${cachebatwarn[@]}
+                do cachebatfinalwarn[${w}]=${cachebatnames[$line]}
+                let w++
+                done
+
+		declare -a cachebatunknown=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.28.1.5 | grep -n "0" | awk -F : '{print $1}' | tr '\n' ' '))
+
+	        declare -a cachebatok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.28.1.5 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
+	        c=0
+                for line in ${cachebatok[@]}
+                do cachebatok[$o]=`expr ${cachebatok[$o]} - 1`
+                let o++
+                done
+                # find the corresponding names of the ok cachebat
+                c=0
+                for line in ${cachebatok[@]}
+                do cachebatfinalok[${o}]=${cachebatnames[$line]}
+                let o++
+                done
+
+
+		if [[ ${#cachebatfinalcrit[*]} -gt 0 ]]
+                then echo "Cache Battery Expired: ${cachebatfinalcrit[*]}"; exit ${STATE_CRITICAL}
+                elif [[ ${#cachefinalwarn[*]} -gt 0 ]]
+                then echo "Cache Battery Expired exepted: ${cachebatfinalwarn[*]}"; exit ${STATE_WARNING}
+                elif [[ ${#cachebatunknown[*]} -gt 0 ]]
+                then echo "UNKNOWN Check Cachebattery, an unknown error occured"; exit ${STATE_UNKNOWN}
+		elif [[ ${#cachebatfinalok[*]} -gt 0 ]]
+		then echo "Cache Battery OK"; exit ${STATE_OK}
+                fi
+		;;
+
+
+	folderspace)
+                folderscount=$(snmpwalk -v 2c -c ${community} ${host} 1.3.6.1.4.1.674.11000.2000.500.1.2.25.1.4 | wc -l)
+                declare -a foldernames=($(snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.674.11000.2000.500.1.2.25.1.4 | tr '\n' ' ' | sed -e :a -e 's/^\(\([^"]*"[^"]*"[^"]*\)*[^"]*"[^"]*\) /\1/;ta' ))
+                declare -a folderavailspace=($(snmpwalk -v 2c -O vqe -c ${community} ${host}  .1.3.6.1.4.1.674.11000.2000.500.1.2.32.1.5 | tr '\n' ' '))
+                declare -a folderusedspace=($(snmpwalk -v 2c -O vqe -c ${community} ${host}  .1.3.6.1.4.1.674.11000.2000.500.1.2.32.1.6 | tr '\n' ' '))
+		
+		# Determine special Compellent folders and remove them from array
+                ignorefolders=($(snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.674.11000.2000.500.1.2.25.1.4 | grep -n -w "Unassigned" | awk -F : '{print $1}' | tr '\n' ' '))
+                k=0
+                while [ ${k} -lt ${#ignorefolders[@]} ]
+                do
+                finalignore[$k]=`expr ${ignorefolders[$k]} - 1`
+                unset foldernames[${finalignore[$k]}]
+                unset folderavailspace[${finalignore[$k]}]
+                unset folderusedspace[${finalignore[$k]}]
+                let k++
+                done
+
+                # How many real folders (manmade) do exist
+                realfolderscount=`expr ${folderscount} - ${#ignorefolders[@]}`
+		
+                # Calculate Free Space and Percentage per folder
+                i=0
+                while [ ${i} -le ${folderscount} ]
+                do
+                        if [ ${foldernames[${i}]} ]
+                        then
+                        folderfreespace[${i}]=`expr ${folderavailspace[${i}]} - ${folderusedspace[${i}]}`
+                        folderpercentage[${i}]=`expr ${folderusedspace[${i}]} \* 100 / ${folderavailspace[${i}]}`
+                        #echo "$i: ${foldernames[$i]}, free Space: ${folderfreespace[${i}]} used: ${folderpercentage[${i}]} %" # For Debug
+			perfavailspace[${i}]=$((${folderavailspace[${i}]}*1024*1024))
+			perfusedspace[${i}]=$((${folderusedspace[${i}]}*1024*1024))
+			perffreespace[${i}]=$((${folderfreespace[${i}]}*1024*1024))
+			perfdata[${i}]="${foldernames[$i]}=${perfusedspace[${i}]};${perffreespace[${i}]};${perfavailspace[${i}]};"
+                        let i++
+                        else
+                        let i++
+                        fi
+                done
+
+                # Output Warning and Critical
+                if [ -n "${warning}" ] || [ -n "${critical}" ]
+                then
+                j=0
+                while [ ${j} -le ${folderscount} ]
+                do
+                        if [ ${foldernames[${j}]} ]
+                        then
+                                if [ ${folderpercentage[${j}]} -ge ${warning} ] && [ ${folderpercentage[${j}]} -lt ${critical} ]
+                                then folderwarning[${j}]="${foldernames[${j}]}: ${folderpercentage[${j}]}% used "
+                                elif [ ${folderpercentage[${j}]} -ge ${critical} ]
+                                then foldercritical[${j}]="${foldernames[${j}]}: ${folderpercentage[${j}]}% used "
+                                else folderok[${j}]="${foldernames[$j]}: ${folderpercentage[${j}]}% used "
+                                fi
+                        let j++
+                        else
+                        let j++
+                        fi
+                done
+
+
+                if [ ${#folderwarning[@]} -gt 0 ] && [ ${#foldercritical[@]} -lt 1 ]
+                then echo "WARNING ${folderwarning[@]}|${perfdata[*]}"; exit ${STATE_WARNING}
+                elif [ ${#foldercritical[@]} -ge 1 ]
+                then echo "CRITICAL ${foldercritical[@]}|${perfdata[*]}"; exit ${STATE_CRITICAL}
+                else
+                echo "OK ${folderok[*]}|${perfdata[*]}"; exit ${STATE_OK}
+                fi
+
+                # Output without thresholds
+                else
+                j=0
+                while [ ${j} -le ${folderscount} ]
+                do
+                        if [ ${foldernames[${j}]} ]
+                        then
+                        folderfinaloutput[${j}]="${foldernames[$j]}: ${folderpercentage[${j}]}% used "
+                        let j++
+                        else
+                        let j++
+                        fi
+                done
+                echo "${folderfinaloutput[*]}|${perfdata[*]}"
+                exit ${STATE_OK}
+                fi
+
+	;;
+
+
+
+       esac
+
+
+echo "UNKNOWN: should never reach this part"
+exit ${STATE_UNKNOWN}

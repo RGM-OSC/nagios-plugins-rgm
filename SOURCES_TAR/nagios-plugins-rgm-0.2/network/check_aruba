@@ -1,0 +1,1303 @@
+#!/usr/bin/perl
+#
+# Check aruba wireless
+#
+# $Header: /opt/home/doke/work/nagios/RCS/check_aruba,v 1.63 2012/12/20 16:49:11 doke Exp $
+
+
+#use strict;
+use warnings;
+no warnings 'redefine';
+use Getopt::Long;
+use Net::SNMP;
+use Storable;
+use Fcntl ':flock';
+use Time::HiRes qw( usleep );
+use Data::Dumper;
+
+
+use vars qw( @default_master_hosts $default_community_file @master_hosts
+    $host $community $aptarget $force $verbose $help $use_snmpv2c $mib2
+    $enterprises $aruba @crits @warns @unknowns @oks $rc $sep
+    %snmp_sessions %name2ip $cache_file $ap_cache $cache_holddown_time
+    @perfdata $dump_cache );
+
+@default_master_hosts = ( 
+    'aruba-master.udel.edu', 
+    'aruba3600-6.nss.udel.edu',
+    'aruba3600-7.nss.udel.edu', 
+    #'128.175.129.100', 
+    #'128.175.129.102', 
+    );
+$default_community_file = '/home/nagios/aruba_community.pw';
+
+@master_hosts = ( );
+$host = 'aruba-master';
+$community = '';
+$aptarget = undef;
+$dump_cache = 0;
+$force = 0;
+$verbose = 0;
+$help = 0;
+
+$use_snmpv2c = 1;
+
+$mib2 = '1.3.6.1.2.1';
+$enterprises = '1.3.6.1.4.1';
+$aruba = "$enterprises.14823";
+
+$cache_file = "/var/tmp/check_aruba_cache.$<";
+
+# don't reload/rebuild the cache more often than this
+$cache_holddown_time = 15 * 60;   # seconds
+
+sub usage {
+    my( $rc ) = @_;
+    print "Usage: $0 [-vh] -H <host> [-C <community>]
+       $0 [-vh] [-M <master>] [-C <community>] -a <ap-name>
+    Without an ap-name checks the specified controller.
+    With an ap-name checks that ap.
+    -H s  controller hostname [$host]
+    -C s  snmp community [from $default_community_file]
+    -M s  aruba master controllers, can be repeated [@default_master_hosts]
+    -a s  access point name
+    -f    force cache file rebuild, despite age
+    -D    dump cache, for debugging
+    -v    verbose
+    -h    help
+";
+    exit $rc;
+    }
+
+Getopt::Long::Configure ("bundling");
+GetOptions(
+    'H=s' => \$host,
+    'C=s' => \$community,
+    'M=s' => \@master_hosts,
+    'a=s' => \$aptarget,
+    'f' => \$force,
+    'D' => \$dump_cache,
+    'v+' => \$verbose,
+    'h' => \$help,
+    );
+&usage( 0 ) if ( $help );
+
+if ( ! scalar @master_hosts ) {
+    @master_hosts = @default_master_hosts;
+    }
+
+
+sub alarm_handler  { 
+    die "alarm timeout in pid $$\n";
+    exit -1
+    }
+$SIG{ALRM} = \&alarm_handler;
+alarm( 300 );  # make sure we don't hang nagios
+
+
+if ( ! scalar $community ) {
+    if ( ! open( fH, $default_community_file ) ) {
+	print "can't open default community file: $!\n";
+	exit 3;
+	}
+    $community = <fH>;
+    chomp $community;
+    close fH;
+    }
+
+if ( $dump_cache ) { 
+    load_ap_cache( $aptarget );
+    print "cache: ", Dumper( $ap_cache ), "\n";
+    exit 0;
+    }
+
+if ( $aptarget ) {
+    check_ap( $aptarget );
+    }
+else {
+    check_controller();
+    }
+
+$rc = 0;
+$sep = '';
+if ( $#crits >= 0 ) {
+    $rc = 2;
+    print "CRITICAL ", join( ", ", @crits );
+    $sep = '; ';
+    }
+if ( $#warns >= 0 ) {
+    $rc = 1 if ( $rc == 0 );
+    print $sep, "Warning ", join( ", ", @warns );
+    $sep = '; ';
+    }
+if ( $#unknowns >= 0 ) {
+    $rc = 3 if ( $rc == 0 );
+    print $sep, "Unknown ", join( ", ", @unknowns );
+    }
+if ( $rc == 0 ) {
+    print "Ok ", join( ", ", @oks );
+    print( " | ", join( " ", @perfdata ) ) if ( $#perfdata >= 0 );
+    }
+print "\n";
+exit $rc;
+
+
+##################
+
+
+sub check_controller {
+    my( $result, @oids, @data, $row, $apname );
+
+    my $sysDescr_oid = "$mib2.1.1.0";
+    my $sysUpTime_oid = "$mib2.1.3.0";
+    my $sysName_oid = "$mib2.1.5.0";
+    @oids = ( $sysDescr_oid, $sysUpTime_oid, $sysName_oid );
+    $result = snmp_get( $host, $community, 'system', \@oids );
+    my $sysDescr = $result->{ $sysDescr_oid };
+    my $sysUpTime = $result->{ $sysUpTime_oid };
+    my $sysName = $result->{ $sysName_oid };
+    if ( $verbose ) {
+	print "sysName $sysName\n";
+	print "sysDescr $sysDescr\n";
+	print "sysUpTime $sysUpTime\n";
+	}
+    if ( ! $sysDescr ) {
+	push @unknowns, "unable to get sysDescr";
+	return;
+	}
+    elsif ( $sysDescr !~ m/ArubaOS/ ) {
+	push @unknowns, "not an Aruba controller: $sysDescr";
+	return;
+	}
+    push @oks, "$sysName";
+    push @oks, "up $sysUpTime";
+    
+    # $aruba = 1.3.6.1.4.1.14823
+    my $role_oid = "$aruba.2.2.1.1.1.4.0";
+    my $serialnum_oid = "$aruba.2.2.1.1.1.12.0";
+    my $num_aps_oid = "$aruba.2.2.1.1.3.1.0";
+    my $num_assocs_oid = "$aruba.2.2.1.1.3.2.0";
+    my $swip_oid = "$aruba.2.2.1.2.1.1.0";   # needed to index sysext tables
+    my $temp_oid = "$aruba.2.2.1.2.1.10.0";
+    #my $num_users_oid = "$aruba.2.2.1.4.1.1.0";   # not useful, wierd counter
+
+    @oids = ( $role_oid, $serialnum_oid, $num_aps_oid, $num_assocs_oid,
+	$swip_oid, $temp_oid );
+    $result = snmp_get( $host, $community, 'summary data', \@oids );
+    my $role = $result->{ $role_oid };
+    my $serialnum = $result->{ $serialnum_oid };
+    my $num_aps = $result->{ $num_aps_oid };
+    my $num_assocs = $result->{ $num_assocs_oid };
+    my $swip = $result->{ $swip_oid };
+    my $temp = $result->{ $temp_oid };
+
+    my @roles = ( 'unknown', 'master', 'local', 'backup-master' );
+    $verbose && print "role $role $roles[ $role ]\n";
+    push @oks, "role " . $roles[ $role ];
+
+    if ( $verbose ) {
+	print "serialnum $serialnum\n";
+	print "aps $num_aps\n";
+	print "associations $num_assocs\n";
+	print "swip $swip\n";
+	}
+    push @oks, "serialnum $serialnum";
+    push @oks, "aps $num_aps";
+    push @perfdata, sprintf "aps=%d", $num_aps;
+    push @oks, "associations $num_assocs";
+    push @perfdata, sprintf "associations=%d", $num_assocs;
+
+    if ( $temp =~ m/normal/i ) {
+	push @oks, $temp;
+	}
+    else {
+	push @warns, $temp;
+	}
+
+    my $swver_oid = "$aruba.2.2.1.2.1.19.1.4.$swip";
+    my $status_oid = "$aruba.2.2.1.2.1.19.1.5.$swip";
+    @oids = ( $swver_oid, $status_oid );
+    $result = snmp_get( $host, $community, 'version', \@oids );
+    my $swver = $result->{ $swver_oid };
+    my $status = $result->{ $status_oid };
+
+    push @oks, "version $swver" if defined ( $swver );
+
+    if ( defined $status ) { 
+	my @statuses = ( 'unknown', 'active', 'inactive' );
+	$verbose && print "status $status $statuses[ $status ]\n";
+	if ( $status != 1 ) {
+	    push @warns, "status " . $statuses[ $status ];
+	    }
+	else {
+	    #push @oks, "status " . $statuses[ $status ];
+	    }
+	}
+
+    # processor load table
+    @data = walk_table( $host, $community, 'cpuload', "$aruba.2.2.1.2.1.13.1" );
+    foreach $row ( 1 .. $#{@{$data[2]}} ) {
+	my $descr = $data[2][$row];
+	next if ( ! defined $descr );
+	my $load = $data[3][$row];
+	$verbose && print "$descr load $load%\n";
+	if ( $load > 90 ) {
+	    push @crits, "$descr load $load%";
+	    }
+	elsif ( $load > 80 ) {
+	    push @warns, "$descr load $load%";
+	    }
+	else  {
+	    #push @oks, "$descr load $load%";
+        push @perfdata, sprintf "cpu_load=%d", $load;
+	    }
+	}
+
+
+    # storage table
+    @data = walk_table( $host, $community, 'storage', "$aruba.2.2.1.2.1.14.1" );
+    foreach $row ( 1 .. $#{@{$data[2]}} ) {
+	my $type = $data[2][$row];
+	my $size = $data[3][$row];
+	my $used = $data[4][$row];
+	my $name = $data[5][$row];
+	my $pc = int( $used * 100 / $size );
+	$verbose && print "$name $pc% full\n";
+	if ( $name eq '/' ) {
+	    # skip it, it's always 98% full
+	    }
+	elsif ( $pc > 90 ) {
+	    push @crits, "$name $pc% full";
+	    }
+	elsif ( $pc > 80 ) {
+	    push @warns, "$name $pc% full";
+	    }
+	else  {
+	    #push @oks, "$name $pc% full";
+	    }
+	}
+
+
+    # memory table
+    @data = walk_table( $host, $community, 'memory', "$aruba.2.2.1.1.1.11" );
+    foreach $row ( 1 .. $#{@{$data[2]}} ) {
+	my $size = $data[2][$row];
+	my $used = $data[3][$row];
+	my $free = $data[4][$row];
+	my $pc = int( $used * 100 / $size );
+	$verbose && print "memory $pc% full\n";
+	if ( $pc > 100 ) {  # shouldn't be possible
+	    push @crits, "memory $pc% full";
+	    }
+	elsif ( $pc > 99 ) {
+	    push @warns, "memory $pc% full";
+	    }
+	else  {
+	    #push @oks, "memory $pc% full";
+	    }
+	}
+
+
+
+    # auth server table
+    if ( 0 ) {
+	@data = walk_table2( $host, $community, 'auth-servers', "$aruba.2.2.1.8.1.1.1" );
+	#print "dump ", Dumper( @data ), "\n";
+	foreach $row ( sort keys %{$data[2]} ) {
+	    my @a = split( /\./, $row );
+	    shift @a;  # loose the length byte
+	    my $name = pack( "C*", @a );
+	    my $type = $data[2]{$row};
+	    my $responsetime = $data[13]{$row};
+	    $verbose && print "auth server $name avg response time $responsetime ms\n";
+	    if ( $responsetime > 5000 ) {
+		push @crits, "auth server $name avg response time $responsetime ms";
+		}
+	    elsif ( $responsetime > 1000 ) {
+		push @warns, "auth server $name avg response time $responsetime ms";
+		}
+	    else  {
+		#push @oks, "auth server $name avg response time $responsetime ms";
+		}
+	    }
+	}
+
+    # fixme, do something with alarm mib
+
+    # todo: check licences?  Our current ones say they never expire.
+
+
+    }
+
+
+
+sub check_ap {
+    my( $aptarget ) = @_;
+    my( $i, $apref, $rc );
+
+    $verbose && print "check_ap( $aptarget )\n";
+
+    $rc = 0;
+
+    for $i ( 1 .. 10 ) {
+	if ( load_ap_cache( $aptarget ) ) {
+	    $apref = find_ap( $aptarget );
+	    if ( $apref && $apref->{ 'controller' } ) {
+		$rc = scan_ap( $apref, $aptarget, 1 );
+		if ( $rc == 1 ) {
+		    # found it and it's up, hurray!
+		    return $rc;
+		    }
+		}
+	    }
+
+	if ( ! rebuild_ap_cache( $aptarget ) ) {
+	    usleep( 20000 * $i );
+	    }
+	}
+
+    if ( ! $ap_cache ) {
+	# couldn't get cache
+	push @unknowns, "can't load nor build aruba controller cache";
+	return;
+	}
+
+    if ( ! $apref || $rc == 0 ) {
+	# still can't find it.
+	push @unknowns, "can't find controller for ap $aptarget";
+	return;
+	}
+
+    if ( $rc == 2 ) {
+	# found it, but it's down
+	$rc = scan_ap( $apref, $aptarget, 0 );
+	}
+    return $rc;
+    }
+
+
+
+
+
+
+
+# scan a specified ap on a specified controller
+# return 0 if can't find it on this controller, or otherwise mismatched
+# return 1 if found it and it's up
+# return 2 if found it and it's down
+sub scan_ap {
+    my( $apref, $aptarget, $no_down ) = @_;
+    my( $controller, $apname, $apip, $apmac, $apmac_oid, $result, @oids,
+	@apwlanrow, @apradiorow, $radio, %radios, $val, $oid2, $oid,
+	$col, $perf_util, $perf_clients, $bssid, @bssidrow );
+
+    $verbose && print "scan_ap( $apref, $aptarget, $no_down )\n";
+
+    $controller = $apref->{ controller };
+    $apname = $apref->{ apname };
+    $apip = $apref->{ apip };
+    $apmac = $apref->{ apmac };
+    $apmac_oid = $apref->{ apmac_oid };
+    if ( $verbose ) {
+	print "$apname, $apip, $apmac, $apmac_oid, $controller\n";
+	}
+
+    my $sysDescr_oid = "$mib2.1.1.0";
+    my $sysUpTime_oid = "$mib2.1.3.0";
+    my $sysName_oid = "$mib2.1.5.0";
+    @oids = ( $sysDescr_oid, $sysUpTime_oid, $sysName_oid );
+    $result = snmp_get( $controller, $community, 'system', \@oids );
+    my $sysName = $result->{ $sysName_oid };
+    my $sysDescr = $result->{ $sysDescr_oid };
+    my $sysUpTime = $result->{ $sysUpTime_oid };
+    if ( $verbose ) {
+	print "sysName $sysName\n";
+	print "sysDescr $sysDescr\n";
+	print "sysUpTime $sysUpTime\n";
+	}
+    if ( ! $sysDescr ) {
+	#push @unknowns, "unable to get sysDescr";
+	return 0;
+	}
+    elsif ( $sysDescr !~ m/ArubaOS/ ) {
+	#push @unknowns, "not an Aruba controller: $sysDescr";
+	return 0;
+	}
+
+    # pick the stuff for this mac out of the AP table
+    # wlsxWlanAPTable
+    # INDEX {wlanAPMacAddress}
+    # 1 wlanAPMacAddress                       MacAddress,
+    # 2 wlanAPIpAddress                        IpAddress,
+    # 3 wlanAPName                                     DisplayString,
+    # 4 wlanAPGroupName                        DisplayString,
+    # 5 wlanAPModel                            OBJECT IDENTIFIER,
+    # 6 wlanAPSerialNumber                     DisplayString,
+    # 7 wlanAPdot11aAntennaGain        Integer32,
+    # 8 wlanAPdot11gAntennaGain        Integer32,
+    # 9 wlanAPNumRadios                        Integer32,
+    # 10 wlanAPEnet1Mode                        ArubaEnet1Mode,
+    # 11 wlanAPIpsecMode                        ArubaEnableValue,
+    # 12 wlanAPUpTime                           TimeTicks,
+    # 13 wlanAPModelName                        DisplayString,
+    # 14 wlanAPLocation                     DisplayString,
+    # 15 wlanAPBuilding                         Integer32,
+    # 16 wlanAPFloor                            Integer32,
+    # 17 wlanAPLoc                                      Integer32,
+    # 18 wlanAPExternalAntenna          ArubaAntennaSetting,
+    # 19 wlanAPStatus                           ArubaAPStatus,
+    # 20 wlanAPNumBootstraps            Integer32,
+    # 21 wlanAPNumReboots                       Integer32,
+    # 22 wlanAPUnprovisioned        ArubaUnprovisionedStatus,
+    # 23 wlanAPMonitorMode          ArubaMonitorMode,
+    # 24 wlanAPFQLNBuilding                     DisplayString,
+    # 25 wlanAPFQLNFloor                        DisplayString,
+    # 26 wlanAPFQLN                                     DisplayString,
+    # 27 wlanAPFQLNCampus                       DisplayString,
+    # 28 wlanAPLongitude                        DisplayString,
+    # 29 wlanAPLatitude                         DisplayString,
+    # 30 wlanAPAltitude                         DisplayString,
+    # 31 wlanAPMeshRole             ArubaMeshRole
+    undef @oids;
+    foreach $col ( 2 .. 31 ) {
+	$oid = "$aruba.2.2.1.5.2.1.4.1.$col.$apmac_oid";
+	push @oids, $oid;
+	}
+    $result = snmp_get( $controller, $community, 'ap table', \@oids );
+    foreach $oid ( keys %$result ) {
+	if ( $oid =~ m/2\.2\.1\.5\.2\.1\.4\.1\.(\d+)\.$apmac_oid/ ) {
+	    $val = $result->{ $oid };
+	    $verbose > 1 && print "$oid = $val\n";
+	    $apwlanrow[ $1 ] = $val;
+	    }
+	}
+
+    $apip = $apwlanrow[ 2 ];
+    $apname = $apwlanrow[ 3 ];
+
+    my @statuses = ( 'unknown', 'up', 'down' );
+
+    if ( $verbose ) {
+	print "ap name $apname, ip $apip, mac $apmac\n";
+	print "ap group ", $apwlanrow[ 4 ], "\n";
+	#print "ap model ", $apwlanrow[ 5 ], "\n";   # as an index code
+	print "ap serial ", $apwlanrow[ 6 ], "\n";
+	print "ap num radios ", $apwlanrow[ 9 ], "\n";
+	print "ap ipsec mode ", $apwlanrow[ 11 ], "\n";
+	print "ap uptime ", $apwlanrow[ 12 ], "\n";
+	print "ap model name ", $apwlanrow[ 13 ], "\n";   # as a string
+	print "ap external antenna ", $apwlanrow[ 18 ], "\n";   # 1 not present, 2 enabled
+	print "ap status ", $apwlanrow[ 19 ], " ", $statuses[ $apwlanrow[19] ], "\n";   # 1 up
+	print "ap bootstraps ", $apwlanrow[ 20 ], "\n";
+	print "ap reboots ", $apwlanrow[ 21 ], "\n";
+	print "ap unprovisioned ", $apwlanrow[ 22 ], "\n";   # 1 up
+	print "ap monitor mode ", $apwlanrow[ 23 ], "\n";   # 2 none
+	print "ap mesh role ", $apwlanrow[ 31 ], "\n";   # 0 nonmesh
+	}
+
+    if ( ! defined $apname ) {
+	$apname = '';
+	}
+    if ( ! defined $apip ) {
+	$apip = '';
+	}
+
+    if ( $apname ne $aptarget && $apip ne $aptarget ) {
+	# We didn't get what we asked for.
+	# Maybe it got renamed and the cache is out of date?
+	$verbose && print "name mismatch: want $aptarget, got $apname $apip\n";
+	return 0;
+	}
+
+    if ( $no_down ) {
+	if ( ! defined $apwlanrow[19] || $apwlanrow[19] == 0 ) {
+	    return 0;
+	    }
+	elsif ( $apwlanrow[19] == 2 ) {
+	    return 2;
+	    }
+	# else it's ok, keep going
+	}
+
+    if ( $apwlanrow[19] != 1 ) {
+	push @crits, $statuses[ $apwlanrow[19] ];
+	}
+    else {
+	push @oks, $statuses[ $apwlanrow[19] ];
+	}
+
+    push @oks, $apmac;
+    #push @oks, "ip $apip";
+    #push @oks, "name $apname";
+    push @oks, "ap$apwlanrow[13]";
+    push @oks, "sn $apwlanrow[6]";
+    push @oks, "group $apwlanrow[4]";
+
+
+
+
+
+
+    # pick the stuff for this mac out of the radio table
+    # wlsxWlanRadioTable
+    # INDEX {wlanAPMacAddress, wlanAPRadioNumber}
+    # 1 wlanAPRadioNumber                                      Integer32,
+    # 2 wlanAPRadioType                                        ArubaPhyType,
+    # 3 wlanAPRadioChannel                                     Integer32,
+    # 4 wlanAPRadioTransmitPower                       Integer32,
+    # 5 wlanAPRadioMode                                        ArubaAccessPointMode,
+    # 6 wlanAPRadioUtilization                         Integer32,
+    # 7 wlanAPRadioNumAssociatedClients        Integer32,
+    # 8 wlanAPRadioNumMonitoredClients         Integer32,
+    # 9 wlanAPRadioNumActiveBSSIDs                     Integer32,
+    # 10 wlanAPRadioNumMonitoredBSSIDs          Integer32,
+    # 11 wlanAPRadioBearing                             DisplayString,
+    # 12 wlanAPRadioTiltAngle                           DisplayString,
+    # 13 wlanAPRadioHTMode                                      ArubaHTMode,
+    # 14 wlanAPRadioHTExtChannel                        ArubaHTExtChannel,
+    # 15 wlanAPRadioHTChannel                           DisplayString
+
+
+    # this doesn't work, it says the tables are empty...
+    #undef @oids;
+    #foreach $col ( 2 .. 14 ) {
+    #	$oid = "$aruba.2.2.1.5.2.1.5.1.$col.$apmac_oid";
+    #	print "oid $oid\n";
+    #	$result = snmp_walk( $controller, $community, 'radio', $oid );
+    #
+    #	foreach $oid2 ( keys %$result ) {
+    #	    if ( $oid2 =~ m/2\.2\.1\.5\.2\.1\.5\.1\.$col\.$apmac_oid\.(\d+)$/ ) {
+    #		$val = $result->{ $oid2 };
+    #		$verbose && print "$oid2 = $val\n";
+    #		$apradiorow[ $col ][ $1 ] = $val;
+    #		$radios{ $1 } = 1;
+    #		}
+    #	    }
+    #	}
+
+    foreach $radio ( 1 .. $apwlanrow[ 9 ] ) {
+	# Get each radio seperately, so an snmp not found for an inactive radio
+	# won't hide an active one.
+	undef @oids;
+	foreach $col ( 2 .. 14 ) {
+	    $oid = "$aruba.2.2.1.5.2.1.5.1.$col.$apmac_oid.$radio";
+	    push @oids, $oid;
+	    }
+	$result = snmp_get( $controller, $community, "radio $radio", \@oids );
+	foreach $oid ( keys %$result ) {
+	    if ( $oid =~ m/2\.2\.1\.5\.2\.1\.5\.1\.(\d+)\.$apmac_oid\.$radio$/ ) {
+		$col = $1;
+		$val = $result->{ $oid };
+		$verbose > 1 && print "$oid = $val\n";
+		$apradiorow[ $col ][ $radio ] = $val;
+		}
+	    }
+	}
+
+    my @radio_types = ( 'unknown', 'dot11a', 'dot11b', 'dot11g', 'dot11ag', 'wired' );
+
+    $perf_util = $perf_clients = 0;
+    foreach $radio ( 1 .. $apwlanrow[ 9 ] ) {
+
+	next if ( ! $apradiorow[ 2 ][$radio] || $apradiorow[ 2 ][$radio] eq "noSuchInstance" );
+
+	if ( $verbose ) {
+	    print "radio $radio type ", $radio_types[ $apradiorow[ 2 ][$radio] ], "\n";
+	    print "radio $radio channel ", $apradiorow[ 3 ][$radio], "\n";
+	    printf "radio $radio tx power %0.1f dBm\n", $apradiorow[ 4 ][$radio] / 2;
+	    print "radio $radio mode ", $apradiorow[ 5 ][$radio], "\n";   # as an index code
+	    print "radio $radio utilization ", $apradiorow[ 6 ][$radio], "\n";
+	    print "radio $radio num associated clients ", $apradiorow[ 7 ][$radio], "\n";
+	    print "radio $radio num monitored clients ", $apradiorow[ 8 ][$radio], "\n";
+	    print "radio $radio num active bssids ", $apradiorow[ 9 ][$radio], "\n";
+	    print "radio $radio num monitored bssids ", $apradiorow[ 10 ][$radio], "\n";
+	    print "radio $radio bearing ", $apradiorow[ 11 ][$radio], "\n";   # as a string
+	    print "radio $radio tilt angle ", $apradiorow[ 12 ][$radio], "\n";   # as a string
+	    # 13 ?
+	    # 14 ?
+	    # 15 channel?
+	    }
+
+	push @oks, sprintf( "%s ch%d %2.1fdBm %d%%util %dclients",
+	    $radio_types[ $apradiorow[ 2 ][$radio] ],
+	    $apradiorow[ 3 ][$radio],
+	    $apradiorow[ 4 ][$radio] / 2,
+	    $apradiorow[ 6 ][$radio],
+	    $apradiorow[ 7 ][$radio] );
+
+	$perf_util = $apradiorow[ 6 ][$radio] if ( $apradiorow[ 6 ][$radio] > $perf_util );
+	$perf_clients += $apradiorow[ 7 ][$radio];
+	}
+
+    push @perfdata, sprintf "util=%d", $perf_util;
+    push @perfdata, sprintf "clients=%d", $perf_clients;
+
+
+
+
+
+
+    # wlsxWlanAPBssidTable
+    # INDEX {wlanAPMacAddress, wlanAPRadioNumber, wlanAPBSSID}
+    # 1 wlanAPBSSID                                            MacAddress,
+    # 2 wlanAPESSID                                            DisplayString,
+    # 3 wlanAPBssidSlot                                        Unsigned32,
+    # 4 wlanAPBssidPort                                        Unsigned32,
+    # 5 wlanAPBssidPhyType                                     ArubaPhyType,
+    # 6 wlanAPBssidRogueType                           ArubaRogueApType,
+    # 7 wlanAPBssidMode                                        INTEGER,
+    # 8 wlanAPBssidChannel                                     INTEGER,
+    # 9 wlanAPBssidUpTime                                      TimeTicks,
+    # 10 wlanAPBssidInactiveTime                        TimeTicks,
+    # 11 wlanAPBssidLoadBalancing                       TruthValue,
+    # 12 wlanAPBssidNumAssociatedStations       Unsigned32,
+    # 13 wlanAPBssidAPMacAddress                        MacAddress,
+    # 14 wlanAPBssidPhyNumber                           Integer32,
+    # 15 wlanAPBssidHTMode                                      ArubaHTMode,
+    # 16 wlanAPBssidHTExtChannel                        ArubaHTExtChannel,
+    # 17 wlanAPBssidHTChannel                           DisplayString
+
+    if ( $verbose ) {
+	undef @oids;
+	foreach $col ( 2, 11, 12, 15, 16, 17 ) {
+	    $oid = "$aruba.2.2.1.5.2.1.7.1.$col.$apmac_oid";
+	    $result = snmp_walk( $controller, $community, "bssid table $col", $oid );
+	    foreach $oid2 ( keys %$result ) {
+		if ( $oid2 =~ m/2\.2\.1\.5\.2\.1\.7\.1\.$col\.$apmac_oid\.(\d+)\.([\d\.]+)$/ ) {
+		    $radio = $1;
+		    $bssid = $2;
+		    $val = $result->{ $oid2 };
+		    $verbose > 1 && print "$oid2 = $val\n";
+		    $bssidrow[ $col ][ $radio ]{ $bssid } = $val;
+		    }
+		}
+	    }
+
+	foreach $radio ( 1 .. $apwlanrow[ 9 ] ) {
+	    foreach $bssid ( sort keys %{$bssidrow[ 2 ][ $radio ]} ) {
+
+		printf "%s radio %s ESSID '%s' BSSID %s\n",
+		    $apname,
+		    $radio_types[ $apradiorow[ 2 ][ $radio ] ],
+		    $bssidrow[ 2 ][ $radio ]{ $bssid },
+		    sprintf( "%02x:%02x:%02x:%02x:%02x:%02x",
+			split( /\./, $bssid ) );
+		printf "    load balancing %s\n", $bssidrow[ 11 ][ $radio ]{ $bssid };
+		printf "    stations %d\n", $bssidrow[ 12 ][ $radio ]{ $bssid };
+		printf "    HTMode %d\n", $bssidrow[ 15 ][ $radio ]{ $bssid };
+		printf "    HTExtChannel %d\n", $bssidrow[ 16 ][ $radio ]{ $bssid };
+		printf "    HTChannel %s\n", $bssidrow[ 17 ][ $radio ]{ $bssid };
+		}
+
+	    # what else?
+	    }
+	}
+
+
+
+
+
+    # fixme, do something with alarm mib
+
+    push @oks, "controller $sysName";
+
+    return 1;
+    }
+
+
+
+# search the ap_cache for an ap ip or name
+# return a reference to it's entry, or 0 on failure
+sub find_ap {
+    my( $ap ) = @_;
+    my( $apmac_oid, $best );
+
+    $verbose && print "find_ap( $ap )\n";
+
+    $best = '';
+    if ( $ap =~ m/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/ ) {
+	# ip address
+	foreach $apmac_oid ( keys %$ap_cache ) {
+	    if ( exists $ap_cache->{ $apmac_oid }{ apip }
+		    && defined $ap_cache->{ $apmac_oid }{ apip }
+		    && $ap_cache->{ $apmac_oid }{ apip } eq $ap ) {
+		$verbose && printf "found %s  = %s %s %s\n", 
+		    $ap, $apmac_oid, 
+		    $ap_cache->{ $apmac_oid }{ status },
+		    $ap_cache->{ $apmac_oid }{ learned };
+		# we want the matching mac that is up, and most recently learned
+		if ( ! $best || $ap_cache->{ $best }{ status } ne 'up' 
+			|| $ap_cache->{ $best }{ learned } < $ap_cache->{ $apmac_oid }{ learned } ) {
+		    $best = $apmac_oid;
+		    }
+		}
+	    }
+	}
+    else {
+	# ap name
+	foreach $apmac_oid ( keys %$ap_cache ) {
+	    if ( exists $ap_cache->{ $apmac_oid }{ apname }
+		    && defined $ap_cache->{ $apmac_oid }{ apname }
+		    && $ap_cache->{ $apmac_oid }{ apname } eq $ap ) {
+		$verbose && printf "found %s  = %s %s %s\n", 
+		    $ap, $apmac_oid, 
+		    $ap_cache->{ $apmac_oid }{ status },
+		    $ap_cache->{ $apmac_oid }{ learned };
+		# we want the matching mac that is up, and most recently learned
+		if ( ! $best || $ap_cache->{ $best }{ status } ne 'up' 
+			|| $ap_cache->{ $best }{ learned } < $ap_cache->{ $apmac_oid }{ learned } ) {
+		    $best = $apmac_oid;
+		    }
+		}
+	    }
+	}
+
+    if ( $best ) {
+	return \%{$ap_cache->{ $best }};
+	}
+
+    $verbose && print "    can't find $ap\n";
+    return 0;   # can't find it
+    }
+
+
+
+
+
+
+
+# load ap cache hash from storable file
+# on success return $ap_cache
+# on failure return false
+sub load_ap_cache {
+    my( $aptarget ) = @_;
+    my( $i );
+
+    $verbose && print "load_ap_cache( $aptarget )\n";
+
+    for $i ( 1 .. 50 ) {
+	if ( ( -f $cache_file ) && ( -s $cache_file ) > 100 && ! $force ) {
+	    $ap_cache = retrieve( $cache_file );
+	    if ( $ap_cache ) {
+		return $ap_cache;
+		}
+	    }
+	elsif ( $force ) {
+	    # ditch existing cache data, and rebuild
+	    $verbose && warn "forcing cache rebuild, $cache_file";
+	    if ( rebuild_ap_cache( $aptarget, ( $i < 40 ) ? 0 : 1  ) ) {
+		return $ap_cache;
+		}
+	    }
+	else {
+	    $verbose && warn "cache file is invalid, $cache_file";
+	    if ( rebuild_ap_cache( $aptarget ) ) {
+		return $ap_cache;
+		}
+	    }
+	usleep( 20000 * $i );
+	}
+
+    push @unknowns, "unable to load or rebuild ap cashe";
+    return 0;
+    }
+
+
+
+
+
+
+# rebuild the cache of aps
+# return 1 success, 0 failure
+sub rebuild_ap_cache {
+    my( $aptarget, $relaxed_checks ) = @_;
+    my( $sysDescr, $result, $oid, %controllers, $controller, $rc, $apmac_oid,
+	$apmac, $age, $locked, $i, $now );
+
+    $verbose && print "rebuild_ap_cache( $aptarget )\n";
+
+    # try to lock the new cache file
+
+    if ( -f $cache_file ) {
+	# can't use -M in embedded perl nagios, it computes file age
+	# relative to when nagios demon started.
+	my( $dev, $ino, $mode, $nlink, $uid, $gid, $rdev, $size,
+	    $atime, $mtime, $ctime, $blksize, $blocks ) = stat( _ );
+	$age = time() - $mtime;
+	if ( $age < $cache_holddown_time && ! $force ) {
+	    $verbose && print "cache file only $age seconds old, not rebuilding\n";
+	    return 0;  # failed
+	    }
+	}
+    $force = 0;  # only force once
+
+    $locked = 0;
+    if ( ! open( lockH, "+>>$cache_file.new" ) ) {
+	$verbose && warn "can't open new cache file to lock it: $!\n";
+	return 0;  # failed
+	}
+    if ( ! flock( lockH, LOCK_EX | LOCK_NB ) ) {
+	$verbose && warn "can't lock new cache file, $cache_file.new: $!\n";
+	close lockH;
+
+	my( $dev, $ino, $mode, $nlink, $uid, $gid, $rdev, $size,
+	    $atime, $mtime, $ctime, $blksize, $blocks ) 
+	    = stat( "$cache_file.new"  );
+	$age = time() - $mtime;
+	$verbose && print "existing $cache_file.new age $age\n";
+	if ( $age > 900 ) {
+	    # new cache file is hanging out too long?  wierd
+	    if ( ! unlink "$cache_file.new" ) { 
+		$verbose && warn "can't unlink existing $cache_file.new: $!\n";
+		}
+	    }
+	return 0;  # failed
+	}
+
+    foreach $host ( @master_hosts ) {
+
+	$sysDescr = snmp_get_one( $host, $community, 'sysDescr', "$mib2.1.1.0" );
+	if ( ! $sysDescr ) {
+	    push @unknowns, "unable to get sysDescr";
+	    flock( lockH, LOCK_UN );
+	    close( lockH );
+	    if ( $relaxed_checks )  { 
+		next;
+		}
+	    else { 
+		return 0;  # failed
+		}
+	    }
+	$verbose && print "sysDescr $sysDescr\n";
+	if ( $sysDescr !~ m/ArubaOS/ ) {
+	    push @unknowns, "not an Aruba controller: $sysDescr";
+	    flock( lockH, LOCK_UN );
+	    close( lockH );
+	    if ( $relaxed_checks )  { 
+		next;
+		}
+	    else { 
+		return 0;  # failed
+		}
+	    }
+
+	$result = snmp_walk( $host, $community, 'switchListSwitchRole', "$aruba.2.2.1.1.1.6.1.2" );
+	foreach $oid ( keys %$result ) {
+	    if ( $oid =~ m/6\.1\.2\.(\d+\.\d+\.\d+\.\d+)$/ ) {
+		$controllers{ $1 } = 1;
+		}
+	    }
+	}
+
+    if ( ! $ap_cache ) {
+	$ap_cache = {};
+	}
+    foreach $controller ( sort keys %controllers ) {
+	next if ( ! $controller );
+	rebuild_ap_cache_per_controller( $controller, $aptarget );
+	}
+
+    $verbose && print "\ncollating ap info\n";
+    $now = time;
+    foreach $apmac_oid ( sort keys %$ap_cache ) {
+	if ( exists $ap_cache->{ $apmac_oid }{ 'learned' }
+		&& $ap_cache->{ $apmac_oid }{ 'learned' } < ( $now - 604800 ) ) {
+	    # entry hasn't been updated in a week
+	    # clean it out to avoid bloating the cache
+	    delete $ap_cache->{ $apmac_oid };
+	    next;
+	    }
+
+	$ap_cache->{ $apmac_oid }{ 'apmac_oid' } = $apmac_oid;
+	$apmac = sprintf( "%02x:%02x:%02x:%02x:%02x:%02x",
+	    split( /\./, $apmac_oid ) );
+	$ap_cache->{ $apmac_oid }{ 'apmac' } = $apmac;
+	if ( $verbose > 1 || ( $verbose && $ap_cache->{ $apmac_oid }{ 'apname' } eq $aptarget ) ) {
+	    if ( $ap_cache->{ $apmac_oid }{ 'apname' } eq $aptarget ) {
+		print "***> ";
+		}
+	    printf "ap mac %s, name %s, ip %s, controller %s, status %s, learned %u\n",
+		$apmac,
+		$ap_cache->{ $apmac_oid }{ 'apname' },
+		$ap_cache->{ $apmac_oid }{ 'apip' },
+		$ap_cache->{ $apmac_oid }{ 'controller' },
+		$ap_cache->{ $apmac_oid }{ 'status' },
+		$ap_cache->{ $apmac_oid }{ 'learned' };
+	    }
+	}
+
+    if ( ! store $ap_cache, "$cache_file.new" ) {
+	$verbose && warn "can't store to new cache file: $!\n";
+	push @warns, "can't store to new cache file: $!";
+	flock( lockH, LOCK_UN );
+	close( lockH );
+	return 0;
+	}
+
+    # rename is atomic
+    # Won't disturb other instances of this script that already # have it open.
+    if ( ! rename( "$cache_file.new", $cache_file ) ) {
+	$verbose && warn "unable to rename new cache file: $!\n";
+	push @warns, "unable to rename new cache file: $!";
+	flock( lockH, LOCK_UN );
+	close( lockH );
+	return 0;
+	}
+
+    flock( lockH, LOCK_UN );
+    close( lockH );
+    return 1;   # success
+    }
+
+
+
+
+
+
+sub rebuild_ap_cache_per_controller {
+    my( $controller, $aptarget ) = @_;
+    my( $result, @oids, $val, $oid, $apmac_oid, $status, $per_ctrl_cache, $apname,
+	$apip, $now );
+
+    $verbose && print "rebuild_ap_cache_per_controller( $controller, $aptarget )\n";
+
+    my $sysDescr_oid = "$mib2.1.1.0";
+    my $sysUpTime_oid = "$mib2.1.3.0";
+    my $sysName_oid = "$mib2.1.5.0";
+    @oids = ( $sysDescr_oid, $sysUpTime_oid, $sysName_oid );
+    $result = snmp_get( $controller, $community, 'system', \@oids );
+    my $sysName = $result->{ $sysName_oid };
+    my $sysDescr = $result->{ $sysDescr_oid };
+    my $sysUpTime = $result->{ $sysUpTime_oid };
+    if ( $verbose ) {
+	print "sysName $sysName\n";
+	print "sysDescr $sysDescr\n";
+	print "sysUpTime $sysUpTime\n";
+	}
+    if ( ! $sysDescr ) {
+	#push @unknowns, "unable to get sysDescr";
+	return 0;
+	}
+    elsif ( $sysDescr !~ m/ArubaOS/ ) {
+	#push @unknowns, "not an Aruba controller: $sysDescr";
+	return 0;
+	}
+
+    my @statuses = ( 'unknown', 'up', 'down' );
+
+    $per_ctrl_cache = {};
+
+    # wlsxWlanAPTable.wlsxWlanAPEntry.wlanAPIpAddress
+    $result = snmp_walk( $controller, $community, 'wlanAPIpAddress',
+	"$aruba.2.2.1.5.2.1.4.1.2" );
+    foreach $oid ( keys %$result ) {
+	$val = $result->{ $oid };
+	$verbose > 1 && print "$oid = $val\n";
+	if ( $oid =~ m/\.(\d+\.\d+\.\d+\.\d+\.\d+\.\d+)$/ ) {
+	    $apmac_oid = $1;
+	    $per_ctrl_cache->{ $apmac_oid }{ 'apip' } = $val;
+	    }
+	}
+
+    # wlsxWlanAPTable.wlsxWlanAPEntry.wlanAPName
+    $result = snmp_walk( $controller, $community, 'wlanAPName', "$aruba.2.2.1.5.2.1.4.1.3" );
+    foreach $oid ( keys %$result ) {
+	$val = $result->{ $oid };
+	$verbose > 1 && print "$oid = $val\n";
+	if ( $oid =~ m/\.(\d+\.\d+\.\d+\.\d+\.\d+\.\d+)$/ ) {
+	    $apmac_oid = $1;
+	    $per_ctrl_cache->{ $apmac_oid }{ 'apname' } = $val;
+	    if ( $verbose && $val eq $aptarget ) { 
+		print "****> $controller, $apmac_oid, $val\n";
+		}
+	    }
+	}
+
+    # wlsxWlanAPTable.wlsxWlanAPEntry.wlanAPStatus
+    $result = snmp_walk( $controller, $community, 'wlanAPStatus',
+	"$aruba.2.2.1.5.2.1.4.1.19" );
+    foreach $oid ( keys %$result ) {
+	$val = $result->{ $oid };
+	$status = $statuses[ $val ];
+	$verbose > 1 && print "$oid = $val $status\n";
+	if ( $oid =~ m/\.(\d+\.\d+\.\d+\.\d+\.\d+\.\d+)$/ ) {
+	    $apmac_oid = $1;
+	    #$per_ctrl_cache->{ $apmac_oid }{ 'controller' } = $controller;
+	    $per_ctrl_cache->{ $apmac_oid }{ 'status' } = $status;
+	    }
+	}
+
+
+    # APs can get moved from one controller to another, and get renamed at
+    # the same time.  And they stick around in the old controller's mib as
+    # down for a long, long time (weeks).  So you can have the same ap wired mac
+    # (which is the primary table key) in two controllers at the same time,
+    # with different names, different ips, and one up and one down.  So you
+    # have to know if it's up before overwriting the oid to apname binding.
+
+    $now = time;
+    foreach $apmac_oid ( keys %$per_ctrl_cache ) {
+	# we want to prefer the apname and apip from the controller that
+	# sees the ap as 'up'
+	if ( exists $ap_cache->{ $apmac_oid }
+		&& $per_ctrl_cache->{ $apmac_oid }{ 'status' } eq 'down'
+		&& $ap_cache->{ $apmac_oid }{ 'status' } eq 'up'
+		&& defined $ap_cache->{ $apmac_oid }{ 'learned' }
+		&& $ap_cache->{ $apmac_oid }{ 'learned' }
+		    > ( $now - $cache_holddown_time ) ) {
+	    next;
+	    }
+
+	$apname = $per_ctrl_cache->{ $apmac_oid }{ 'apname' };
+	$apip = $per_ctrl_cache->{ $apmac_oid }{ 'apip' };
+	$status = $per_ctrl_cache->{ $apmac_oid }{ 'status' };
+
+	$apname = '' unless ( defined $apname );
+	$apip = '' unless ( defined $apip );
+	$status = 'down' unless ( defined $status );
+
+	$ap_cache->{ $apmac_oid }{ 'controller' } = $controller;
+	$ap_cache->{ $apmac_oid }{ 'apname' } = $apname;
+	$ap_cache->{ $apmac_oid }{ 'apip' } = $apip;
+	$ap_cache->{ $apmac_oid }{ 'status' } = $status;
+	$ap_cache->{ $apmac_oid }{ 'learned' } = $now;
+
+	if ( $verbose && $apname eq $aptarget ) {
+	    print "***> caching $apmac_oid $controller $apname $apip $status\n";
+	    }
+	}
+
+
+    return 1;
+    }
+
+
+
+
+
+
+
+
+
+# for tables with simple 1 integer indecies, ie most normal ones
+# Returns an array of arrays: data[ column ][ row ]
+sub walk_table {
+    my( $dev, $community, $name, $baseoid ) = @_;
+    my( $result, $rows, $oid, $val, $col, $row, @data );
+
+    $verbose && print "walk_table $dev $name\n";
+
+    $result = snmp_walk( $dev, $community, $name, $baseoid ) || return undef;
+
+    $rows = 0;
+    foreach $oid ( keys %$result ) {
+	$val = $result->{ $oid };
+	$verbose > 1 && print "$oid = $val\n";
+	next if ( $val eq 'endOfMibView' );
+	if ( $oid =~ m/.*\.(\d+)\.(\d+)$/ ) {
+	    $col = $1; $row = $2;
+	    $data[$col][$row] = $val;
+	    $rows = $row if ( $row > $rows );
+	    }
+	}
+
+    if ( ! $rows ) {
+        push @unknowns, "no rows in $name table on $dev";
+	return undef;
+        }
+
+    return @data;
+    }
+
+
+
+
+
+
+# for tables with complex indecies, like macaddrs or ips
+# Expectes the next octet of the oid after the baseoid to be the column number,
+# and anything after that to be the index/row.
+# So usually have to give this a baseoid with a final 1 for the "entry" level,
+# not just the "table" level oid.
+# Returns an array of hashes: data[ column ]{ row }
+sub walk_table2 {
+    my( $dev, $community, $name, $baseoid ) = @_;
+    my( $result, %rows, $nrows, $oid, $val, $col, $row, @data );
+
+    $verbose && print "walk_table2 $dev $name\n";
+
+    $result = snmp_walk( $dev, $community, $name, $baseoid ) || return undef;
+
+    foreach $oid ( keys %$result ) {
+	$val = $result->{ $oid };
+	$verbose > 1 && print "$oid = $val\n";
+	next if ( $val eq 'endOfMibView' );
+	if ( $oid =~ m/$baseoid\.(\d+)\.([\d\.]+)$/ ) {
+	    $col = $1; $row = $2;
+	    $rows{ $row } = 1;
+	    $data[$col]{$row} = $val;
+	    }
+	}
+
+    $nrows = scalar keys %rows;
+    if ( ! $nrows ) {
+        push @unknowns, "no rows in $name table on $dev";
+	return undef;
+        }
+
+    return @data;
+    }
+
+
+
+
+
+sub snmp_walk {
+    my( $dev, $community, $name, $baseoid ) = @_;
+    my( $session, $result );
+
+    $verbose && print "snmp_walk $dev $name\n";
+
+    $session = snmp_session( $dev, $community );
+    if ( ! defined( $session ) ) {
+        return undef;
+	}
+    $result = $session->get_table( -baseoid => $baseoid );
+    #print "session error ", $session->error(), "\n";
+    if ( ! defined( $result )
+            && $session->error() !~ m/Requested table is empty/ ) {
+	#warn sprintf( "error walking $name table on %s: %s",
+        #    $session->hostname, $session->error() );
+        #push @unknowns, sprintf( "error walking $name table on %s: %s",
+        #    $session->hostname, $session->error() );
+	return undef;
+        }
+    return $result;
+    }
+
+
+
+
+
+sub snmp_get_one {
+    my( $dev, $community, $name, $oid ) = @_;
+    my( $session, @oids, $result, $oid2, $val );
+
+    $verbose && print "snmp_get $dev $name\n";
+    $session = snmp_session( $dev, $community );
+    if ( ! defined( $session ) ) {
+        return undef;
+	}
+    @oids = ( $oid );
+    $result = $session->get_request( -varbindlist => \@oids );
+    if ( ! defined( $result ) ) {
+        #warn sprintf "error getting %s from %s: %s\n",
+        #    $name, $session->hostname, $session->error();
+        return undef;
+        }
+
+    if ( ! exists $result->{ $oid } ) {
+        #warn "snmp_get error: requested $name oid $oid not in response\n";
+        return undef;
+        }
+    return $result->{ $oid };
+    }
+
+
+
+
+sub snmp_get {
+    my( $dev, $community, $name, $oids ) = @_;
+    my( $session, $result, $oid );
+
+    $verbose && print "snmp_get $dev $name\n";
+    $session = snmp_session( $dev, $community );
+    if ( ! defined( $session ) ) {
+	$verbose && print "snmp_get undefined session\n";
+        return undef;
+	}
+    $result = $session->get_request( -varbindlist => $oids );
+    if ( ! defined( $result ) ) {
+	$verbose && print "get_request returned undefined result\n";
+        #warn sprintf "error getting %s from %s: %s\n",
+        #    $name, $session->hostname, $session->error();
+        return undef;
+        }
+
+    # clean the noSuchObject and noSuchInstance errors out of the result
+    foreach $oid ( keys %{$result} ) {
+        if ( $result->{ $oid } eq 'noSuchObject' 
+		|| $result->{ $oid } eq 'noSuchInstance' ) {
+            delete $result->{ $oid };
+            }
+        }
+
+    return $result;
+    }
+
+
+
+sub snmp_session {
+    my( $dev, $community ) = @_;
+    my( $ip, $session, $error );
+
+    if ( $dev =~ m/^\d[\d\.]+$/ ) {
+        $ip = $dev;
+        }
+    else {
+        $ip = name2ip( $dev );
+	if ( ! $ip ) {
+	    print "unable to resolve $dev to an ip\n";
+	    return undef;
+	    }
+        }
+
+    if ( exists $snmp_sessions{ "$ip,$community" } ) {
+        return $snmp_sessions{ "$ip,$community" };
+        }
+
+    ( $session, $error ) = Net::SNMP->session(
+        -version => $use_snmpv2c ? 'snmpv2c' : 'snmpv1',
+        -hostname => $ip,
+        -community => $community,
+        -timeout => 5.0,
+        -retries => 3,
+        #-debug => 0x02
+        );
+    if ( ! defined( $session ) ) {
+        push @unknowns, "snmp setup error: $error\n";
+        return undef;
+        }
+    $session->translate( [ '-octetstring' => 0 ] );
+
+    $snmp_sessions{ "$ip,$community" } = $session;
+    return $session;
+    }
+
+
+
+sub name2ip {
+    my( $name ) = @_;
+    my( $ip, $a, $b, $c, $d );
+
+    if ( defined( $name2ip{ $name } ) ) {
+        $ip = $name2ip{ $name };
+        }
+    elsif ( $name =~ m/^\s*(\d+\.\d+\.\d+\.\d+)\s*$/ ) {
+        $ip = $1;
+        $name2ip{ $name } = $ip;
+        $name2ip{ $1 } = $ip;
+        }
+    else {
+        $ip = gethostbyname( $name );
+        if ( ! $ip ) {
+            return undef;
+            }
+        ($a,$b,$c,$d) = unpack( 'C4', $ip );
+        $ip = "$a.$b.$c.$d";
+        $name2ip{ $name } = $ip;
+        }
+    return $ip;
+    }
+
+

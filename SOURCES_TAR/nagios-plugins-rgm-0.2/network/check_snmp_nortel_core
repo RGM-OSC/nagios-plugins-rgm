@@ -1,0 +1,114 @@
+#!/usr/bin/perl
+# Author : Roderick Derks (roderick@r71.nl)
+# Geschreven voor het St. Elisabeth Ziekenhuis te Tilburg
+# Date : 19/10/2007
+# check_snmp_nortel 
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+#################################################################
+#
+# cpu             : snmpwalk ezh1 -v 2c -c public 1.3.6.1.4.1.2272.1.1.20
+# switchfabricutil: snmpwalk ezh1 -v 2c -c public 1.3.6.1.4.1.2272.1.1.21
+# sysbufferutil   : snmpwalk ezh1 -v 2c -c public 1.3.6.1.4.1.2272.1.1.13 (high value:congestion)
+
+
+# globale variabelen:
+use vars qw($opt_h $opt_H $opt_C $opt_w $opt_c);
+use Getopt::Std;
+
+&getopts("h:H:C:c:w")||die "ERROR: Onbekende optie. -help voor help\n";
+if ($opt_h) { 
+    &print_usage;
+   }
+
+sub print_usage {
+    print "check_snmp_apc_env -H [ IP|HOSTNAME ] -C SNMPCOMMUNITY -w warning -c critical\n";
+    exit $STATE_UNKNOWN;
+}
+
+$PROGNAME = "check_snmp_apc_env";
+
+$STATE_CRITICAL = 2;
+$STATE_WARNING = 1;
+$STATE_UNKNOWN = 3;
+$STATE_OK = 0;
+
+$IP=$opt_H;
+$COMMUNITY=$opt_C;
+$warning=$opt_w;
+$critical=$opt_c;
+
+$result_cpuutil			=`snmpwalk $IP -v 2c -c $COMMUNITY 1.3.6.1.4.1.2272.1.1.20`;
+$result_switchfabricutil	=`snmpwalk $IP -v 2c -c $COMMUNITY 1.3.6.1.4.1.2272.1.1.21`;
+$result_sysbufferutil		=`snmpwalk $IP -v 2c -c $COMMUNITY 1.3.6.1.4.1.2272.1.1.13`;
+
+chomp $result_cpuutil;
+chomp $result_switchfabricutil;
+chomp $result_sysbufferutil;
+
+$result_cpuutil =~s/SNMPv2-SMI::enterprises.2272.1.1.20.0 = Gauge32: //g;
+$result_switchfabricutil =~s/SNMPv2-SMI::enterprises.2272.1.1.21.0 = Gauge32: //g;
+$result_sysbufferutil =~s/SNMPv2-SMI::enterprises.2272.1.1.13.0 = INTEGER: //g;
+
+
+if ( "$result_cpuutil" >= "$critical" ) {
+     $cpu_status = "cpu_critical";
+}
+elsif ( "$result_cpuutil" < "$warning" ) {
+     $cpu_status = "ok";
+}
+else {
+     $cpu_status = "warning";
+}
+
+if ( "$result_switchfabricutil" >= "$critical" ) {
+     $switchfabricutil_status = "critical";
+}
+elsif ( "$result_switchfabricutil" < "$warning" ) {
+     $switchfabricutil_status = "ok";
+}
+else {
+     $switchfabricutil_status = "warning";
+}
+
+if ( "$result_sysbufferutil" >= "$critical" ) {
+     $sysbufferutil_status = "critical";
+}
+elsif ( "$result_sysbufferutil" < "$warning" ) {
+     $sysbufferutil_status = "ok";
+}
+else {
+     $sysbufferutil_status = "warning";
+}
+
+
+#print "status_temp $status_temp status_hum $status_hum\n";
+
+$OUTPUT="CpuUtil=${result_cpuutil}% SwitchFabricUtil=${result_switchfabricutil}% SysBufferUtil=$result_sysbufferutil|CpuUtil=${result_cpuutil} SwitchFabricUtil=${result_switchfabricutil} SysBufferUtil=$result_sysbufferutil";
+
+if ( $result_cpuutil eq "critical" or $result_switchfabricutil eq "critical" or $result_sysbufferutil eq "critical" ) {
+     print "SNMP_ENVIRONMENT CRITICAL : $OUTPUT\n";
+     exit $STATE_CRITICAL;
+}
+elsif ( $result_cpuutil eq "warning" or $result_switchfabricutil eq "warning" or $result_sysbufferutil eq "warning" ) {
+     print "SNMP_ENVIRONMENT WARNING : $OUTPUT\n";
+     exit $STATE_WARNING;
+}
+else {
+     print "SNMP_ENVIRONMENT OK : $OUTPUT\n";
+     exit $STATE_OK;
+}
+
+
+
+#	print "OK : TEMP \n";
+#	exit $STATE_OK;
