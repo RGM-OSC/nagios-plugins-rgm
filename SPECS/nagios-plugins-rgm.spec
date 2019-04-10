@@ -9,7 +9,7 @@ License: GPL
 Requires: rgm-base nagios-plugins
 Requires: coreutils, fping
 Requires: python python-requests
-Requires: perl perl-libwww-perl-old perl-LWP-Protocol-https perl-Mail-Sendmail perl-Module-Load perl-Nagios-Plugin perl-Time-Duration
+Requires: perl perl-libwww-perl-old perl-LWP-Protocol-https perl-Mail-Sendmail perl-Module-Load perl-Nagios-Plugin perl-Time-Duration perl-WWW-Curl
 
 BuildRequires: rpm-macros-rgm autoconf automake gawk perl
 

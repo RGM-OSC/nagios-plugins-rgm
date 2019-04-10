@@ -1,0 +1,161 @@
+#!/bin/bash
+
+#  This script is Nagios plugin, part of JvmInspector tool
+#  Version 2014101401 (YYYYMMDDxx)
+#
+#  Author: Dimitar Fidanov <dimitar@fidanov.net>
+#
+#  The latest version can be found at:
+#  https://fidanov.net/c0d3/nagios-plugins/jvminspector/
+#
+#  See README for more details
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+##############################
+### PATH TO JvmInspector.jar
+
+JVMINSPECTOR="/usr/local/bin/JvmInspector.jar"  
+
+##############################
+
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export ENV=""
+export CDPATH=""
+
+STATE_OK=0
+STATE_WARNING=1
+STATE_CRITICAL=2
+STATE_UNKNOWN=3
+MSG_OK="OK"
+MSG_WARNING="WARNING"
+MSG_CRITICAL="CRITICAL"
+MSG_UNKNOWN="UNKNOWN"
+SCRIPT_NAME=$(basename $0)
+
+p_ok () {
+  echo "$MSG_OK $1"
+  exit "$STATE_OK"
+}
+p_warning () {
+  echo "$MSG_WARNING $1"
+  exit "$STATE_WARNING"
+}
+p_critical () {
+  echo "$MSG_CRITICAL $1"
+  exit "$STATE_CRITICAL"
+}
+p_unknown () {
+  echo "$MSG_UNKNOWN $1"
+  exit "$STATE_UNKNOWN"
+}
+
+usage () {
+  cat << EOF
+This is Nagios plugin that checks local JVMs properies like heap & non-heap memory, threads and etc
+
+Usage: $SCRIPT_NAME -n|--name <java_name> -p|--property <property> -w|--warning <warn> -c|--critical <crit>
+
+Where: <propery> is one of: "heap|non-heap|threads|classes"
+Hint: You can use "jps -l" or "java -jar JvmInspector.jar all" to get the java name
+Example: $SCRIPT_NAME -n org.apache.catalina.startup.Bootstrap -p heap -w 1073741824 -c 2147483648
+
+EOF
+exit 0
+}
+
+[ "$#" -eq 0 ] && usage
+
+while [ ! -z "$1" ]; do
+  case $1 in
+    -n|--name)     shift; NAME="$1";;
+    -p|--property) shift; PROPERTY="$1";;
+    -w|--warning)  shift; WARNING="$1";;
+    -c|--critical) shift; CRITICAL="$1";;
+    -h|--help)     usage;;
+  esac
+  shift
+done
+
+[ -z "$NAME" ] && p_unknown "Missing JVM app class name, use -n <value>"
+[ -z "$PROPERTY" ] && p_unknown "Missing property, use -p <value>"
+[ -z "$WARNING" ] && p_unknown "Missing warning thresholds, use -w <value>"
+[ -z "$CRITICAL" ] && p_unknown "Missing critical thresholds, use -c <value>"
+
+expr ${WARNING}  : '[0-9]\+$' >/dev/null || p_unknown "Invalid warning threshold"
+expr ${CRITICAL}  : '[0-9]\+$' >/dev/null || p_unknown "Invalid critical threshold"
+[ -f "$JVMINSPECTOR" ] || p_unknown "Can't find JvmInspector.jar, please install it and set JVMINSPECTOR var in this script"
+
+PSLINE="$(ps axo pid,uid,command | grep [j]ava | grep $NAME | head -1)"
+PID="$(echo $PSLINE | awk '{print $1}')"
+PUID="$(echo $PSLINE | awk '{print $2}')"
+
+[ -z "${PID}" ] && p_unknown "Can't find JVM with class name: $NAME"
+expr ${PID}  : '[0-9]\+$' >/dev/null || p_unknown "Bug"
+
+[ "${PUID}" = "${EUID}" ] || p_unknown "JVM is running with different username, run this script with UID $PUID"
+
+TIMEOUT="" ; timeout --version >/dev/null 2>&1 && TIMEOUT="timeout 7"
+JVMDATA="$(${TIMEOUT} java -jar ${JVMINSPECTOR} ${PID} 2>&1)"
+[ $? -ne 0 ] && p_unknown "Can't connect to JVM: ${JVMDATA}" 
+
+echo "$JVMDATA" | grep "class count" >/dev/null 2>/dev/null || p_unknown "Can't connect to the JVM: $JVMDATA"
+
+#echo "$JVMDATA"  # debug
+
+if [ "${PROPERTY}" = "threads" ]; then
+        RESULT="$(printf "%s" "$JVMDATA" | awk '/^  thread count/{print $3}')"
+        FRESULT="${RESULT}"
+        PERFDATA="${PROPERTY}=${RESULT};;;"
+elif [ "${PROPERTY}" = "classes" ]; then
+        RESULT=$(printf "%s" "$JVMDATA" | awk '/^  class count/{print $3}')
+        FRESULT="${RESULT}"
+        PERFDATA="${PROPERTY}=${RESULT};;;"
+elif [ "${PROPERTY}" = "heap" ]; then
+        TEMPDATA=$(printf "%s" "$JVMDATA" | awk 'BEGIN { FS = ": " } ;/^  heap memory/{print $2}')
+        MAX=$(printf "%s" "$TEMPDATA" | awk 'BEGIN { FS="|" } {print $1}' | awk 'BEGIN { FS="=" } {print $2}')
+        COMMITED=$(printf "%s" "$TEMPDATA" | awk 'BEGIN { FS="|" } {print $2}' | awk 'BEGIN { FS="=" } {print $2}')
+        USED=$(printf "%s" "$TEMPDATA" | awk 'BEGIN { FS="|" } {print $3}' | awk 'BEGIN { FS="=" } {print $2}')
+        RESULT="${USED}"
+        FRESULT=$(echo "${RESULT}" | numfmt --to=iec 2>/dev/null) || FRESULT="${RESULT}"
+        PERFDATA="max=${MAX};;; commited=${COMMITED};;; used=${USED};;;"
+elif [ "${PROPERTY}" = "non-heap" ]; then
+        TEMPDATA=$(printf "%s" "$JVMDATA" | awk 'BEGIN { FS = ": " } ;/^  non-heap memory/{print $2}')
+        MAX=$(printf "%s" "$TEMPDATA" | awk 'BEGIN { FS="|" } {print $1}' | awk 'BEGIN { FS="=" } {print $2}')
+        COMMITED=$(printf "%s" "$TEMPDATA" | awk 'BEGIN { FS="|" } {print $2}' | awk 'BEGIN { FS="=" } {print $2}')
+        USED=$(printf "%s" "$TEMPDATA" | awk 'BEGIN { FS="|" } {print $3}' | awk 'BEGIN { FS="=" } {print $2}')
+        RESULT="${USED}"
+        FRESULT=$(echo "${RESULT}" | numfmt --to=iec 2>/dev/null) || FRESULT="${RESULT}"
+        PERFDATA="max=${MAX};;; commited=${COMMITED};;; used=${USED};;;"
+elif [ "${PROPERTY}" = "sessions" ]; then
+	RESULT=$(printf "%s" "$JVMDATA" | awk '/^  active sessions/' | sed 's/^.*total\=\([0-9]*\)|.*$/\1/g')	
+        FRESULT="${RESULT}"
+        PERFDATA="sessions=${RESULT};;;"
+else 
+	p_unknown "Invalid property"
+fi
+
+[ -z ${RESULT} ] && p_unknown "Invalid data"
+expr ${RESULT}  : '-\?[0-9]\+$' >/dev/null || p_unknown "Invalid data"
+
+if [ "${RESULT}" -ge "$CRITICAL" ]; then
+	p_critical "${FRESULT} |${PERFDATA}"
+elif [ "${RESULT}" -ge "$WARNING" ]; then
+	p_warning "${FRESULT} |${PERFDATA}"
+else 
+	p_ok "${FRESULT} |${PERFDATA}"
+fi
+
+exit 0
+

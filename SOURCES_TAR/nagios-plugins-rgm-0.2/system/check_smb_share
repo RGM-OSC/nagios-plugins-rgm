@@ -1,0 +1,79 @@
+#!/bin/sh
+
+# Check for sharename on SMB with nagios
+# Michael Hodges <michael@va.com.au> 2011-03-04
+# Modified version of check_smb by Dave Love <fx@gnu.org>
+
+REVISION=1.0
+PROGNAME=`/bin/basename $0`
+PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
+
+. $PROGPATH/utils.sh
+
+usage () {
+    echo "\
+Nagios plugin to check for SAMBA Share. Use anonymous login if username is not supplied. 
+
+Usage:
+  $PROGNAME -H <host> -s <"sharename">
+  $PROGNAME -H <host> -s <"sharename"> -u <username> -p <password>
+  $PROGNAME --help
+  $PROGNAME --version
+"
+}
+
+help () {
+    print_revision $PROGNAME $REVISION
+    echo; usage; echo; support
+}
+
+if [ $# -lt 1 ]; then
+    usage
+    exit $STATE_UNKNOWN
+fi
+
+username="guest"
+password=""
+
+while test -n "$1"; do
+    case "$1" in
+	--help | -h)
+	    help
+	    exit $STATE_OK;;
+	--version | -V)
+	    print_revision $PROGNAME $REVISION
+	    exit $STATE_OK;;
+	-H)
+	    shift
+	    host="$1";;
+	-s)
+	    shift
+	    share="$1";;
+	-u)
+	    shift
+	    username="$1";;
+	-p)
+	    shift
+	    password="$1";;
+	*)
+	    usage; exit $STATE_UNKNOWN;;
+    esac
+shift
+done
+
+if [ "$username" = "guest" ]; then
+	stdout=`smbclient -N -L "$host" 2>&1`
+	sharetest=`echo "$stdout" | grep -o "$share" |head -n 1`
+else
+	stdout=`smbclient -L "$host" -U"$username"%"$password" 2>&1`
+	sharetest=`echo "$stdout" | grep -o "$share" |head -n 1`
+fi
+
+if [ "$sharetest" = "$share" ]; then
+	echo "OK SMB Sharename: `echo "$stdout" | grep "$share" |head -n 1`"
+	exit $STATE_OK
+else
+	err=`echo "$stdout" | head -n 1`
+	echo "CRITICAL SMB Sharename: "$share" "$err""
+	exit $STATE_CRITICAL
+fi

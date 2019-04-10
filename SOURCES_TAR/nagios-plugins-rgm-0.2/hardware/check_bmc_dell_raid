@@ -1,0 +1,48 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+use POSIX ();
+
+my ($sysname, $nodename, $release, $version, $machine);
+($sysname, $nodename, $release, $version, $machine) = POSIX::uname();
+
+if ($sysname == "FreeBSD") {
+	use lib "/usr/local/libexec/nagios";
+} else {
+	use lib "/usr/local/nagios/libexec";
+}
+
+use utils qw(%ERRORS);
+
+my $usage = "
+Usage: $0 host_addr ipmi_user ipmi_pass
+
+Connects to a Dell BMC and parses the Drive token for RAID status
+and disk slot errors.";
+
+# Gets output of ipmi command, this is funny with IPMI v2, we *sometimes* get an Authentication type error.
+my $result = `/usr/local/bin/ipmitool -I lan -H $ARGV[0] -U $ARGV[1] -P $ARGV[2] sdr type "Drive Slot / Bay" | grep -v "Authentication"`;
+
+# Check for authentication type error, and ignore it if it's there.
+
+my @status = split(/\|\s/s,$result);
+
+chomp $status[4];
+
+# XXX Debug lines XXX
+#print "Raw Status: $result\n";
+#print "My Status = \"$status[4]\"\n";
+
+if ($status[4] =~ m/^Drive Present\Z/g){
+	print "Raid Optimal | raid=10\n";
+	exit $ERRORS{'OK'};
+}
+elsif ($status[4] =~ m/^Drive Present, Parity Check In Progress$/g) {
+	print "Raid Reconstructing | raid=5\n";
+	exit $ERRORS{'WARNING'};
+}
+else {
+	print "Drive Present, In Critical Array | raid = 0\n";
+	exit $ERRORS{'CRITICAL'};
+}

@@ -1,0 +1,98 @@
+#!/bin/sh
+
+#####################################################
+# Check Windows share access                        #
+#                                                   #
+# Bruno GUERPILLON - 22-07-2014                     #
+#                                                   #
+# This plugin check access to Windows share         #
+# It's testing Authentication and Authorization too #
+#                                                   #
+# Authentication mean a bad usr/pwd config          #
+# Authorization mean a denied access on the share   #
+#                                                   #
+#                                                   #
+#####################################################
+
+
+REVISION=1.1
+PROGNAME=`/bin/basename $0`
+PROGPATH=`echo $0 | /bin/sed -e 's,[\\/][^\\/][^\\/]*$,,'`
+
+ACCESS_DENIED='NT_STATUS_ACCESS_DENIED'
+LOGON_DENIED='NT_STATUS_LOGON_FAILURE'
+
+logon_state=0
+acces_state=0
+
+. $PROGPATH/utils.sh
+
+usage () {
+    echo "\
+Nagios plugin to check Windows share
+
+Usage:
+  $PROGNAME -H <host> -U USER%PASSWORD -S SHARE
+  $PROGNAME --help
+  $PROGNAME --version
+"
+}
+
+help () {
+    print_revision $PROGNAME $REVISION
+    echo; usage; echo; support
+}
+
+if [ $# -lt 1 ] || [ $# -gt 6 ]; then
+    usage
+    exit $STATE_UNKNOWN
+fi
+
+while test -n "$1"; do
+    case "$1" in
+	--help | -h)
+	    help
+	    exit $STATE_OK;;
+	--version | -V)
+	    print_revision $PROGNAME $REVISION
+	    exit $STATE_OK;;
+	-H)
+	    shift
+	    host=$1;;
+	-U)
+	    shift
+	    userandpwd=$1;;
+	-S)
+	    shift
+	    share=$1;;
+	*)
+	    usage; exit $STATE_UNKNOWN;;
+    esac
+    shift
+done
+
+stdout=$(smbclient //$host/$share -U $userandpwd -c dir 2>&1)
+
+
+logon_state=$(echo $stdout | grep $LOGON_DENIED | wc -l)
+acces_state=$(echo $stdout | grep $ACCESS_DENIED | wc -l)
+share_state=$(echo "$stdout" | wc -l)
+
+if [ $logon_state -eq 1 ]; then
+    echo "CRITICAL Authentication problem : Check USER/PWD config"
+    exit $STATE_CRITICAL
+fi
+
+if [ $acces_state -eq 1 ]; then
+    echo "CRITICAL Authorization problem : Access denied"
+    exit $STATE_CRITICAL
+fi
+
+if [[ $acces_state -eq 0 && $logon_state -eq 0 && $share_state -gt 3 ]]; then
+    echo "OK Share : $share is accessible"
+    exit $STATE_OK
+fi
+
+    echo "Unknown state : $share"
+    exit $STATE_UNKNOWN
+
