@@ -13,6 +13,8 @@ Requires: perl perl-libwww-perl-old perl-LWP-Protocol-https perl-Mail-Sendmail p
 
 BuildRequires: rpm-macros-rgm autoconf automake gawk perl
 
+AutoReqProv:   0
+
 
 ### Consol.Labs plugins
 # https://labs.consol.de/assets/downloads/nagios/check_db2_health-1.1.2.2.tar.gz
