@@ -135,7 +135,7 @@ def rgm_memory_output(elastichost, plugin_hostname,warning_treshold,critical_tre
 
         print("{rc} - Memory Usage: {mmem}% (Qty Used: {umem}GB, Qty Free: {fmem}GB)," \
             " Swap Usage: {mswp}% (Qty Used: {uswp}GB, Qty Free: {fswp}GB) |" \
-            " 'Memory'={mmem};{mtw};{mtc};0;100 'swap'={mswp};{stw};{stc};0;100".format(
+            " Memory={mmem};{mtw};{mtc};0;100 Swap={mswp};{stw};{stc};0;100".format(
             rc=NagiosRetCode[retcode],
             mmem=str(round(mem_used_pct,2)),
             umem=str(round(mem_used_gb,2)),
