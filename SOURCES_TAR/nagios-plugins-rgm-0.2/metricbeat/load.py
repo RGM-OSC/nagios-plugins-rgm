@@ -111,7 +111,7 @@ def rgm_load_output(elastichost, plugin_hostname,warning_treshold,critical_tresh
             print("UNKNOWN: Load Average has not been returned")
             sys.exit(rc)
 
-        print("{}: Load Average 1 minute: {}, 5 minutes: {}, 15 minutes: {} | 'Load Average 1m'={};{};{} 'Load Average 5m'={};{};{} 'Load Average 15m'={};{};{}".format(
+        print("{}: Load Average 1 minute: {}, 5 minutes: {}, 15 minutes: {} | Load_Average_1m={};{};{} Load_Average_5m={};{};{} Load_Average_15m={};{};{}".format(
             NagiosRetCode[rc],
             str(round(load_1,2)),
             str(round(load_5,2)),
