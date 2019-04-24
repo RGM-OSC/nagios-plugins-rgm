@@ -54,7 +54,7 @@ def validate_elastichost(elastichost):
     verify that the ElasticSearch connection URL is valid
     eg. in the form of http(s)://hostname:port
     """
-    regex = re.compile(r"^https?://[-_\.\d\w]+:\d{2,5}/?$")
+    regex = re.compile(r"^https?:\/\/[-_\.\d\w]+(:\d{2,5})?\/?([-_\d\w]+)?$")
     if not regex.search(elastichost):
         print("Error: invalid ElasticSearch connection URL (must be of the fomr \"http://hostname:port\"")
         exit(2)

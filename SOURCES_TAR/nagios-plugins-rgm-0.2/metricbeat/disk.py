@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# vim: expandtab ts=4 sw=4:
 
 '''
 DESCRIPTION :
@@ -30,13 +31,15 @@ __maintainer__ = "Julien Dumarchey"
 ## MODULES FEATURES #######################################################################################################
 
 # Import the following modules:
+import urllib3
+urllib3.disable_warnings()
 import sys, re, argparse, requests, json, pprint
 from _rgmbeat import generic_api_call, generic_api_payload, get_data_validity_range, validate_elastichost
 
 NagiosRetCode = ('OK', 'WARNING', 'CRITICAL', 'UNKNOWN')
 
 # If required, disable SSL Warning Logging for "requests" library:
-#requests.packages.urllib3.disable_warnings()
+requests.packages.urllib3.disable_warnings()
 
 ## Declare Functions ######################################################################################################
 
@@ -84,7 +87,7 @@ def get_disk(elastichost, plugin_hostname,data_validity,verbose):
             print("### request payload:")
             pp.pprint(payload)
             print("### JSON output:")
-            print(results_json)
+            pp.pprint(results_json)
             print("####################################################################################")
 
         if int(results_json["hits"]["total"]) > 0:
@@ -122,8 +125,8 @@ def build_alerting_list(elastichost,plugin_hostname,warning_treshold,critical_tr
 
         if isinstance(fslist, list):
             for item in fslist:
-                item['warn_treshold_abs'] = (warning_treshold * item['total']) / 100
-                item['crit_treshold_abs'] = (critical_treshold * item['total']) / 100
+                item['warn_treshold_abs'] = (int(warning_treshold) * item['total']) / 100
+                item['crit_treshold_abs'] = (int(critical_treshold) * item['total']) / 100
                 item['nagios_status'] = 3
 
                 if item['used'] >= item['crit_treshold_abs']:
@@ -232,4 +235,6 @@ if __name__ == '__main__':
 
     if validate_elastichost(args.elastichost):
         rgm_disk_output(args.elastichost, args.hostname, args.warning, args.critical, args.timeout, args.verbose)
+    else:
+        print("can't validate elastic host")
 # EOF
