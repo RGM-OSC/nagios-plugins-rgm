@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 0.2
-Release: 0.rgm
+Release: 1.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -9,7 +9,7 @@ License: GPL
 Requires: rgm-base nagios-plugins
 Requires: coreutils, fping
 Requires: python python-requests
-Requires: perl perl-libwww-perl-old perl-LWP-Protocol-https perl-Mail-Sendmail perl-Module-Load perl-Nagios-Plugin perl-Time-Duration perl-WWW-Curl
+Requires: perl perl-libwww-perl-old perl-LWP-Protocol-https perl-Mail-Sendmail perl-Module-Load perl-Nagios-Plugin perl-Time-Duration perl-WWW-Curl perl-Net-OpenSSH perl-IO-Tty
 
 BuildRequires: rpm-macros-rgm autoconf automake gawk perl
 
@@ -162,6 +162,9 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 
 
 %changelog
+* Fri Apr 26 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 0.2-1.rgm
+- add Perl dependencies: perl-Net-OpenSSH perl-IO-Tty
+
 * Mon Apr 08 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 0.2-0.rgm
 - imported contrib plugins
 
