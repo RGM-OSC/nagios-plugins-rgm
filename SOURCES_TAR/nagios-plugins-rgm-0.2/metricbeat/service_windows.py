@@ -73,14 +73,17 @@ def get_service(elastichost,hostname,data_validity,verbose,custom_payload):
        results = requests.get(url=addr, headers=header, json=custom_payload, verify=False)
        results_json = results.json()
        if verbose:
-            print("## VERBOSE MODE - API REST HTTP RESPONSE: ##########################################")
-            print("request payload: {}".format(custom_payload))
-            print("JSON output: {}".format(results_json))
-            print("####################################################################################")
+            print("## VERBOSE MODE - API REST HTTP REQUEST - PAYLOAD: ####################################################################################")
+            print("REQUESTED PAYLOAD: {}".format(custom_payload) + '\n')
+            print("## VERBOSE MODE - API REST HTTP RESPONSE - JSON OUTPUT: ###############################################################################")
+            print("JSON RESPONSE: {}".format(results_json) + '\n')
+            print("## VERBOSE MODE - API REST HTTP RESPONSE - HITS: #####################################################################################")
+            print("TOTAL HIT: {}".format(str(results_json["hits"]["total"])) + '\n')
+            print("######################################################################################################################################")
        # Extract the "Total Hit" from results (= check if LOAD Value has been returned):
        total_hit = int(results_json["hits"]["total"])
        # If request hits: extract results and display Verbose Mode if requested in ARGS ; otherwise return a static code (0):
-        display_name, service_status = "TBD", "TBD"
+       display_name, service_status = "TBD", "TBD"
        if total_hit != 0:
            display_name = results_json["hits"]["hits"][0]["_source"]["windows"]["service"]["display_name"]
            service_status = results_json["hits"]["hits"][0]["_source"]["windows"]["service"]["state"]
