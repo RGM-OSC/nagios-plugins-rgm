@@ -79,7 +79,8 @@ def get_service(elastichost,hostname,data_validity,verbose,custom_payload):
             print("####################################################################################")
        # Extract the "Total Hit" from results (= check if LOAD Value has been returned):
        total_hit = int(results_json["hits"]["total"])
-       # If request hits: extract results (Memory Values in %) and display Verbose Mode if requested in ARGS ; otherwise return a static code (0):
+       # If request hits: extract results and display Verbose Mode if requested in ARGS ; otherwise return a static code (0):
+        display_name, service_status = "TBD", "TBD"
        if total_hit != 0:
            display_name = results_json["hits"]["hits"][0]["_source"]["windows"]["service"]["display_name"]
            service_status = results_json["hits"]["hits"][0]["_source"]["windows"]["service"]["state"]
@@ -154,6 +155,5 @@ if __name__ == '__main__':
         total_hit, display_name, service_status = get_service(args.elastichost,args.hostname,args.timeout,args.verbose,custom_payload)
         rgm_service_output(args.elastichost,args.hostname,args.warning,args.critical,args.timeout,args.verbose,total_hit,display_name,service_status)
 
-        #rgm_memory_output(args.elastichost, args.hostname, args.warning, args.critical, args.timeout, args.verbose, args.service)
 
 ## EOF ####################################################################################################################
