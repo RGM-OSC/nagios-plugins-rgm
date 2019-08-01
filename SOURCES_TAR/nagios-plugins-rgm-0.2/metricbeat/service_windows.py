@@ -36,7 +36,7 @@ NagiosRetCode = ('OK', 'WARNING', 'CRITICAL', 'UNKNOWN')
 
 ## Declare Functions ######################################################################################################
 
-# Build a custom Payload for ElasticSearch (here: HTTP Request Body for getting Service Status for specified Hostname and Service):
+# Build a custom Payload for ElasticSearch (here: HTTP Request Body for getting latest Windows/Service event with given beat hostname and service name):
 def custom_api_payload(hostname,windows_service,data_validity):
     try:
         # ElasticSearch Custom Variables:
@@ -64,7 +64,7 @@ def custom_api_payload(hostname,windows_service,data_validity):
         sys.exit(3)
 
 
-# Request a custom ElasticSearch API REST Call (here: Get Memories: Used, Free, Swap for Linux distrib):
+# Request a custom ElasticSearch API REST Call (here: Get relevant details about the given Service name):
 def get_service(elastichost,hostname,data_validity,verbose,custom_payload):
    try:
        # Get prerequisites for ElasticSearch API:
@@ -92,7 +92,7 @@ def get_service(elastichost,hostname,data_validity,verbose,custom_payload):
         print("Error calling \"get_service\"... Exception {}".format(e))
         sys.exit(3)
 
-# Display Service Status (System Information + Performance Data) in a format compliant with RGM expectations:
+# Display Nagios Status (System Information: yes, Performance Data: no) in a format compliant with RGM expectations:
 def rgm_service_output(elastichost, plugin_hostname,warning_treshold,critical_treshold,data_validity,verbose,total_hit,display_name,service_status):
     try:
         # Get Memory values:
