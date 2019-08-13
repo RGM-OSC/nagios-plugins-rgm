@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 0.2
-Release: 1.rgm
+Release: 2.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -154,14 +154,28 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 
 
 %files
-%defattr(0644, %{rgm_user_nagios}, %{rgm_group}, 0755)
+%defattr(0754, %{rgm_user_nagios}, %{rgm_group}, 0755)
 %{rgmdatadir}
 %{rgmdatadir}/metricbeat
 %{rgmdatadir}/metricbeat/*
-%attr(0754,%{rgm_user_nagios},%{rgm_group}) %{rgmdatadir}/metricbeat/*.py
-
+%attr(0554,%{rgm_user_nagios},%{rgm_group}) %{rgmdatadir}/*/*.pyc
+%attr(0554,%{rgm_user_nagios},%{rgm_group}) %{rgmdatadir}/*/*.pyo
+%attr(0554,%{rgm_user_nagios},%{rgm_group}) %{rgmdatadir}/*/*.class
+%attr(0554,%{rgm_user_nagios},%{rgm_group}) %{rgmdatadir}/*/*.java
+%attr(0554,%{rgm_user_nagios},%{rgm_group}) %{rgmdatadir}/*/*.example
+%attr(0554,%{rgm_user_nagios},%{rgm_group}) %{rgmdatadir}/*/*.txt
+%attr(0554,%{rgm_user_nagios},%{rgm_group}) %{rgmdatadir}/*/*.md
+%attr(0554,%{rgm_user_nagios},%{rgm_group}) %{rgmdatadir}/*/*.ini
+%attr(0554,%{rgm_user_nagios},%{rgm_group}) %{rgmdatadir}/*/*.conf
+%attr(0554,%{rgm_user_nagios},%{rgm_group}) %{rgmdatadir}/*/*.bat
+%attr(0554,%{rgm_user_nagios},%{rgm_group}) %{rgmdatadir}/*/*html
+%attr(0554,%{rgm_user_nagios},%{rgm_group}) %{rgmdatadir}/*/*.tar
+%attr(0554,%{rgm_user_nagios},%{rgm_group}) %{rgmdatadir}/*/*.rpm
 
 %changelog
+* Tue Aug 13 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 0.2-2.rgm
+- update files attrs
+
 * Fri Apr 26 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 0.2-1.rgm
 - add Perl dependencies: perl-Net-OpenSSH perl-IO-Tty
 
