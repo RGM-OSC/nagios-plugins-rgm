@@ -16,13 +16,14 @@ CHANGES :
   * 1.0.1       2019-03-26  Eric Belhomme <ebelhomme@fr.scc.com>        replace getopts by argparse module
                                                                         code factorization & mutualization
                                                                         added elastichost variable
+  * 1.0.2       2019-08-14  Samuel Ronciaux <sronciaux@fr.scc.com>      change metricset variable name to metricbeat agent 7.2.x                                                                         
 '''
 
 __author__ = "Julien Dumarchey, Eric Belhomme"
 __copyright__ = "2018, SCC"
 __credits__ = ["Julien Dumarchey", "Eric Belhomme"]
 __license__ = "GPL"
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 __maintainer__ = "Julien Dumarchey"
 
 ## MODULES FEATURES #######################################################################################################
@@ -56,9 +57,9 @@ def custom_api_payload(plugin_hostname,data_validity):
         custom_payload.update( {"query":{"bool":{"must":[],"filter":[],"should":[],"must_not":[]}}} )
         custom_payload["query"]["bool"]["must"].append( {"match_all":{}} )
         custom_payload["query"]["bool"]["must"].append( {"exists":{"field":""+field_name+""}} )
-        custom_payload["query"]["bool"]["must"].append( {"match_phrase":{"metricset.module":{"query":""+metricset_module+""}}} )
+        custom_payload["query"]["bool"]["must"].append( {"match_phrase":{"event.module":{"query":""+metricset_module+""}}} )
         custom_payload["query"]["bool"]["must"].append( {"match_phrase":{"metricset.name":{"query":""+metricset_name+""}}} )
-        custom_payload["query"]["bool"]["must"].append( {"match_phrase":{"beat.name":{"query":""+beat_name+""}}} )
+        custom_payload["query"]["bool"]["must"].append( {"match_phrase":{"host.name":{"query":""+beat_name+""}}} )
         custom_payload["query"]["bool"]["must"].append( {"range":{"@timestamp":{"gte":""+str(oldest_valid_timestamp)+"","lte":""+str(newest_valid_timestamp)+"","format":"epoch_millis"}}} )
         return custom_payload
     except Exception as e:

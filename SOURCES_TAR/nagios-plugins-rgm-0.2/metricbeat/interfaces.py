@@ -11,13 +11,14 @@ AUTHOR :
 CHANGES :
   * VERSION     DATE        WHO                                         DETAIL
   * 0.0.1       2019-04-04  Eric Belhomme <ebelhomme@fr.scc.com>        Initial version
+  * 0.0.2       2019-08-14  Samuel Ronciaux <sronciaux@fr.scc.com>      change metricset variable name to metricbeat agent 7.2.x  
 '''
 
 __author__ = "Eric Belhomme"
 __copyright__ = "2019, SCC"
 __credits__ = ["Eric Belhomme"]
 __license__ = "GPL"
-__version__ = "1.1.0"
+__version__ = "0.0.2"
 __maintainer__ = "Eric Belhomme"
 
 ## MODULES FEATURES #######################################################################################################
@@ -51,9 +52,9 @@ def custom_api_payload(hostname, data_validity):
         # Add the Query structure with ElasticSearch Variables:
         custom_payload.update( {'query': {'bool': {'must': [], 'filter': [], 'should': [], 'must_not': [] }}} )
         custom_payload['query']['bool']['must'].append( {'match_all': {}} )
-        custom_payload['query']['bool']['must'].append( {'match_phrase': {'metricset.module': {'query': metricset_module}}} )
+        custom_payload['query']['bool']['must'].append( {'match_phrase': {'event.module': {'query': metricset_module}}} )
         custom_payload['query']['bool']['must'].append( {'match_phrase': {'metricset.name': {'query': metricset_name}}} )
-        custom_payload['query']['bool']['must'].append( {'match_phrase': {'beat.name': {'query': hostname}}} )
+        custom_payload['query']['bool']['must'].append( {'match_phrase': {'host.name': {'query': hostname}}} )
         custom_payload['query']['bool']['must_not'].append( {'match': {'system.network.name': {'query': 'lo'}}} )
         custom_payload['query']['bool']['must'].append( {'range': {'@timestamp': {'gte': str(oldest_valid_timestamp), 'lte': str(newest_valid_timestamp), 'format': 'epoch_millis'}}} )
         return custom_payload
