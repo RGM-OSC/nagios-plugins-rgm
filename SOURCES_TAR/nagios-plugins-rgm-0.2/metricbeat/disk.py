@@ -91,7 +91,7 @@ def get_disk(elastichost, plugin_hostname,data_validity,verbose):
             pp.pprint(results_json)
             print("####################################################################################")
 
-        if int(results_json["hits"]["total"]) > 0:
+        if int(results_json["hits"]["total"]['value']) > 0:
             fslist = []
             # get a list of returned fs, then keep only latest item of each mountpoint
             allfslist = [ i['_source'] for i in results_json['hits']['hits'] ]

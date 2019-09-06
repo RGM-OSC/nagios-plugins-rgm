@@ -81,7 +81,7 @@ def get_interfaces(elastichost, hostname, data_validity, verbose):
             print(results_json)
             print("####################################################################################")
 
-        if not bool(results_json['timed_out']) and int(results_json["hits"]["total"]) > 0:
+        if not bool(results_json['timed_out']) and int(results_json["hits"]["total"]['value']) > 0:
             niclst = []
             # get a list of returned fs, then keep only latest item of each mountpoint
             allfslist = [ i['_source'] for i in results_json['hits']['hits'] ]

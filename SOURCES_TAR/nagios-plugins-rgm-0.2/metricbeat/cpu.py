@@ -77,7 +77,7 @@ def get_cpu(elastic_host, plugin_hostname,data_validity,verbose):
         results = requests.get(url=addr, headers=header, json=payload, verify=False)
         results_json = results.json()
         # Extract the "Total Hit" from results (= check if CPU Value has been returned):
-        total_hit = int(results_json["hits"]["total"])
+        total_hit = int(results_json["hits"]["total"]['value'])
         # If request hits: extract results (CPU Values in %) and display Verbose Mode if requested in ARGS ; otherwise return a static code (0):
         if verbose:
             print("## VERBOSE MODE - API REST HTTP RESPONSE: ##########################################")

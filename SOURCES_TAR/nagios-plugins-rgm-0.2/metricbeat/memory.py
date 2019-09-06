@@ -81,7 +81,7 @@ def get_memory(elastichost, plugin_hostname,data_validity,verbose):
             print("JSON output: {}".format(results_json))
             print("####################################################################################")
        # Extract the "Total Hit" from results (= check if LOAD Value has been returned):
-       total_hit = int(results_json["hits"]["total"])
+       total_hit = int(results_json["hits"]["total"]['value'])
        # If request hits: extract results (Memory Values in %) and display Verbose Mode if requested in ARGS ; otherwise return a static code (0):
        if total_hit != 0:
             mem_used_pct = float(results_json["hits"]["hits"][0]["_source"]["system"]["memory"]["actual"]["used"]["pct"]) * 100

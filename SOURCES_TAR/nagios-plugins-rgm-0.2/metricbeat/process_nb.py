@@ -80,7 +80,7 @@ def get_timestamp(elastichost,hostname,process_name,data_validity,verbose,payloa
             print("TOTAL HIT: {}".format(str(results_json["hits"]["total"])) + '\n')
             print("######################################################################################################################################")
        # Extract the "Total Hit" from results (= check if LOAD Value has been returned):
-       total_hit = int(results_json["hits"]["total"])
+       total_hit = int(results_json["hits"]["total"]['value'])
        # If request hits: extract results and display Verbose Mode if requested in ARGS ; otherwise return a static code (0):
        timestamp = "TBD"
        if total_hit != 0:

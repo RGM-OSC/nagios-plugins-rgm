@@ -56,9 +56,9 @@ def custom_api_payload(plugin_hostname,data_validity):
         custom_payload.update( {"query":{"bool":{"must":[],"filter":[],"should":[],"must_not":[]}}} )
         custom_payload["query"]["bool"]["must"].append( {"match_all":{}} )
         custom_payload["query"]["bool"]["must"].append( {"exists":{"field":""+field_name+""}} )
-        custom_payload["query"]["bool"]["must"].append( {"match_phrase":{"metricset.module":{"query":""+metricset_module+""}}} )
+        custom_payload["query"]["bool"]["must"].append( {"match_phrase":{"event.module":{"query":""+metricset_module+""}}} )
         custom_payload["query"]["bool"]["must"].append( {"match_phrase":{"metricset.name":{"query":""+metricset_name+""}}} )
-        custom_payload["query"]["bool"]["must"].append( {"match_phrase":{"beat.name":{"query":""+beat_name+""}}} )
+        custom_payload["query"]["bool"]["must"].append( {"match_phrase":{"host.name":{"query":""+beat_name+""}}} )
         custom_payload["query"]["bool"]["must"].append( {"range":{"@timestamp":{"gte":""+str(oldest_valid_timestamp)+"","lte":""+str(newest_valid_timestamp)+"","format":"epoch_millis"}}} )
         return custom_payload
     except Exception as e:
@@ -79,7 +79,7 @@ def get_uptime(elastichost, plugin_hostname,data_validity,verbose):
             print("request payload: {}".format(payload))
             print("JSON output: {}".format(results_json))
             print("####################################################################################")        # Extract the "Total Hit" from results (= check if an Uptime has been returned):
-        total_hit = int(results_json["hits"]["total"])
+        total_hit = int(results_json["hits"]["total"]['value'])
         # If request hits: extract results (Uptime in ms) and display Verbose Mode if requested in ARGS ; otherwise return a static code (0):
         if total_hit != 0:
             uptime_ms = results_json["hits"]["hits"][0]["_source"]["system"]["uptime"]["duration"]["ms"]
