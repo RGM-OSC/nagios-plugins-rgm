@@ -4,7 +4,6 @@ Version: 1.0
 Release: 1.rgm
 Version: 0.2
 Release: 2.rgm
->>>>>>> master
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -173,7 +172,6 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 
 * Fri Apr 26 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 0.2-1.rgm
 - add Perl dependencies: perl-Net-OpenSSH perl-IO-Tty
->>>>>>> master
 
 * Mon Apr 08 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 0.2-0.rgm
 - imported contrib plugins
