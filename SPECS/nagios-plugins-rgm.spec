@@ -1,9 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
-<<<<<<< HEAD
 Version: 1.0
-Release: 0.rgm
-=======
+Release: 1.rgm
 Version: 0.2
 Release: 2.rgm
 >>>>>>> master
@@ -164,10 +162,12 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 
 
 %changelog
-<<<<<<< HEAD
+* Fri Sep 27 2019 Michael Aubertin <maubertin@fr.scc.com> - 1.0-1.rgm
+- Fix git merge issue
+
 * Fri Sep 27 2019 Michael Aubertin <maubertin@fr.scc.com> - 1.0-0.rgm
 - First RGM release. Add check_apachestatus
-=======
+
 * Tue Aug 13 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 0.2-2.rgm
 - update files attrs
 
