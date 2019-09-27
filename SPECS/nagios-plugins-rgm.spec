@@ -1,6 +1,6 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
-Version: 0.2
+Version: 1.0
 Release: 0.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
@@ -162,6 +162,9 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 
 
 %changelog
+* Fri Sep 27 2019 Michael Aubertin <maubertin@fr.scc.com> - 1.0-0.rgm
+- First RGM release. Add check_apachestatus
+
 * Mon Apr 08 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 0.2-0.rgm
 - imported contrib plugins
 
