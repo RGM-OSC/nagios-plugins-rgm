@@ -1,7 +1,12 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
+<<<<<<< HEAD
 Version: 1.0
 Release: 0.rgm
+=======
+Version: 0.2
+Release: 2.rgm
+>>>>>>> master
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -9,7 +14,7 @@ License: GPL
 Requires: rgm-base nagios-plugins
 Requires: coreutils, fping
 Requires: python python-requests
-Requires: perl perl-libwww-perl-old perl-LWP-Protocol-https perl-Mail-Sendmail perl-Module-Load perl-Nagios-Plugin perl-Time-Duration perl-WWW-Curl
+Requires: perl perl-libwww-perl-old perl-LWP-Protocol-https perl-Mail-Sendmail perl-Module-Load perl-Nagios-Plugin perl-Time-Duration perl-WWW-Curl perl-Net-OpenSSH perl-IO-Tty
 
 BuildRequires: rpm-macros-rgm autoconf automake gawk perl
 
@@ -154,16 +159,21 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 
 
 %files
-%defattr(0644, %{rgm_user_nagios}, %{rgm_group}, 0755)
+%defattr(0754, %{rgm_user_nagios}, %{rgm_group}, 0755)
 %{rgmdatadir}
-%{rgmdatadir}/metricbeat
-%{rgmdatadir}/metricbeat/*
-%attr(0754,%{rgm_user_nagios},%{rgm_group}) %{rgmdatadir}/metricbeat/*.py
 
 
 %changelog
+<<<<<<< HEAD
 * Fri Sep 27 2019 Michael Aubertin <maubertin@fr.scc.com> - 1.0-0.rgm
 - First RGM release. Add check_apachestatus
+=======
+* Tue Aug 13 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 0.2-2.rgm
+- update files attrs
+
+* Fri Apr 26 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 0.2-1.rgm
+- add Perl dependencies: perl-Net-OpenSSH perl-IO-Tty
+>>>>>>> master
 
 * Mon Apr 08 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 0.2-0.rgm
 - imported contrib plugins

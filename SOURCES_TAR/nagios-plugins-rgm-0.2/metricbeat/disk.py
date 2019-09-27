@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# vim: expandtab ts=4 sw=4:
 
 '''
 DESCRIPTION :
@@ -17,26 +18,29 @@ CHANGES :
   * 1.0.1       2019-03-26  Eric Belhomme <ebelhomme@fr.scc.com>        replace getopts by argparse module
                                                                         code factorization & mutualization
   * 1.1.0       2019-04-04  Eric Belhomme <ebelhomme@fr.scc.com>        massive rewrite with list comprehension
-                                                                        perfdata are absolute MB instead of percentage                                                                        
+                                                                        perfdata are absolute MB instead of percentage 
+  * 1.1.1       2019-08-14  Samuel Ronciaux <sronciaux@fr.scc.com>      change metricset variable name to metricbeat agent 7.2.x                                                                                                                                                
 '''
 
 __author__ = "Julien Dumarchey, Eric Belhomme"
 __copyright__ = "2018, SCC"
 __credits__ = ["Julien Dumarchey", "Eric Belhomme"]
 __license__ = "GPL"
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 __maintainer__ = "Julien Dumarchey"
 
 ## MODULES FEATURES #######################################################################################################
 
 # Import the following modules:
+import urllib3
+urllib3.disable_warnings()
 import sys, re, argparse, requests, json, pprint
 from _rgmbeat import generic_api_call, generic_api_payload, get_data_validity_range, validate_elastichost
 
 NagiosRetCode = ('OK', 'WARNING', 'CRITICAL', 'UNKNOWN')
 
 # If required, disable SSL Warning Logging for "requests" library:
-#requests.packages.urllib3.disable_warnings()
+requests.packages.urllib3.disable_warnings()
 
 ## Declare Functions ######################################################################################################
 
@@ -59,9 +63,9 @@ def custom_api_payload(plugin_hostname,data_validity):
         custom_payload.update( {"query":{"bool":{"must":[],"filter":[],"should":[],"must_not":[]}}} )
         custom_payload["query"]["bool"]["must"].append( {"match_all":{}} )
         custom_payload["query"]["bool"]["must"].append( {"exists":{"field":""+field_name+""}} )
-        custom_payload["query"]["bool"]["must"].append( {"match_phrase":{"metricset.module":{"query":""+metricset_module+""}}} )
+        custom_payload["query"]["bool"]["must"].append( {"match_phrase":{"event.module":{"query":""+metricset_module+""}}} )
         custom_payload["query"]["bool"]["must"].append( {"match_phrase":{"metricset.name":{"query":""+metricset_name+""}}} )
-        custom_payload["query"]["bool"]["must"].append( {"match_phrase":{"beat.name":{"query":""+beat_name+""}}} )
+        custom_payload["query"]["bool"]["must"].append( {"match_phrase":{"host.name":{"query":""+beat_name+""}}} )
         custom_payload["query"]["bool"]["must"].append( {"range":{"@timestamp":{"gte":""+str(oldest_valid_timestamp)+"","lte":""+str(newest_valid_timestamp)+"","format":"epoch_millis"}}} )
         return custom_payload
     except Exception as e:
@@ -84,10 +88,10 @@ def get_disk(elastichost, plugin_hostname,data_validity,verbose):
             print("### request payload:")
             pp.pprint(payload)
             print("### JSON output:")
-            print(results_json)
+            pp.pprint(results_json)
             print("####################################################################################")
 
-        if int(results_json["hits"]["total"]) > 0:
+        if int(results_json["hits"]["total"]['value']) > 0:
             fslist = []
             # get a list of returned fs, then keep only latest item of each mountpoint
             allfslist = [ i['_source'] for i in results_json['hits']['hits'] ]
@@ -122,8 +126,8 @@ def build_alerting_list(elastichost,plugin_hostname,warning_treshold,critical_tr
 
         if isinstance(fslist, list):
             for item in fslist:
-                item['warn_treshold_abs'] = (warning_treshold * item['total']) / 100
-                item['crit_treshold_abs'] = (critical_treshold * item['total']) / 100
+                item['warn_treshold_abs'] = (int(warning_treshold) * item['total']) / 100
+                item['crit_treshold_abs'] = (int(critical_treshold) * item['total']) / 100
                 item['nagios_status'] = 3
 
                 if item['used'] >= item['crit_treshold_abs']:
@@ -232,4 +236,6 @@ if __name__ == '__main__':
 
     if validate_elastichost(args.elastichost):
         rgm_disk_output(args.elastichost, args.hostname, args.warning, args.critical, args.timeout, args.verbose)
+    else:
+        print("can't validate elastic host")
 # EOF
