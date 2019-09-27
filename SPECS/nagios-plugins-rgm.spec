@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 1.rgm
+Release: 2.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -110,6 +110,7 @@ cd ../check_printer_health-1.0.1.1
 install -d -o %{rgm_user_nagios} -g %{rgm_group} -m 0755 %{buildroot}%{rgmdatadir}
 cp -afv aix %{buildroot}%{rgmdatadir}/
 cp -afv as400 %{buildroot}%{rgmdatadir}/
+cp -afv apache %{buildroot}%{rgmdatadir}/
 cp -afv backup %{buildroot}%{rgmdatadir}/
 cp -afv database %{buildroot}%{rgmdatadir}/
 cp -afv downtime %{buildroot}%{rgmdatadir}/
@@ -159,11 +160,14 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 
 
 %changelog
+* Fri Sep 27 2019 Michael Aubertin <maubertin@fr.scc.com> - 1.0-2.rgm
+- Add Apache Status Check
+
 * Fri Sep 27 2019 Michael Aubertin <maubertin@fr.scc.com> - 1.0-1.rgm
 - Fix git merge issue
 
 * Fri Sep 27 2019 Michael Aubertin <maubertin@fr.scc.com> - 1.0-0.rgm
-- First RGM release. Add check_apachestatus
+- First RGM release. 
 
 * Tue Aug 13 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 0.2-2.rgm
 - update files attrs
