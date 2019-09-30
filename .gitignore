@@ -1,1 +1,2 @@
 SOURCES/**/*.pyc
+SOURCES/**/*.pyo

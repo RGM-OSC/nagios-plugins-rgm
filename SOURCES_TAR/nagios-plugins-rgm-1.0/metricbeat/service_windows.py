@@ -147,7 +147,7 @@ if __name__ == '__main__':
     parser.add_argument('-S', '--service', type=str, help='Windows service to monitor', required=True)
     parser.add_argument('-w', '--warning', help='Raise as a Warning alert if service is stoppped', action='store_true')
     parser.add_argument('-c', '--critical', help='Raise as a Crtical alert if service is stoppped', action='store_true')
-    parser.add_argument('-t', '--timeout', type=str, help='Data validity timeout (in minutes)', default=4)
+    parser.add_argument('-t', '--timeout', type=int, help='Data validity timeout (in minutes)', default=4)
     parser.add_argument('-E', '--elastichost', type=str, help='Connection URL of ElasticSearch server', default="http://localhost:9200")
     parser.add_argument('-v', '--verbose', help='be verbose', action='store_true')
 

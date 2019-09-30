@@ -112,7 +112,7 @@ if __name__ == '__main__':
         """,
         epilog="version {}, copyright {}".format(__version__, __copyright__))
     parser.add_argument('-H', '--hostname', type=str, help='hostname or IP address', required=True)
-    parser.add_argument('-t', '--timeout', type=str, help='data validity timeout (in minutes)', default=4)
+    parser.add_argument('-t', '--timeout', type=int, help='data validity timeout (in minutes)', default=4)
     parser.add_argument('-E', '--elastichost', type=str, help='connection URL of ElasticSearch server', default="http://localhost:9200")
     parser.add_argument('-v', '--verbose', help='be verbose', action='store_true')
 

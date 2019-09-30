@@ -16,7 +16,8 @@ CHANGES :
   * 1.0.1       2019-03-26  Eric Belhomme <ebelhomme@fr.scc.com>        replace getopts by argparse module
                                                                         code factorization & mutualization
                                                                         added elastichost variable
-  * 1.0.2       2019-08-14  Samuel Ronciaux <sronciaux@fr.scc.com>      change metricset variable name to metricbeat agent 7.2.x                                                                    
+  * 1.0.2       2019-08-14  Samuel Ronciaux <sronciaux@fr.scc.com>      change metricset variable name to metricbeat agent 7.2.x
+  * 1.0.3       2019-09-30  Eric Belhomme <ebelhomme@fr.scc.com>        fix argument type casting to int for warning, critical, timeout
 '''
 
 __author__ = "Julien Dumarchey, Eric Belhomme"
@@ -85,6 +86,7 @@ def get_cpu(elastic_host, plugin_hostname,data_validity,verbose):
             print("JSON output: {}".format(results_json))
             print("####################################################################################")
  
+        cpu_total, cpu_user, cpu_system = 0, 0, 0
         if total_hit != 0:
             cpu_nb = int(results_json["hits"]["hits"][0]["_source"]["system"]["cpu"]["cores"])
             cpu_total = float(float(results_json["hits"]["hits"][0]["_source"]["system"]["cpu"]["total"]["pct"]) * 100) / cpu_nb
@@ -102,16 +104,22 @@ def rgm_cpu_output(elastic_host, plugin_hostname,warning_treshold,critical_tresh
     try:
         # Get CPU values:
         total_hit, cpu_total, cpu_user, cpu_system = get_cpu(elastic_host, plugin_hostname, data_validity, verbose)
+        if verbose:
+            print("returned metrics: got {} hits, CPU(total, user, system): ({}, {}, {}) - warn: {}, crit: {}".format(
+                total_hit, cpu_total, cpu_user, cpu_system, warning_treshold, critical_treshold
+            ))
+
         # Parse value for Alerting returns:
-        if total_hit != 0 and cpu_total >= critical_treshold:
-            print("CRITICAL - Total CPU is: "+str(round(cpu_total,2))+"% (User CPU is: "+str(round(cpu_user,2))+"%, System CPU is: "+str(round(cpu_system,2))+"%) | Total_CPU="+str(round(cpu_total,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
-            sys.exit(2)
-        elif total_hit != 0 and cpu_total >= warning_treshold and cpu_total < critical_treshold:
-            print("WARNING - Total CPU is: "+str(round(cpu_total,2))+"% (User CPU is: "+str(round(cpu_user,2))+"%, System CPU is: "+str(round(cpu_system,2))+"%) | Total_CPU="+str(round(cpu_total,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
-            sys.exit(1)
-        elif total_hit != 0 and cpu_total < warning_treshold:
-            print("OK - Total CPU is: "+str(round(cpu_total,2))+"% (User CPU is: "+str(round(cpu_user,2))+"%, System CPU is: "+str(round(cpu_system,2))+"%) | Total_CPU="+str(round(cpu_total,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
-            sys.exit(0)
+        if total_hit > 0:
+            if int(cpu_total) >= critical_treshold:
+                print("CRITICAL - Total CPU is: "+str(round(cpu_total,2))+"% (User CPU is: "+str(round(cpu_user,2))+"%, System CPU is: "+str(round(cpu_system,2))+"%) | Total_CPU="+str(round(cpu_total,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
+                sys.exit(2)
+            elif int(cpu_total) >= warning_treshold and int(cpu_total) < critical_treshold:
+                print("WARNING - Total CPU is: "+str(round(cpu_total,2))+"% (User CPU is: "+str(round(cpu_user,2))+"%, System CPU is: "+str(round(cpu_system,2))+"%) | Total_CPU="+str(round(cpu_total,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
+                sys.exit(1)
+            elif int(cpu_total) < warning_treshold:
+                print("OK - Total CPU is: "+str(round(cpu_total,2))+"% (User CPU is: "+str(round(cpu_user,2))+"%, System CPU is: "+str(round(cpu_system,2))+"%) | Total_CPU="+str(round(cpu_total,2))+";"+str(warning_treshold)+";"+str(critical_treshold)+"")
+                sys.exit(0)
         else:
             print("UNKNOWN: CPU has not been returned...")
             sys.exit(3)
@@ -148,9 +156,9 @@ if __name__ == '__main__':
         """,
         epilog="version {}, copyright {}".format(__version__, __copyright__))
     parser.add_argument('-H', '--hostname', type=str, help='hostname or IP address', required=True)
-    parser.add_argument('-w', '--warning', type=str, nargs='?', help='warning trigger', default=85)
-    parser.add_argument('-c', '--critical', type=str, nargs='?', help='critical trigger', default=90)
-    parser.add_argument('-t', '--timeout', type=str, help='data validity timeout (in minutes)', default=4)
+    parser.add_argument('-w', '--warning', type=int, nargs='?', help='warning trigger', default=85)
+    parser.add_argument('-c', '--critical', type=int, nargs='?', help='critical trigger', default=90)
+    parser.add_argument('-t', '--timeout', type=int, help='data validity timeout (in minutes)', default=4)
     parser.add_argument('-E', '--elastichost', type=str, help='connection URL of ElasticSearch server', default="http://localhost:9200")
     parser.add_argument('-v', '--verbose', help='be verbose', action='store_true')
 

@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 3.rgm
+Release: 4.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -160,6 +160,9 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 
 
 %changelog
+* Mon Sep 30 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-4.rgm
+- fix argument type casting to int for warning, critical, timeout on metricbeat checks
+
 * Fri Sep 27 2019 Michael Aubertin <maubertin@fr.scc.com> - 1.0-3.rgm
 - Change Apache check
 

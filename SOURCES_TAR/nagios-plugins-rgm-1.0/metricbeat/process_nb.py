@@ -13,7 +13,7 @@ AUTHOR :
 CHANGES :
   * VERSION     DATE        WHO                                         DETAIL
   * 0.0.1       2019-31-07  Julien Dumarchey <jdumarchey@fr.scc.com>    Initial version
-
+  * 0.0.2       2019-09-30  Eric Belhomme <ebelhomme@fr.scc.com>        fix argument type casting to int for warning, critical, timeout
 '''
 
 __author__ = "Julien Dumarchey"
@@ -208,7 +208,7 @@ if __name__ == '__main__':
     parser.add_argument('-P', '--process', type=str, help='Process Name to monitor', required=True)
     parser.add_argument('-w', '--warning', type=int, nargs='?', help='Raise as a Warning alert if the number of process is <= the given parameter', default=4)
     parser.add_argument('-c', '--critical', type=int, nargs='?', help='Raise as a Critical alert if the number of process is <= the given parameter', default=2)
-    parser.add_argument('-t', '--timeout', type=str, help='Data validity timeout (in minutes)', default=4)
+    parser.add_argument('-t', '--timeout', type=int, help='Data validity timeout (in minutes)', default=4)
     parser.add_argument('-E', '--elastichost', type=str, help='Connection URL of ElasticSearch server', default="http://localhost:9200")
     parser.add_argument('-v', '--verbose', help='be verbose', action='store_true')
 

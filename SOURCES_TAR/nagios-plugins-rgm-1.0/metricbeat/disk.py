@@ -18,8 +18,9 @@ CHANGES :
   * 1.0.1       2019-03-26  Eric Belhomme <ebelhomme@fr.scc.com>        replace getopts by argparse module
                                                                         code factorization & mutualization
   * 1.1.0       2019-04-04  Eric Belhomme <ebelhomme@fr.scc.com>        massive rewrite with list comprehension
-                                                                        perfdata are absolute MB instead of percentage 
-  * 1.1.1       2019-08-14  Samuel Ronciaux <sronciaux@fr.scc.com>      change metricset variable name to metricbeat agent 7.2.x                                                                                                                                                
+                                                                        perfdata are absolute MB instead of percentage
+  * 1.1.1       2019-08-14  Samuel Ronciaux <sronciaux@fr.scc.com>      change metricset variable name to metricbeat agent 7.2.x
+  * 1.1.2       2019-09-30  Eric Belhomme <ebelhomme@fr.scc.com>        fix argument type casting to int for warning, critical, timeout                                                                                                                            
 '''
 
 __author__ = "Julien Dumarchey, Eric Belhomme"
@@ -226,9 +227,9 @@ if __name__ == '__main__':
         """,
         epilog="version {}, copyright {}".format(__version__, __copyright__))
     parser.add_argument('-H', '--hostname', type=str, help='hostname or IP address', required=True)
-    parser.add_argument('-w', '--warning', type=str, nargs='?', help='warning trigger', default=85)
-    parser.add_argument('-c', '--critical', type=str, nargs='?', help='critical trigger', default=95)
-    parser.add_argument('-t', '--timeout', type=str, help='data validity timeout (in minutes)', default=4)
+    parser.add_argument('-w', '--warning', type=int, nargs='?', help='warning trigger', default=85)
+    parser.add_argument('-c', '--critical', type=int, nargs='?', help='critical trigger', default=95)
+    parser.add_argument('-t', '--timeout', type=int, help='data validity timeout (in minutes)', default=4)
     parser.add_argument('-E', '--elastichost', type=str, help='connection URL of ElasticSearch server', default="http://localhost:9200")
     parser.add_argument('-v', '--verbose', help='be verbose', action='store_true')
 

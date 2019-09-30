@@ -16,7 +16,8 @@ CHANGES :
   * 1.0.1       2019-03-26  Eric Belhomme <ebelhomme@fr.scc.com>        replace getopts by argparse module
                                                                         code factorization & mutualization
                                                                         added elastichost variable
-  * 1.0.2       2019-08-14  Samuel Ronciaux <sronciaux@fr.scc.com>      change metricset variable name to metricbeat agent 7.2.x                                                                         
+  * 1.0.2       2019-08-14  Samuel Ronciaux <sronciaux@fr.scc.com>      change metricset variable name to metricbeat agent 7.2.x
+  * 1.0.3       2019-09-30  Eric Belhomme <ebelhomme@fr.scc.com>        fix argument type casting to int for warning, critical, timeout
 '''
 
 __author__ = "Julien Dumarchey, Eric Belhomme"
@@ -187,7 +188,7 @@ if __name__ == '__main__':
     parser.add_argument('-H', '--hostname', type=str, help='hostname or IP address', required=True)
     parser.add_argument('-w', '--warning', type=str, nargs='?', help='warning trigger (physical,swap)', default='85,40')
     parser.add_argument('-c', '--critical', type=str, nargs='?', help='critical trigger (physical,swap)', default='95,50')
-    parser.add_argument('-t', '--timeout', type=str, help='data validity timeout (in minutes)', default=4)
+    parser.add_argument('-t', '--timeout', type=int, help='data validity timeout (in minutes)', default=4)
     parser.add_argument('-E', '--elastichost', type=str, help='connection URL of ElasticSearch server', default="http://localhost:9200")
     parser.add_argument('-v', '--verbose', help='be verbose', action='store_true')
 
