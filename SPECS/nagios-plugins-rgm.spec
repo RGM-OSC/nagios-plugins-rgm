@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 4.rgm
+Release: 5.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -35,7 +35,7 @@ AutoReqProv:   0
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
-Source1: check_nwc_health-7.6.tar.gz
+Source1: check_nwc_health-7.10.0.6.tar.gz
 Source2: check_db2_health-1.1.2.2.tar.gz
 Source3: check_mssql_health-2.6.4.14.tar.gz
 Source4: check_oracle_health-3.1.2.2.tar.gz
@@ -76,7 +76,7 @@ Currently includes Nagios metricbeat plugins for ElasticSearch/metricbeat
 %build
 
 # build Consol.Labs plugins
-cd check_nwc_health-7.6
+cd check_nwc_health-7.10.0.6
 ./configure --libexecdir=%{rgmdatadir}/network --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
 cd ../check_db2_health-1.1.2.2
 ./configure --libexecdir=%{rgmdatadir}/database --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
@@ -160,6 +160,9 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 
 
 %changelog
+* Thu Oct 03 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-5.rgm
+- upgrade ConsolLabs plugin check_nwc_health to version 7.10.0.6
+
 * Mon Sep 30 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-4.rgm
 - fix argument type casting to int for warning, critical, timeout on metricbeat checks
 
