@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 5.rgm
+Release: 6.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -15,39 +15,40 @@ BuildRequires: rpm-macros-rgm autoconf automake gawk perl
 
 AutoReqProv:   0
 
-
 ### Consol.Labs plugins
-# https://labs.consol.de/assets/downloads/nagios/check_db2_health-1.1.2.2.tar.gz
-# https://labs.consol.de/assets/downloads/nagios/check_hpasm-4.8.tar.gz
-# https://labs.consol.de/assets/downloads/nagios/check_logfiles-3.11.0.2.tar.gz
-# https://labs.consol.de/assets/downloads/nagios/check_mailbox_health-1.7.2.tar.gz
-# https://labs.consol.de/assets/downloads/nagios/check_mssql_health-2.6.4.14.tar.gz
-# https://labs.consol.de/assets/downloads/nagios/check_ntp_health-1.3.tar.gz
-# https://labs.consol.de/assets/downloads/nagios/check_nwc_health-7.6.tar.gz
-# https://labs.consol.de/assets/downloads/nagios/check_oracle_health-3.1.2.2.tar.gz
-# https://labs.consol.de/assets/downloads/nagios/check_pdu_health-2.4.tar.gz
-# https://labs.consol.de/assets/downloads/nagios/check_printer_health-1.0.1.1.tar.gz
-# https://labs.consol.de/assets/downloads/nagios/check_sap_health-2.0.0.5.tar.gz
-# https://labs.consol.de/assets/downloads/nagios/check_sqlbase_health-1.0.0.2.tar.gz
-# https://labs.consol.de/assets/downloads/nagios/check_ups_health-2.8.3.3.tar.gz
-# https://labs.consol.de/assets/downloads/nagios/check_mysql_health-3.0.0.5.tar.gz
+# https://labs.consol.de/assets/downloads/nagios/
+
+%define check_nwc_health     check_nwc_health-7.10.0.6
+%define check_db2_health     check_db2_health-1.1.2.2
+%define check_mssql_health   check_mssql_health-2.6.4.14
+%define check_oracle_health  check_oracle_health-3.1.2.2
+%define check_sap_health     check_sap_health-2.0.0.5
+%define check_sqlbase_health check_sqlbase_health-1.0.0.2
+%define check_mysql_health   check_mysql_health-3.0.0.5
+%define check_hpasm          check_hpasm-4.8
+%define check_ups_health     check_ups_health-2.8.3.3
+%define check_logfiles       check_logfiles-3.11.0.2
+%define check_ntp_health     check_ntp_health-1.3
+%define check_pdu_health     check_pdu_health-2.4
+%define check_printer_health check_printer_health-1.0.1.1
 
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
-Source1: check_nwc_health-7.10.0.6.tar.gz
-Source2: check_db2_health-1.1.2.2.tar.gz
-Source3: check_mssql_health-2.6.4.14.tar.gz
-Source4: check_oracle_health-3.1.2.2.tar.gz
-Source5: check_sap_health-2.0.0.5.tar.gz
-Source6: check_sqlbase_health-1.0.0.2.tar.gz
-Source7: check_mysql_health-3.0.0.5.tar.gz
-Source8: check_hpasm-4.8.tar.gz
-Source9: check_ups_health-2.8.3.3.tar.gz
-Source10: check_logfiles-3.11.0.2.tar.gz
-Source11: check_ntp_health-1.3.tar.gz
-Source12: check_pdu_health-2.4.tar.gz
-Source13: check_printer_health-1.0.1.1.tar.gz
+Source1: %{check_nwc_health}.tar.gz
+Source2: %{check_db2_health}.tar.gz
+Source3: %{check_mssql_health}.tar.gz
+Source4: %{check_oracle_health}.tar.gz
+Source5: %{check_sap_health}.tar.gz
+Source6: %{check_sqlbase_health}.tar.gz
+Source7: %{check_mysql_health}.tar.gz
+Source8: %{check_hpasm}.tar.gz
+Source9: %{check_ups_health}.tar.gz
+Source10: %{check_logfiles}.tar.gz
+Source11: %{check_ntp_health}.tar.gz
+Source12: %{check_pdu_health}.tar.gz
+Source13: %{check_printer_health}.tar.gz
+Source14: snmp2elastic.tar.gz
 
 %define	rgmdatadir		%{rgm_path}/lib/%{name}-%{version}
 
@@ -71,38 +72,38 @@ Currently includes Nagios metricbeat plugins for ElasticSearch/metricbeat
 %setup -D -a 11
 %setup -D -a 12
 %setup -D -a 13
+%setup -D -a 14
 
 
 %build
 
 # build Consol.Labs plugins
-cd check_nwc_health-7.10.0.6
+cd %{check_nwc_health}
 ./configure --libexecdir=%{rgmdatadir}/network --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
-cd ../check_db2_health-1.1.2.2
+cd ../%{check_db2_health}
 ./configure --libexecdir=%{rgmdatadir}/database --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
-cd ../check_mssql_health-2.6.4.14
+cd ../%{check_mssql_health}
 ./configure --libexecdir=%{rgmdatadir}/database --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
-cd ../check_oracle_health-3.1.2.2
+cd ../%{check_oracle_health}
 ./configure --libexecdir=%{rgmdatadir}/database --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
-cd ../check_sap_health-2.0.0.5
+cd ../%{check_sap_health}
 ./configure --libexecdir=%{rgmdatadir}/database --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
-cd ../check_sqlbase_health-1.0.0.2
+cd ../%{check_sqlbase_health}
 ./configure --libexecdir=%{rgmdatadir}/database --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
-cd ../check_mysql_health-3.0.0.5
+cd ../%{check_mysql_health}
 ./configure --libexecdir=%{rgmdatadir}/database --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
-cd ../check_hpasm-4.8
+cd ../%{check_hpasm}
 ./configure --libexecdir=%{rgmdatadir}/storage --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
-cd ../check_ups_health-2.8.3.3
+cd ../%{check_ups_health}
 ./configure --libexecdir=%{rgmdatadir}/ups --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
-cd ../check_logfiles-3.11.0.2
+cd ../%{check_logfiles}
 ./configure --libexecdir=%{rgmdatadir}/backup --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
-cd ../check_ntp_health-1.3
+cd ../%{check_ntp_health}
 ./configure --libexecdir=%{rgmdatadir}/system --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
-cd ../check_pdu_health-2.4
+cd ../%{check_pdu_health}
 ./configure --libexecdir=%{rgmdatadir}/hardware --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
-cd ../check_printer_health-1.0.1.1
+cd ../%{check_printer_health}
 ./configure --libexecdir=%{rgmdatadir}/system --with-nagios-user=%{rgm_user_nagios} --with-nagios-group=%{rgm_group} && make
-
 
 %install
 
@@ -128,21 +129,23 @@ cp -afv windows %{buildroot}%{rgmdatadir}/
 
 # install Consol.Labs plugins
 install -d -o %{rgm_user_nagios} -g %{rgm_group} -m 0755 %{buildroot}%{rgmdatadir}/network
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_nwc_health-7.6/plugins-scripts/check_nwc_health %{buildroot}%{rgmdatadir}/network/
 install -d -o %{rgm_user_nagios} -g %{rgm_group} -m 0755 %{buildroot}%{rgmdatadir}/database
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_db2_health-1.1.2.2/plugins-scripts/check_db2_health %{buildroot}%{rgmdatadir}/database/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_mssql_health-2.6.4.14/plugins-scripts/check_mssql_health %{buildroot}%{rgmdatadir}/database/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_oracle_health-3.1.2.2/plugins-scripts/check_oracle_health %{buildroot}%{rgmdatadir}/database/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_sap_health-2.0.0.5/plugins-scripts/check_sap_health %{buildroot}%{rgmdatadir}/database/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_sqlbase_health-1.0.0.2/plugins-scripts/check_sqlbase_health %{buildroot}%{rgmdatadir}/database/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_mysql_health-3.0.0.5/plugins-scripts/check_mysql_health %{buildroot}%{rgmdatadir}/database/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_hpasm-4.8/plugins-scripts/check_hpasm %{buildroot}%{rgmdatadir}/storage/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_ups_health-2.8.3.3/plugins-scripts/check_ups_health %{buildroot}%{rgmdatadir}/ups/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_logfiles-3.11.0.2/plugins-scripts/check_logfiles %{buildroot}%{rgmdatadir}/backup/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_ntp_health-1.3/plugins-scripts/check_ntp_health %{buildroot}%{rgmdatadir}/system/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_pdu_health-2.4/plugins-scripts/check_pdu_health %{buildroot}%{rgmdatadir}/hardware/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} check_printer_health-1.0.1.1/plugins-scripts/check_printer_health %{buildroot}%{rgmdatadir}/system/
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_nwc_health}/plugins-scripts/check_nwc_health %{buildroot}%{rgmdatadir}/network/
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_db2_health}/plugins-scripts/check_db2_health %{buildroot}%{rgmdatadir}/database/
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_mssql_health}/plugins-scripts/check_mssql_health %{buildroot}%{rgmdatadir}/database/
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_oracle_health}/plugins-scripts/check_oracle_health %{buildroot}%{rgmdatadir}/database/
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_sap_health}/plugins-scripts/check_sap_health %{buildroot}%{rgmdatadir}/database/
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_sqlbase_health}/plugins-scripts/check_sqlbase_health %{buildroot}%{rgmdatadir}/database/
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_mysql_health}/plugins-scripts/check_mysql_health %{buildroot}%{rgmdatadir}/database/
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_hpasm}/plugins-scripts/check_hpasm %{buildroot}%{rgmdatadir}/storage/
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_ups_health}/plugins-scripts/check_ups_health %{buildroot}%{rgmdatadir}/ups/
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_logfiles}/plugins-scripts/check_logfiles %{buildroot}%{rgmdatadir}/backup/
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_ntp_health}/plugins-scripts/check_ntp_health %{buildroot}%{rgmdatadir}/system/
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_pdu_health}/plugins-scripts/check_pdu_health %{buildroot}%{rgmdatadir}/hardware/
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_printer_health}/plugins-scripts/check_printer_health %{buildroot}%{rgmdatadir}/system/
 
+# install snmp2elastic plugin
+install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} snmp2elastic/nagios_checks/check_el_nwc.py %{buildroot}%{rgmdatadir}/network/
 
 %post
 ln -s %rgmdatadir "$(rpm -ql nagios | grep 'plugins$')/rgm"
@@ -160,6 +163,9 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 
 
 %changelog
+* Tue Oct 29 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-6.rgm
+- add snmp2elastic nagios plugin (CASA dev)
+
 * Thu Oct 03 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-5.rgm
 - upgrade ConsolLabs plugin check_nwc_health to version 7.10.0.6
 
