@@ -1,2 +1,4 @@
 SOURCES/**/*.pyc
 SOURCES/**/*.pyo
+.vscode
+.vstags
