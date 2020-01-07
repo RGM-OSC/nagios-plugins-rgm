@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 6.rgm
+Release: 7.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -163,6 +163,9 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 
 
 %changelog
+* Tue Jan 07 2020 Michael Aubertin <maubertin@fr.scc.com> - 1.0-7.rgm
+- Comment urllib3 packages warning usage in disk.py
+
 * Tue Oct 29 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-6.rgm
 - add snmp2elastic nagios plugin (CASA dev)
 
