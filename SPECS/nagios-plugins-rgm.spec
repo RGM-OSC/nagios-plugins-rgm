@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 8.rgm
+Release: 3.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -161,6 +161,9 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 %{rgmdatadir}
 
 %changelog
+* Wed Jan 08 2020 Michael Aubertin <maubertin@fr.scc.com> - 1.0-9.rgm
+- Add new Oracle check
+
 * Wed Jan 08 2020 Michael Aubertin <maubertin@fr.scc.com> - 1.0-8.rgm
 - Update WMI plugins
 
