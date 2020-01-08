@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 7.rgm
+Release: 8.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -9,7 +9,7 @@ License: GPL
 Requires: rgm-base nagios-plugins
 Requires: coreutils, fping
 Requires: python python-requests
-Requires: perl perl-libwww-perl-old perl-LWP-Protocol-https perl-Mail-Sendmail perl-Module-Load perl-Nagios-Plugin perl-Time-Duration perl-WWW-Curl perl-Net-OpenSSH perl-IO-Tty wget bc
+Requires: perl perl-libwww-perl-old perl-LWP-Protocol-https perl-Mail-Sendmail perl-Module-Load perl-Nagios-Plugin perl-Time-Duration perl-WWW-Curl perl-Net-OpenSSH perl-IO-Tty wget bc perl-Number-Format perl-DateTime wmi
 
 BuildRequires: rpm-macros-rgm autoconf automake gawk perl
 
@@ -156,13 +156,14 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 %clean
 #rm -rf %{buildroot}
 
-
 %files
 %defattr(0754, %{rgm_user_nagios}, %{rgm_group}, 0755)
 %{rgmdatadir}
 
-
 %changelog
+* Wed Jan 08 2020 Michael Aubertin <maubertin@fr.scc.com> - 1.0-8.rgm
+- Update WMI plugins
+
 * Tue Jan 07 2020 Michael Aubertin <maubertin@fr.scc.com> - 1.0-7.rgm
 - Comment urllib3 packages warning usage in disk.py
 
