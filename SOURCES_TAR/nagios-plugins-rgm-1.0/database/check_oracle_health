@@ -1977,6 +1977,17 @@ sub init {
     $self->{connected_users} = $self->{handle}->fetchrow_array(q{
         SELECT COUNT(*) FROM v$session WHERE type = 'USER' 
     });
+  } elsif ($params{mode} =~ /server::instance::simactive/) {
+    $self->{simactive} = $self->{handle}->fetchrow_array(q{
+        SELECT COUNT(*) FROM v$session WHERE type <>'BACKGROUND'  AND status='ACTIVE' 
+    });
+  } elsif ($params{mode} =~ /server::instance::backup_active/) {
+    ($self->{sysdate},
+     $self->{inst_id},
+     $self->{count}) = $self->{handle}->fetchrow_array(q{
+        SELECT sysdate,inst_id,count(*) FROM gv$backup WHERE status<>'NOT ACTIVE' GROUP BY inst_id 
+    }); 
+    $self->{count} = 0 unless defined($self->{count}); 
   } elsif ($params{mode} =~ /server::instance::rman::backup::problems/) {
     $self->{rman_backup_problems} = $self->{handle}->fetchrow_array(q{
         SELECT COUNT(*) FROM v$rman_status 
@@ -2059,6 +2070,24 @@ sub nagios {
       $self->add_perfdata(sprintf "connected_users=%d;%d;%d",
           $self->{connected_users},
           $self->{warningrange}, $self->{criticalrange});
+  } elsif ($params{mode} =~ /server::instance::simactive/) {
+      $self->add_nagios(
+          $self->check_thresholds($self->{simactive}, 16, 35),
+          sprintf "%d active sessions",
+              $self->{simactive});
+      $self->add_perfdata(sprintf "sim_active_session=%d;%d;%d",
+          $self->{simactive},
+          $self->{warningrange}, $self->{criticalrange});
+          
+   } elsif ($params{mode} =~ /server::instance::backup_active/) {
+      $self->add_nagios(
+          $self->check_thresholds($self->{count}, 1, 1 ),
+          sprintf "%d file stay in backup mode",
+              $self->{count});
+      $self->add_perfdata(sprintf "file_in_backup_mode=%d;%d;%d",
+          $self->{count},
+          $self->{warningrange}, $self->{criticalrange});       
+                  
   } elsif ($params{mode} =~ /server::instance::rman::backup::problems/) {
       $self->add_nagios(
           $self->check_thresholds($self->{rman_backup_problems}, 1, 2),
@@ -3245,6 +3274,157 @@ our @ISA = qw(DBD::Oracle::Server::Database);
         $initerrors = 1;
         return undef;
       }
+    } elsif (($params{mode} =~ /server::cdatabase::tablespace::usage/) ||
+        ($params{mode} =~ /server::cdatabase::tablespace::free/) ||
+        ($params{mode} =~ /server::cdatabase::tablespace::listtablespaces/)) {
+      my @tablespaceresult = ();
+      if (DBD::Oracle::Server::return_first_server()->version_is_minimum("9.x")) {
+        my $tbs_sql_undo = q{
+                -- freier platz durch expired extents
+                -- speziell fuer undo tablespaces
+                -- => bytes_expired
+                SELECT
+                    tablespace_name, bytes_expired, con_id
+                FROM
+                    (
+                        SELECT
+                            tablespace_name,
+                            SUM (bytes) bytes_expired,
+                            status,
+                            con_id
+                        FROM
+                            cdb_undo_extents
+                        GROUP BY
+                            con_id, tablespace_name, status
+                    )
+                WHERE
+                    status = 'EXPIRED'
+        };
+        my $tbs_sql_undo_empty = q{
+                SELECT NULL AS tablespace_name, NULL AS bytes_expired, NULL AS con_id FROM DUAL
+        };
+        my $tbs_sql_temp = q{
+            UNION
+            SELECT
+                e.name||'_'||b.tablespace_name "Tablespace",
+                b.status "Status",
+                b.contents "Type",
+                b.extent_management "Extent Mgmt",
+                sum(a.bytes_free + a.bytes_used) bytes,   -- allocated
+                SUM(DECODE(d.autoextensible, 'YES', d.maxbytes, 'NO', d.bytes)) bytes_max,
+                SUM(a.bytes_free + a.bytes_used - NVL(c.bytes_used, 0)) bytes_free
+            FROM
+                sys.v_$TEMP_SPACE_HEADER a, -- has con_id
+                sys.cdb_tablespaces b, -- has con_id
+                sys.v_$Temp_extent_pool c,
+                cdb_temp_files d, -- has con_id
+                v$containers e
+            WHERE
+                a.file_id = c.file_id(+)
+                AND a.file_id = d.file_id
+                AND a.tablespace_name = c.tablespace_name(+)
+                AND a.tablespace_name = d.tablespace_name
+                AND a.tablespace_name = b.tablespace_name
+                AND a.con_id = c.con_id(+)
+                AND a.con_id = d.con_id
+                AND a.con_id = b.con_id
+                AND a.con_id = e.con_id
+            GROUP BY
+                e.name,
+                b.con_id,
+                b.status,
+                b.contents,
+                b.extent_management,
+                b.tablespace_name
+            ORDER BY
+                1
+        };
+        my $tbs_sql = sprintf q{
+            SELECT /*+ opt_param('optimizer_adaptive_features','false') */
+                e.name||'_'||a.tablespace_name         "Tablespace",
+                b.status                  "Status",
+                b.contents                "Type",
+                b.extent_management       "Extent Mgmt",
+                a.bytes                   bytes,
+                a.maxbytes                bytes_max,
+                c.bytes_free + NVL(d.bytes_expired,0)             bytes_free
+            FROM
+              (
+                -- belegter und maximal verfuegbarer platz pro datafile
+                -- nach tablespacenamen zusammengefasst
+                -- => bytes
+                -- => maxbytes
+                SELECT
+                    a.con_id,
+                    a.tablespace_name,
+                    SUM(a.bytes)          bytes,
+                    SUM(DECODE(a.autoextensible, 'YES', a.maxbytes, 'NO', a.bytes)) maxbytes
+                FROM
+                    cdb_data_files a
+                GROUP BY
+                    con_id, tablespace_name
+              ) a,
+              sys.cdb_tablespaces b,
+              (
+                -- freier platz pro tablespace
+                -- => bytes_free
+                SELECT
+                    a.con_id,
+                    a.tablespace_name,
+                    SUM(a.bytes) bytes_free
+                FROM
+                    cdb_free_space a
+                GROUP BY
+                    con_id, tablespace_name
+              ) c,
+              (
+                %s
+              ) d,
+              v$containers e
+            WHERE
+                a.tablespace_name = c.tablespace_name (+)
+                AND a.tablespace_name = b.tablespace_name
+                AND a.tablespace_name = d.tablespace_name (+)
+                AND a.con_id = c.con_id(+)
+                AND a.con_id = b.con_id
+                AND a.con_id = d.con_id(+)
+                AND a.con_id = e.con_id
+                %s
+            %s
+        }, $params{notemp} ? $tbs_sql_undo_empty : $tbs_sql_undo,
+           $params{notemp} ? "AND (b.contents != 'TEMPORARY' AND b.contents != 'UNDO')" : "",
+           $params{notemp} ? "" : $tbs_sql_temp;
+        $tbs_sql = join "\n", grep !/^\s*$/, split(/\n/, $tbs_sql);
+        @tablespaceresult = $params{handle}->fetchall_array($tbs_sql);
+      }
+      foreach (@tablespaceresult) {
+        my ($name, $status, $type, $extentmgmt, $bytes, $bytes_max, $bytes_free) = @{$_};
+        next if $params{notemp} && ($type eq "UNDO" || $type eq "TEMPORARY");
+        next if $params{noreadonly} && ($status eq "READ ONLY");
+        next if $params{container} && ($name !~ /^$params{container}_/i);
+        if ($params{regexp}) {
+          next if $params{selectname} && $name !~ /$params{selectname}/;
+        } else {
+          next if $params{selectname} && lc $params{selectname} ne lc $name;
+        }
+        # host_filesys_pctAvailable
+        my %thisparams = %params;
+        $thisparams{name} = $name;
+        $thisparams{bytes} = $bytes;
+        $thisparams{bytes_max} = $bytes_max;
+        $thisparams{bytes_free} = $bytes_free;
+        $thisparams{status} = lc $status;
+        $thisparams{type} = lc $type;
+        $thisparams{extent_management} = lc $extentmgmt;
+        my $tablespace = DBD::Oracle::Server::Database::Tablespace->new(
+            %thisparams);
+        add_tablespace($tablespace);
+        $num_tablespaces++;
+      }
+      if (! $num_tablespaces) {
+        $initerrors = 1;
+        return undef;
+      }
     } elsif ($params{mode} =~ /server::database::tablespace::fragmentation/) {
       my @tablespaceresult = $params{handle}->fetchall_array(q{
           SELECT
@@ -3383,7 +3563,7 @@ sub init {
   my %params = @_;
   $self->init_nagios();
   $self->set_local_db_thresholds(%params);
-  if ($params{mode} =~ /server::database::tablespace::(usage|free)/) {
+  if ($params{mode} =~ /server::[c]*database::tablespace::(usage|free)/) {
     if (! defined $self->{bytes_max} || $self->{bytes_max} eq '') { 
       # eq '' kommt z.b. vor, wenn ein datafile online_status recover hat
       # in dba_data_files sind dann bytes und maxbytes nicht belegt (Null)
@@ -3426,7 +3606,7 @@ sub init {
     }
     $self->{percent_free} = 100 - $self->{percent_used};
     my $tlen = 20;
-    my $len = int((($params{mode} =~ /server::database::tablespace::usage/) ?
+    my $len = int((($params{mode} =~ /server::[c]*database::tablespace::usage/) ?
         $self->{percent_used} : $self->{percent_free} / 100 * $tlen) + 0.5);
     $self->{percent_as_bar} = '=' x $len . '_' x ($tlen - $len);
   } elsif ($params{mode} =~ /server::database::tablespace::fragmentation/) {
@@ -3500,7 +3680,7 @@ sub nagios {
   my $self = shift;
   my %params = @_;
   if (! $self->{nagios_level}) {
-    if ($params{mode} =~ /server::database::tablespace::usage/) {
+    if ($params{mode} =~ /server::[c]*database::tablespace::usage/) {
       if (! $self->{bytes_max}) {
         $self->check_thresholds($self->{percent_used}, "90", "98");
         if ($self->{status} eq 'offline') {
@@ -3521,7 +3701,7 @@ sub nagios {
             $self->check_thresholds($self->{percent_used}, "90", "98"),
             $params{eyecandy} ?
                 sprintf("[%s] %s", $self->{percent_as_bar}, $self->{name}) :
-                sprintf("tbs %s usage is %.2f%%",
+                sprintf("tbs %s usage is %.2f%%\n",
                     $self->{name}, $self->{percent_used})
         );
       }
@@ -3547,7 +3727,7 @@ sub nagios {
           lc $self->{name},
           $self->{fsfi},
           $self->{warningrange}, $self->{criticalrange});
-    } elsif ($params{mode} =~ /server::database::tablespace::free/) {
+    } elsif ($params{mode} =~ /server::[c]*database::tablespace::free/) {
       # ->percent_free
       # ->real_bytes_max
       #
@@ -4179,7 +4359,7 @@ sub init {
   my $self = shift;
   my %params = @_;
   $self->init_nagios();
-  if ($params{mode} =~ /server::database::tablespace/) {
+  if ($params{mode} =~ /server::[c]*database::tablespace/) {
     DBD::Oracle::Server::Database::Tablespace::init_tablespaces(%params);
     if (my @tablespaces = 
         DBD::Oracle::Server::Database::Tablespace::return_tablespaces()) {
@@ -4187,7 +4367,7 @@ sub init {
     } else {
       $self->add_nagios_critical("unable to aquire tablespace info");
     }
-  } elsif ($params{mode} =~ /server::database::flash_recovery_area/) {
+  } elsif ($params{mode} =~ /server::[c]*database::flash_recovery_area/) {
     DBD::Oracle::Server::Database::FlashRecoveryArea::init_flash_recovery_areas(%params);
     if (my @flash_recovery_areas = 
         DBD::Oracle::Server::Database::FlashRecoveryArea::return_flash_recovery_areas()) {
@@ -4484,12 +4664,12 @@ sub nagios {
   my $self = shift;
   my %params = @_;
   if (! $self->{nagios_level}) {
-    if ($params{mode} =~ /server::database::tablespace::listtablespaces/) {
+    if ($params{mode} =~ /server::[c]*database::tablespace::listtablespaces/) {
       foreach (sort { $a->{name} cmp $b->{name}; }  @{$self->{tablespaces}}) {
 	printf "%s\n", $_->{name};
       }
       $self->add_nagios_ok("have fun");
-    } elsif ($params{mode} =~ /server::database::tablespace/) {
+    } elsif ($params{mode} =~ /server::[c]*database::tablespace/) {
       foreach (@{$self->{tablespaces}}) {
         # sind hier noch nach pctused sortiert
         $_->nagios(%params);
@@ -4889,7 +5069,7 @@ sub init {
   $self->set_global_db_thresholds(\%params);
   if ($params{mode} =~ /^server::instance/) {
     $self->{instance} = DBD::Oracle::Server::Instance->new(%params);
-  } elsif ($params{mode} =~ /^server::database/) {
+  } elsif ($params{mode} =~ /^server::[c]*database/) {
     $self->{database} = DBD::Oracle::Server::Database->new(%params);
   } elsif ($params{mode} =~ /^server::sqlruntime/) {
     $self->set_local_db_thresholds(%params);
@@ -4992,7 +5172,7 @@ sub nagios {
     if ($params{mode} =~ /^server::instance/) {
       $self->{instance}->nagios(%params);
       $self->merge_nagios($self->{instance});
-    } elsif ($params{mode} =~ /^server::database/) {
+    } elsif ($params{mode} =~ /^server::[c]*database/) {
       $self->{database}->nagios(%params);
       $self->merge_nagios($self->{database});
     } elsif ($params{mode} =~ /^server::connectiontime/) {
@@ -5586,7 +5766,23 @@ sub save_state {
         $params{statefilesdir});
     return;
   }
-  my $statefile = sprintf "%s_%s", $params{connect}, $mode;
+  
+  my @hostconnect = split /host=/ , lc ($params{connect}) ; @hostconnect = split /\)/ , $hostconnect[1];           
+  my @portconnect = split /port=/ , lc ($params{connect}) ; @portconnect = split /\)/ , $portconnect[1];
+  my @service_nameconnect = split /service_name=/ , lc ($params{connect}) ; @service_nameconnect = split /\)/ , $service_nameconnect[1];
+  my $ipserver = $hostconnect[0];
+  my $portlsnr = $portconnect[0];
+  my $siddb = $service_nameconnect[0]; 
+  
+  my $statedir = sprintf "%s/%s/%s", $params{statefilesdir}, $siddb, $ipserver;
+  if (! -d $statedir) {
+    eval {
+      use File::Path;
+      mkpath $statedir;
+    };
+  }
+   
+  my $statefile = sprintf "%s", $portlsnr;
   $extension .= $params{differenciator} ? "_".$params{differenciator} : "";
   $extension .= $params{tablespace} ? "_".$params{tablespace} : "";
   $extension .= $params{datafile} ? "_".$params{datafile} : "";
@@ -5598,7 +5794,7 @@ sub save_state {
   $extension =~ s/\s/_/g;
   $statefile .= $extension;
   $statefile = lc $statefile;
-  $statefile = sprintf "%s/%s", $params{statefilesdir}, $statefile;
+  $statefile = sprintf "%s/%s", $statedir, $statefile;
   if (open(STATE, ">$statefile")) {
     if ((ref($params{save}) eq "HASH") && exists $params{save}->{timestamp}) {
       $params{save}->{localtime} = scalar localtime $params{save}->{timestamp};
@@ -6993,7 +7189,7 @@ use lib dirname($0);
 use vars qw ($PROGNAME $REVISION $CONTACT $TIMEOUT $STATEFILESDIR $needs_restart %commandline);
 
 $PROGNAME = "check_oracle_health";
-$REVISION = '$Revision: 2.1.3.5 $';
+$REVISION = '$Revision: 3.0.1 $';
 $CONTACT = 'gerhard.lausser@consol.de';
 $TIMEOUT = 60;
 $STATEFILESDIR = '/var/tmp/check_oracle_health';
@@ -7063,6 +7259,9 @@ my @modes = (
   ['server::database::tablespace::free',
       'tablespace-free', undef,
       'Free space in tablespaces' ],
+  ['server::cdatabase::tablespace::free',
+      'container-tablespace-free', undef,
+      'Free space in tablespaces of container databases' ],
   ['server::database::tablespace::remainingfreetime',
       'tablespace-remaining-time', undef,
       'Remaining time until a tablespace is full' ],
@@ -7171,6 +7370,9 @@ my @modes = (
   ['server::database::tablespace::listtablespaces',
       'list-tablespaces', undef,
       'convenience function which lists all tablespaces' ],
+  ['server::cdatabase::tablespace::listtablespaces',
+      'container-list-tablespaces', undef,
+      'convenience function which lists all tablespaces of all container databases' ],
   ['server::database::tablespace::datafile::listdatafiles',
       'list-datafiles', undef,
       'convenience function which lists all datafiles' ],
@@ -7192,6 +7394,12 @@ my @modes = (
   ['server::instance::sysstat::listsysstats',
       'list-sysstats', undef,
       'convenience function which lists all statistics from v$sysstat' ],
+  ['server::instance::simactive',
+      'session-active', undef,
+      'Number of active simultaneous active sessions' ],
+  ['server::instance::backup_active',
+      'backup_active', undef,
+      'Number of files stayed in backup mode (impact log rate)' ],
 );
 
 sub print_usage () {
@@ -7473,7 +7681,7 @@ if (exists $commandline{labelformat}) {
 if (exists $commandline{'with-mymodules-dyn-dir'}) {
   $DBD::Oracle::Server::my_modules_dyn_dir = $commandline{'with-mymodules-dyn-dir'};
 } else {
-  $DBD::Oracle::Server::my_modules_dyn_dir = '/usr/local/nagios/libexec';
+  $DBD::Oracle::Server::my_modules_dyn_dir = '/srv/eyesofnetwork/nagios/plugins/';
 }
 
 if (exists $commandline{environment}) {
