@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 3.rgm
+Release: 10.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -51,6 +51,10 @@ Source13: %{check_printer_health}.tar.gz
 Source14: snmp2elastic.tar.gz
 
 %define	rgmdatadir		%{rgm_path}/lib/%{name}-%{version}
+
+# force rpmbuild to byte-compile using Python3
+%global __python %{__python3}
+
 
 %description
 Collection of Nagios plugins for RGM
@@ -161,6 +165,9 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 %{rgmdatadir}
 
 %changelog
+* Thu Jan 30 2020 Michael Aubertin <ebelhomme@fr.scc.com> - 1.0-10.rgm
+- package Java JMX check
+
 * Wed Jan 08 2020 Michael Aubertin <maubertin@fr.scc.com> - 1.0-9.rgm
 - Add new Oracle check
 
