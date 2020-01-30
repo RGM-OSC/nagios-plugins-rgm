@@ -41,7 +41,7 @@ from _rgmbeat import generic_api_call, generic_api_payload, get_data_validity_ra
 NagiosRetCode = ('OK', 'WARNING', 'CRITICAL', 'UNKNOWN')
 
 # If required, disable SSL Warning Logging for "requests" library:
-requests.packages.urllib3.disable_warnings()
+# requests.packages.urllib3.disable_warnings()
 
 ## Declare Functions ######################################################################################################
 
