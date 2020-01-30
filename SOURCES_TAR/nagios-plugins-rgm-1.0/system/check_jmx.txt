@@ -1,0 +1,20 @@
+Nagios check for Java JMX interface
+
+./check_jmx --username "rgm-jmx" --password "***" -U service:jmx:rmi:///jndi/rmi://'172.16.1.232':'10001'/jmxrmi -O "java.lang:type=Memory" -A HeapMemoryUsage -K used -w 1000000000 -c 3000000000
+
+Lilac command definition (example):
+
+check_jmx
+
+$USER1$/check_jmx --username "$USER22$" --password "$USER23$" -U service:jmx:rmi:///jndi/rmi://'$HOSTADDRESS$':'$ARG1$'/jmxrmi -O "$ARG2$" -A $ARG3$ -K $ARG4$ -w $ARG5$ -c $ARG6$ $ARG7$
+
+ARG1: RMI port
+ARG2: Mbean Tree branch
+ARG3: Mbean Leaf
+ARG4: ValueName (without #)
+ARG5: Warning Threshold
+ARG6: Critical
+ARG7: options if needed. (eg. units)
+
+Another example, with no user/password:
+./check_jmx --username "" --password "" -U service:jmx:rmi:///jndi/rmi://'127.0.0.1':'10001'/jmxrmi -O "java.lang:type=Memory" -A HeapMemoryUsage -K used -w 1000000000 -c 3000000000
