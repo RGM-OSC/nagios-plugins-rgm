@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 10.rgm
+Release: 11.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -165,7 +165,10 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 %{rgmdatadir}
 
 %changelog
-* Thu Jan 30 2020 Michael Aubertin <ebelhomme@fr.scc.com> - 1.0-10.rgm
+* Thu Feb 04 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-11.rgm
+- fix path for check_bp_status
+
+* Thu Jan 30 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-10.rgm
 - package Java JMX check
 
 * Wed Jan 08 2020 Michael Aubertin <maubertin@fr.scc.com> - 1.0-9.rgm

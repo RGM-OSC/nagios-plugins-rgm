@@ -19,7 +19,7 @@
 
 
 #Load modules
-	use lib ('/srv/eyesofnetwork/nagiosbp-0.9.6/lib');
+	use lib ('/srv/rgm/nagiosbp/lib');
         #require a good programming
         use strict;
 	#db connection module
