@@ -1,3 +1,3 @@
 [submodule "snmp2elastic"]
 	path = snmp2elastic
-	url = git@gitlab.budcca-demo.lab:rgm-components/snmp2elastic.git
+	url = git@gitlab.forge.rgm-cloud.io:rgm-components/snmp2elastic.git
