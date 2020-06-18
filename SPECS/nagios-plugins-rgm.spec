@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 11.rgm
+Release: 12.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -14,6 +14,9 @@ Requires: perl perl-libwww-perl-old perl-LWP-Protocol-https perl-Mail-Sendmail p
 BuildRequires: rpm-macros-rgm autoconf automake gawk perl
 
 AutoReqProv:   0
+
+# disable debuginfo package build
+ %define debug_package %{nil}
 
 ### Consol.Labs plugins
 # https://labs.consol.de/assets/downloads/nagios/
@@ -168,7 +171,10 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 %{rgmdatadir}
 
 %changelog
-* Thu Feb 04 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-11.rgm
+* Thu Jun 18 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-12.rgm
+- fix spec file issues
+
+* Tue Feb 04 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-11.rgm
 - fix path for check_bp_status
 
 * Thu Jan 30 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-10.rgm
