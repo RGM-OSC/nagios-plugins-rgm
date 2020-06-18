@@ -154,7 +154,7 @@ install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_printer_health}/pl
 # install snmp2elastic plugin
 install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} snmp2elastic/nagios_checks/check_el_nwc.py %{buildroot}%{rgmdatadir}/network/
 
-# ignore rpmbuild python policy script RC at the end of %install
+# ignore rpmbuild python policy script RC at the end of install
 exit 0
 
 %post
