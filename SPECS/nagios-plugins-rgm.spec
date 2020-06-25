@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 12.rgm
+Release: 14.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -171,6 +171,10 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 %{rgmdatadir}
 
 %changelog
+* Thu Jun 25 2020 Vincent Fricou <vincent@fricouv.eu> - 1.0-14.rgm
+- Add check_dd6300 for EMC DataDomain 6300
+- Add check_snmp_compellent for Dell Compellent
+
 * Thu Jun 19 2020 Lucas Fueyo <lfueyo@fr.scc.com> - 1.0-13.rgm
 - Add new containers check
 
