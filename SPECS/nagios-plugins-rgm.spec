@@ -171,10 +171,13 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 %{rgmdatadir}
 
 %changelog
+* Thu Jun 19 2020 Lucas Fueyo <lfueyo@fr.scc.com> - 1.0-13.rgm
+- Add new containers check
+
 * Thu Jun 18 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-12.rgm
 - fix spec file issues
 
-* Tue Feb 04 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-11.rgm
+* Thu Feb 04 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-11.rgm
 - fix path for check_bp_status
 
 * Thu Jan 30 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-10.rgm
