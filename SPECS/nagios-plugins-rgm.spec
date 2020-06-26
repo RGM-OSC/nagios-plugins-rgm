@@ -171,11 +171,14 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 %{rgmdatadir}
 
 %changelog
+* Fri Jun 26 2020 Lucas Fueyo <lfueyo@fr.scc.com> - 1.0.15.rgm 
+- Add clearpass checks 
+
 * Thu Jun 25 2020 Vincent Fricou <vincent@fricouv.eu> - 1.0-14.rgm
 - Add check_dd6300 for EMC DataDomain 6300
 - Add check_snmp_compellent for Dell Compellent
 
-* Thu Jun 19 2020 Lucas Fueyo <lfueyo@fr.scc.com> - 1.0-13.rgm
+* Fri Jun 19 2020 Lucas Fueyo <lfueyo@fr.scc.com> - 1.0-13.rgm
 - Add new containers check
 
 * Thu Jun 18 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-12.rgm
