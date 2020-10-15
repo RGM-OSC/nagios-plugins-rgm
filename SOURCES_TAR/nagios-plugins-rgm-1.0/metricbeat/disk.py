@@ -9,7 +9,7 @@ DESCRIPTION :
   * Disk resquest is handled by API REST againt ElasticSearch.
 
 AUTHOR :
-  * Julien Dumarchey <jdumarchey@fr.scc.com>   START DATE :    Sep 04 11:00:00 2018 
+  * Julien Dumarchey <jdumarchey@fr.scc.com>   START DATE :    Sep 04 11:00:00 2018
   * Eric Belhomme <ebelhomme@fr.scc.com>
 
 CHANGES :
@@ -24,6 +24,8 @@ CHANGES :
   * 1.1.2       2019-09-30  Eric Belhomme <ebelhomme@fr.scc.com>        fix argument type casting to int for
                                                                         warning, critical, timeout
   * 1.1.3       2020-10-15  Eric Belhomme <ebelhomme@fr.scc.com>        add mountpoint filter feature
+                                                                        add verbose flags
+                                                                        add storage unit autodetection
 '''
 
 __author__ = "Julien Dumarchey, Eric Belhomme"
@@ -33,20 +35,80 @@ __license__ = "GPL"
 __version__ = "1.1.1"
 __maintainer__ = "Julien Dumarchey"
 
-## MODULES FEATURES #######################################################################################################
+# MODULES FEATURES ####################################################################################################
 
 # Import the following modules:
 import sys
 import re
 import argparse
 import requests
-import json
 import pprint
+import math
 from _rgmbeat import generic_api_call, generic_api_payload, get_data_validity_range, validate_elastichost
 
 import urllib3
 urllib3.disable_warnings()
 
+
+class disk_cfg():
+
+    def __init__(
+        self,
+        es_api_url,
+        hostname,
+        treshold_warning,
+        treshold_critical,
+        data_ttl,
+        filter_pattern,
+        filter_not_re,
+        verbose_level,
+        display_units,
+    ):
+        self.es_api_url = es_api_url
+        self.hostname = hostname
+        self.treshold_warning = treshold_warning
+        self.treshold_critical = treshold_critical
+        self.data_ttl = data_ttl
+        self.filter_pattern = filter_pattern
+        self.filter_not_re = filter_not_re
+        self.verbose_level = verbose_level
+        self.display_units = display_units
+
+
+class Unit:
+    size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
+
+    def __init__(self, cfg: disk_cfg, volume_used, volume_total):
+        self.cfg = cfg
+        self.volume_used = volume_used
+        self.volume_total = volume_total
+
+    def _get_value(self, value):
+        if value == 0:
+            return '0 B'
+        i = 0
+        if self.cfg.display_units in ['auto', '%']:
+            i = int(math.floor(math.log(value, 1024)))
+        else:
+            i = self.__class__.size_name.index(self.cfg.display_units)
+        p = math.pow(1024, i)
+        s = round(value / p, 2)
+        return "{} {}".format(s, self.__class__.size_name[i])
+
+    def get_usage(self):
+        return self._get_value(self.volume_used)
+
+    def get_total(self):
+        return self._get_value(self.volume_total)
+
+    def get_free(self):
+        return self._get_value(self.volume_total-self.volume_used)
+
+    def get_usage_percent(self):
+        return round((int(self.volume_used * 100)) / self.volume_total, 2)
+
+
+cfg = None
 NagiosRetCode = ('OK', 'WARNING', 'CRITICAL', 'UNKNOWN')
 
 
@@ -68,22 +130,32 @@ def custom_api_payload(plugin_hostname, data_validity):
         custom_payload = {}
         custom_payload.update(generic_payload)
         # Add the Query structure with ElasticSearch Variables:
-        custom_payload.update( {"query": {"bool": {"must": [], "filter": [], "should": [], "must_not": []}}})
+        custom_payload.update({"query": {"bool": {"must": [], "filter": [], "should": [], "must_not": []}}})
         custom_payload["query"]["bool"]["must"].append({"match_all": {}})
         custom_payload["query"]["bool"]["must"].append({"exists": {"field": ""+field_name+""}})
-        custom_payload["query"]["bool"]["must"].append({"match_phrase": {"event.module": {"query": ""+metricset_module+""}}})
-        custom_payload["query"]["bool"]["must"].append({"match_phrase": {"metricset.name": {"query": ""+metricset_name+""}}})
-        custom_payload["query"]["bool"]["must"].append({"match_phrase": {"host.name": {"query": ""+beat_name+""}}})
-        custom_payload["query"]["bool"]["must"].append({"range": {
-            "@timestamp": {"gte": ""+str(oldest_valid_timestamp)+"", "lte": ""+str(newest_valid_timestamp)+"", "format": "epoch_millis"}
-        }})
+        custom_payload["query"]["bool"]["must"].append(
+            {"match_phrase": {"event.module": {"query": ""+metricset_module+""}}}
+        )
+        custom_payload["query"]["bool"]["must"].append(
+            {"match_phrase": {"metricset.name": {"query": ""+metricset_name+""}}}
+        )
+        custom_payload["query"]["bool"]["must"].append(
+            {"match_phrase": {"host.name": {"query": ""+beat_name+""}}}
+        )
+        custom_payload["query"]["bool"]["must"].append(
+            {"range": {"@timestamp": {
+                "gte": ""+str(oldest_valid_timestamp)+"",
+                "lte": ""+str(newest_valid_timestamp)+"",
+                "format": "epoch_millis"
+            }}}
+        )
         return custom_payload
     except Exception as e:
         print("Error calling \"custom_api_payload\"... Exception {}".format(e))
         sys.exit(3)
 
 
-def get_disk(elastichost, plugin_hostname, data_validity, verbose, filter_pattern, filter_not_re):
+def get_disk(cfg: disk_cfg):
     '''
     Request a custom ElasticSearch API REST Call
     here: Get space for all Disks with: Percentage Used, Quantity Used (GigaBytes), and Quantity Free (GigaBytes)
@@ -102,13 +174,13 @@ def get_disk(elastichost, plugin_hostname, data_validity, verbose, filter_patter
 
     try:
         # Get prerequisites for ElasticSearch API:
-        resp_entries_range = 0
-        addr, header = generic_api_call(elastichost)
-        payload = custom_api_payload(plugin_hostname, data_validity)
+        # resp_entries_range = 0
+        addr, header = generic_api_call(cfg.es_api_url)
+        payload = custom_api_payload(cfg.hostname, cfg.data_ttl)
         # Request the ElasticSearch API:
         results = requests.get(url=addr, headers=header, json=payload, verify=False)
         results_json = results.json()
-        if verbose:
+        if cfg.verbose_level >= 3:
             pp = pprint.PrettyPrinter(indent=4)
             print("### VERBOSE MODE - API REST HTTP RESPONSE: #########################################")
             print("### request payload:")
@@ -119,24 +191,24 @@ def get_disk(elastichost, plugin_hostname, data_validity, verbose, filter_patter
 
         if int(results_json["hits"]["total"]['value']) > 0:
             pattern = None
-            if filter_pattern:
-                if not filter_not_re:
-                    pattern = re.compile(filter_pattern)
+            if cfg.filter_pattern:
+                if not cfg.filter_not_re:
+                    pattern = re.compile(cfg.filter_pattern)
                 else:
-                    pattern = filter_pattern
+                    pattern = cfg.filter_pattern
 
             fslist = []
             # get a list of returned fs, then keep only latest item of each mountpoint
-            allfslist = [ i['_source'] for i in results_json['hits']['hits'] ]
-            for fs in set([ i['system']['filesystem']['mount_point'] for i in allfslist ]):
+            allfslist = [i['_source'] for i in results_json['hits']['hits']]
+            for fs in set([i['system']['filesystem']['mount_point'] for i in allfslist]):
                 item = max(
-                    [ i for i in allfslist if i['system']['filesystem']['mount_point'] == fs ],
+                    [i for i in allfslist if i['system']['filesystem']['mount_point'] == fs],
                     key=lambda timestamp: timestamp['@timestamp']
                 )
-                if pattern and not filter_not_re:
+                if pattern and not cfg.filter_not_re:
                     if pattern.match(item['system']['filesystem']['mount_point']):
                         fslist.append(_list_append(item))
-                elif pattern and filter_not_re:
+                elif pattern and cfg.filter_not_re:
                     if pattern == item['system']['filesystem']['mount_point']:
                         fslist.append(_list_append(item))
                 else:
@@ -152,8 +224,7 @@ def get_disk(elastichost, plugin_hostname, data_validity, verbose, filter_patter
         sys.exit(3)
 
 
-def build_alerting_list(elastichost, plugin_hostname, warning_treshold, critical_treshold, data_validity,
-    verbose, filter_pattern, filter_not_re):
+def build_alerting_list(cfg: disk_cfg):
     '''
     Build Alerting lists (sorted by Severity with Disk Space used %) and
     Performance Data lists (sorted by Severity with: Disk Space used %, Quantity Used (GB), and Quantity Free (GB)) :
@@ -161,12 +232,12 @@ def build_alerting_list(elastichost, plugin_hostname, warning_treshold, critical
     try:
         # Get Disk values:
         ret = []
-        fslist = get_disk(elastichost, plugin_hostname, data_validity, verbose, filter_pattern, filter_not_re)
+        fslist = get_disk(cfg)
 
         if isinstance(fslist, list):
             for item in fslist:
-                item['warn_treshold_abs'] = (int(warning_treshold) * item['total']) / 100
-                item['crit_treshold_abs'] = (int(critical_treshold) * item['total']) / 100
+                item['warn_treshold_abs'] = (int(cfg.treshold_warning) * item['total']) / 100
+                item['crit_treshold_abs'] = (int(cfg.treshold_critical) * item['total']) / 100
                 item['nagios_status'] = 3
 
                 if item['used'] >= item['crit_treshold_abs']:
@@ -190,45 +261,51 @@ def byte2mbyte(bytes):
     return int(bytes/(1024*1024))
 
 
-def rgm_disk_output(elastichost, plugin_hostname, warning_treshold, critical_treshold, data_validity,
-    verbose, filter_pattern, filter_not_re):
+def rgm_disk_output(cfg: disk_cfg):
     '''
     Display Disk space (System Information + Performance Data) in a format compliant with RGM expectations:
     '''
     try:
         nagios_status = 3
-        fslist = build_alerting_list(elastichost,
-            plugin_hostname,
-            warning_treshold,
-            critical_treshold,
-            data_validity,
-            verbose,
-            filter_pattern,
-            filter_not_re
-        )
+        fslist = build_alerting_list(cfg)
         outtext = []
         outperf = []
         if isinstance(fslist, list):
             nagios_status = max(fslist, key=lambda status: status['nagios_status'])['nagios_status']
             if nagios_status != 0:
-                crit = [ i['mount_point'] for i in fslist if i['nagios_status'] == 2 ]
+                crit = [i['mount_point'] for i in fslist if i['nagios_status'] == 2]
                 if len(crit) > 0:
                     outtext.append("{} mountpoints in CRITICAL state ({}%): {}".format(
                         str(len(crit)),
-                        str(critical_treshold),
+                        str(cfg.treshold_critical),
                         ", ".join(crit)))
-                warn = [ i['mount_point'] for i in fslist if i['nagios_status'] == 1 ]
+                warn = [i['mount_point'] for i in fslist if i['nagios_status'] == 1]
                 if len(warn) > 0:
                     outtext.append("{} mountpoints in WARNING state ({}%): {}".format(
                         str(len(warn)),
-                        str(warning_treshold),
+                        str(cfg.treshold_warning),
                         ", ".join(warn)))
             else:
                 outtext.append("All mountpoints in OK state ({}%, {}%)".format(
-                    int(warning_treshold),
-                    int(critical_treshold)
+                    int(cfg.treshold_warning),
+                    int(cfg.treshold_critical)
                 ))
             for item in fslist:
+
+                if cfg.verbose_level > 0:
+                    value = Unit(cfg, item['used'], item['total'])
+                    text = "\n {}: {} - {}% used".format(
+                        item['mount_point'],
+                        value.get_usage(),
+                        value.get_usage_percent()
+                    )
+                    if cfg.verbose_level > 1:
+                        text += " (total: {}, free: {}".format(
+                            value.get_total(),
+                            value.get_free()
+                        )
+                    outtext.append(text)
+
                 outperf.append("'{label}'={value}MB;{warn};{crit};0;{total}".format(
                     label=item['mount_point'],
                     value=str(byte2mbyte(item['used'])),
@@ -237,7 +314,7 @@ def rgm_disk_output(elastichost, plugin_hostname, warning_treshold, critical_tre
                     total=str(byte2mbyte(item['total']))
                 ))
         else:
-            print("{}: no output returned for time period ({} min)".format(NagiosRetCode[nagios_status], data_validity))
+            print("{}: no output returned for time period ({} min)".format(NagiosRetCode[nagios_status], cfg.data_ttl))
 
         print("{}: {} | {}".format(
             NagiosRetCode[nagios_status],
@@ -252,7 +329,8 @@ def rgm_disk_output(elastichost, plugin_hostname, warning_treshold, critical_tre
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="""
+    parser = argparse.ArgumentParser(
+        description="""
         Nagios plugin used to return machine "Disk space" from ElasticSearch.
         Disk space values are pushed from MetricBeat agent installed on the monitored machine.
         Disk resquest is handled by API REST againt ElasticSearch.
@@ -263,7 +341,7 @@ if __name__ == '__main__':
 
             disk.py -H srv3 -w 85 -c 95
 
-        Get Disk space for machine "srv3" only if monitored data is not anterior at 2 minutes. 
+        Get Disk space for machine "srv3" only if monitored data is not anterior at 2 minutes.
 
             disk.py -H srv3 -w 85 -c 95 -t 2
 
@@ -285,20 +363,47 @@ if __name__ == '__main__':
             disk.py -H srv3 -w 85 -c 95 -t 2 -r -m '^/var/.*'
 
         """,
-        epilog="version {}, copyright {}".format(__version__, __copyright__))
+        epilog="version {}, copyright {}".format(__version__, __copyright__)
+    )
+    _help_verbose = """verbose output level:
+0: Single line, minimal output. Summary
+1: Single line, additional information (eg list processes that fail)
+2: Multi line, configuration debug output (eg ps command used)
+3: Lots of detail for plugin problem diagnosis"""
     parser.add_argument('-H', '--hostname', type=str, help='hostname or IP address', required=True)
     parser.add_argument('-w', '--warning', type=int, nargs='?', help='warning trigger', default=85)
     parser.add_argument('-c', '--critical', type=int, nargs='?', help='critical trigger', default=95)
     parser.add_argument('-t', '--timeout', type=int, help='data validity timeout (in minutes)', default=4)
-    parser.add_argument('-E', '--elastichost', type=str, help='connection URL of ElasticSearch server', default="http://localhost:9200")
-    parser.add_argument('-v', '--verbose', help='be verbose', action='store_true')
+    parser.add_argument(
+        '-E', '--elastichost', type=str, help='connection URL of ElasticSearch server',
+        default="http://localhost:9200"
+    )
+    parser.add_argument('-v', '--verbose', type=int, help=_help_verbose, choices=[0, 1, 2, 3], default=0)
+    parser.add_argument(
+        '-u', '--unit', help='Display in unit',
+        choices=list(Unit.size_name + ('auto', '%')), default='auto'
+    )
     parser.add_argument('-m', '--name', type=str, help='mountpoint filter', default=r'.*')
-    parser.add_argument('-r', '--noregexp', action='store_true', help='do not use regexp for mountpoint filtering', default=False)
+    parser.add_argument(
+        '-r', '--noregexp', action='store_true',
+        help='do not use regexp for mountpoint filtering', default=False
+    )
     args = parser.parse_args()
 
     if validate_elastichost(args.elastichost):
-        rgm_disk_output(args.elastichost, args.hostname, args.warning, args.critical, args.timeout,
-            args.verbose, args.name, args.noregexp)
+        cfg = disk_cfg(
+            es_api_url=args.elastichost,
+            hostname=args.hostname,
+            treshold_warning=args.warning,
+            treshold_critical=args.critical,
+            data_ttl=args.timeout,
+            filter_pattern=args.name,
+            filter_not_re=args.noregexp,
+            verbose_level=args.verbose,
+            display_units=args.unit
+        )
+        rgm_disk_output(cfg)
     else:
         print("can't validate elastic host")
+
 # EOF

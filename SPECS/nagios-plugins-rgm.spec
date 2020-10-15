@@ -172,7 +172,10 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 
 %changelog
 * Thu Oct 15 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-16.rgm
-- add mountpoint filtering features on metricbeat disk.py check
+- metricbeat disk.py check enhancements:
+  - add mountpoint filtering features on metricbeat disk.py check
+  - add verbose levels for Nagios output text
+  - add storage unit autodetection (or force specific unit)
 
 * Fri Jun 26 2020 Lucas Fueyo <lfueyo@fr.scc.com> - 1.0.15.rgm 
 - Add clearpass checks 
