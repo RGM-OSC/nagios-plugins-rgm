@@ -32,8 +32,8 @@ __author__ = "Julien Dumarchey, Eric Belhomme"
 __copyright__ = "2018, SCC"
 __credits__ = ["Julien Dumarchey", "Eric Belhomme"]
 __license__ = "GPL"
-__version__ = "1.1.1"
-__maintainer__ = "Julien Dumarchey"
+__version__ = "1.1.3"
+__maintainer__ = "Eric Belhomme"
 
 # MODULES FEATURES ####################################################################################################
 
@@ -330,6 +330,7 @@ def rgm_disk_output(cfg: disk_cfg):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
         description="""
         Nagios plugin used to return machine "Disk space" from ElasticSearch.
         Disk space values are pushed from MetricBeat agent installed on the monitored machine.
@@ -366,10 +367,10 @@ if __name__ == '__main__':
         epilog="version {}, copyright {}".format(__version__, __copyright__)
     )
     _help_verbose = """verbose output level:
-0: Single line, minimal output. Summary
-1: Single line, additional information (eg list processes that fail)
-2: Multi line, configuration debug output (eg ps command used)
-3: Lots of detail for plugin problem diagnosis"""
+0: single line, minimal output. Summary
+1: multi line, display mountpoint basic informations
+2: multi line, display mountpoint extended informations
+3: ES raw output for debug purpose only"""
     parser.add_argument('-H', '--hostname', type=str, help='hostname or IP address', required=True)
     parser.add_argument('-w', '--warning', type=int, nargs='?', help='warning trigger', default=85)
     parser.add_argument('-c', '--critical', type=int, nargs='?', help='critical trigger', default=95)
