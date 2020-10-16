@@ -294,13 +294,13 @@ def rgm_disk_output(cfg: disk_cfg):
 
                 if cfg.verbose_level > 0:
                     value = Unit(cfg, item['used'], item['total'])
-                    text = "\n {}: {} - {}% used".format(
-                        item['mount_point'],
+                    text = "\n {} - {} - {}% used".format(
+                        item['mount_point'].strip(' /\\'),
                         value.get_usage(),
                         value.get_usage_percent()
                     )
                     if cfg.verbose_level > 1:
-                        text += " (total: {}, free: {}".format(
+                        text += " (total: {}, free: {})".format(
                             value.get_total(),
                             value.get_free()
                         )
