@@ -10,7 +10,8 @@ Requires: rgm-base nagios-plugins
 Requires: coreutils, fping
 Requires: python python-requests
 Requires: python-rgm >= 1.0
-Requires: perl perl-libwww-perl-old perl-LWP-Protocol-https perl-Mail-Sendmail perl-Module-Load perl-Nagios-Plugin perl-Time-Duration perl-WWW-Curl perl-Net-OpenSSH perl-IO-Tty wget bc perl-Number-Format perl-DateTime wmi
+Requires: perl perl-libwww-perl-old perl-LWP-Protocol-https perl-Mail-Sendmail perl-Module-Load perl-Nagios-Plugin perl-Time-Duration perl-WWW-Curl perl-Net-OpenSSH perl-IO-Tty perl-Number-Format perl-DateTime perl-IPC-Cmd
+Requires: wget bc wmi
 
 BuildRequires: rpm-macros-rgm autoconf automake gawk perl
 
@@ -172,8 +173,9 @@ rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
 %{rgmdatadir}
 
 %changelog
-* Wes Oct 21 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-17.rgm
+* Thu Oct 22 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-17.rgm
 - metricbeat systime.py check addition: check system time through metricbeat
+- add check-netapp-ng.pl in storage checks
 
 * Thu Oct 15 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-16.rgm
 - metricbeat disk.py check enhancements:
