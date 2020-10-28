@@ -290,12 +290,18 @@ def rgm_disk_output(cfg: disk_cfg):
                     int(cfg.treshold_warning),
                     int(cfg.treshold_critical)
                 ))
+
+            def strip_mount(mount):
+                if len(mount) > 1:
+                    return mount.rstrip(' /\\')
+                return mount
+
             for item in fslist:
 
                 if cfg.verbose_level > 0:
                     value = Unit(cfg, item['used'], item['total'])
                     text = "\n {} - {} - {}% used".format(
-                        item['mount_point'].strip(' /\\'),
+                        strip_mount(item['mount_point']),
                         value.get_usage(),
                         value.get_usage_percent()
                     )

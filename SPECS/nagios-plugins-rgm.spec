@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 17.rgm
+Release: 18.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -160,19 +160,40 @@ install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} snmp2elastic/nagios_checks
 exit 0
 
 %post
-ln -s %rgmdatadir "$(rpm -ql nagios | grep 'plugins$')/rgm"
+# Is it first installation ?
+if [ "$1" = 1 ]; then
+    LINKTARGET="$(rpm -ql nagios | grep 'plugins$')/rgm"
+    if [ ! -d "$LINKTARGET" ]; then
+        ln -s %rgmdatadir "$(rpm -ql nagios | grep 'plugins$')/rgm"
+    fi
+fi
 
-%preun
-rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
+
+%postun
+# will it remain a package after uninstall ?
+# $1 == 0 in case of complete uninstallation,
+# $1 > 0 in case of package upgrade
+if [ "$1" = 0 ]; then
+    LINKTARGET="$(rpm -ql nagios | grep 'plugins$')/rgm"
+    if [ -e "$LINKTARGET" ]; then
+        rm -f "$(rpm -ql nagios | grep 'plugins$')/rgm"
+    fi
+fi
+
 
 %clean
-#rm -rf %{buildroot}
+rm -rf %{buildroot}
 
 %files
 %defattr(0754, %{rgm_user_nagios}, %{rgm_group}, 0755)
 %{rgmdatadir}
 
 %changelog
+* Thu Oct 28 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-18.rgm
+- fix SPEC file for correct package upgrade
+- fix display typo on metricbeat disk check in verbose mode
+- rename check_oracle_health check_oracle_health_rgm to avoid conflict with upstream ConsolLab check
+
 * Thu Oct 22 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-17.rgm
 - metricbeat systime.py check addition: check system time through metricbeat
 - add check-netapp-ng.pl in storage checks
