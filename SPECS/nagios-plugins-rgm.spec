@@ -159,14 +159,13 @@ install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} snmp2elastic/nagios_checks
 # ignore rpmbuild python policy script RC at the end of install
 exit 0
 
+
 %post
-# Is it first installation ?
-if [ "$1" = 1 ]; then
-    LINKTARGET="$(rpm -ql nagios | grep 'plugins$')/rgm"
-    if [ ! -d "$LINKTARGET" ]; then
-        ln -s %rgmdatadir "$(rpm -ql nagios | grep 'plugins$')/rgm"
-    fi
+LINKTARGET="$(rpm -ql nagios | grep 'plugins$')/rgm"
+if [ -e "$LINKTARGET" ] && [ -L "$LINKTARGET" ] ; then
+    rm -f "$LINKTARGET"
 fi
+ln -s %rgmdatadir "$LINKTARGET"
 
 
 %postun
