@@ -190,6 +190,7 @@ rm -rf %{buildroot}
 %changelog
 * Tue Nov 03 2020 Lucas Fueyo <lfueyo@fr.scc.com> - 1.0-19.rgm
 - add check_veeam_jobs in backup checks 
+- add check_wmi_veeam_licence in backup checks
 
 * Thu Oct 28 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-18.rgm
 - fix SPEC file for correct package upgrade
