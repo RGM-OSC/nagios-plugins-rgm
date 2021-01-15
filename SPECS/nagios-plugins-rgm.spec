@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 18.rgm
+Release: 20.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -9,7 +9,7 @@ License: GPL
 Requires: rgm-base nagios-plugins
 Requires: coreutils, fping
 Requires: python python-requests
-Requires: python-rgm >= 1.0
+Requires: python-rgm >= 1.0-4
 Requires: perl perl-libwww-perl-old perl-LWP-Protocol-https perl-Mail-Sendmail perl-Module-Load perl-Nagios-Plugin perl-Time-Duration perl-WWW-Curl perl-Net-OpenSSH perl-IO-Tty perl-Number-Format perl-DateTime perl-IPC-Cmd perl-Filesys-SmbClient
 Requires: wget bc wmi
 
@@ -188,6 +188,15 @@ rm -rf %{buildroot}
 %{rgmdatadir}
 
 %changelog
+
+* Fri Jan 15 2021 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-20.rgm
+- add patch provided by V. Fricou :
+  add provisioned storage on check_vmware_esx.pl
+
+* Tue Nov 03 2020 Lucas Fueyo <lfueyo@fr.scc.com> - 1.0-19.rgm
+- add check_veeam_jobs in backup checks 
+- add check_wmi_veeam_licence in backup checks
+
 * Thu Oct 28 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-18.rgm
 - fix SPEC file for correct package upgrade
 - fix display typo on metricbeat disk check in verbose mode

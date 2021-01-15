@@ -37,6 +37,7 @@ sub datastore_volumes_info
     my $space_used_MB;
     my $space_used_GB;
     my $space_used_percent;
+    my $space_provisionned_percent;
     my $tmp_warning = $warning;
     my $tmp_critical = $critical;
     my $warn_out;
@@ -110,15 +111,19 @@ sub datastore_volumes_info
                   {
                   $space_total = $store->summary->capacity;
                   $space_free = $store->summary->freeSpace;
+                  $space_uncommited = $store->summary->uncommitted;
                   $space_used = $space_total - $space_free;
                   $space_used_percent = simplify_number(100 * $space_used/ $space_total);
                   $space_free_percent = 100 - $space_used_percent;
+                  $space_provisionned = $space_total - $space_free + $space_uncommited;
+                  $space_provisionned_percent = simplify_number(100 * $space_provisionned / $space_total);
 
                   if ($gigabyte)
                      {
                      $space_total_GB = simplify_number($space_total / 1024 / 1024 / 1024);
                      $space_free_GB = simplify_number($space_free / 1024 / 1024 / 1024);
                      $space_used_GB = simplify_number($space_used / 1024 / 1024 / 1024);
+                     $space_provisionned_GB = simplify_number($space_provisionned / 1024 / 1024 / 1024);
                      $uom = "GB";
                      }
                   else
@@ -126,6 +131,7 @@ sub datastore_volumes_info
                      $space_total_MB = simplify_number($space_total / 1024 / 1024);
                      $space_free_MB = simplify_number($space_free / 1024 / 1024);
                      $space_used_MB = simplify_number($space_used / 1024 / 1024);
+                     $space_provisionned_MB = simplify_number($space_provisionned / 1024 / 1024);
                      }
 
                   if (defined($warning) || defined($critical))
@@ -225,12 +231,14 @@ sub datastore_volumes_info
                      $space_total = $space_total_GB;
                      $space_free = $space_free_GB;
                      $space_used = $space_used_GB;
+                     $space_provisionned = $space_provisionned_GB;
                      }
                   else
                      {
                      $space_total = $space_total_MB;
                      $space_free = $space_free_MB;
                      $space_used = $space_used_MB;
+                     $space_provisionned = $space_provisionned_MB;
                      }
 
                   if (($warn_is_percent) || ($crit_is_percent))
@@ -253,10 +261,12 @@ sub datastore_volumes_info
                   if (defined($usedspace) && (!defined($perf_free_space)))
                      {
                      $perfdata = $perfdata . " \'" . $name . "\'=" . $space_used . "$uom;" . $perf_thresholds . ";;" . $space_total;
+                     $perfdata = $perfdata . " \'" . $name . "-provisionned\'=" . $space_provisionned . "$uom;;;;";
                      }
                   else
                      {
                      $perfdata = $perfdata . " \'" . $name . "\'=" . $space_free . "$uom;" . $perf_thresholds . ";;" . $space_total;
+                     $perfdata = $perfdata . " \'" . $name . "-provisionned\'=" . $space_provisionned . "$uom;;;;";
                      }
 
                   if ($actual_state != 0)
@@ -264,6 +274,7 @@ sub datastore_volumes_info
                      $tmp_output_error = $tmp_output_error . "$name ($volume_type)" . ($usedspace ? " used" : " free");
                      $tmp_output_error = $tmp_output_error . ": ". ($usedspace ? $space_used : $space_free) . " " . $uom;
                      $tmp_output_error = $tmp_output_error . " (" . ($usedspace ? $space_used_percent : $space_free_percent) . "%) / $space_total $uom (100%)";
+                     $tmp_output = $tmp_output . " - provisionned: " . $space_provisionned ." (" . $space_provisionned_percent . "%)";
                      $tmp_output_error = $tmp_output_error . $multiline;
                      }
                   else
@@ -271,6 +282,7 @@ sub datastore_volumes_info
                      $tmp_output = $tmp_output . "$name ($volume_type)" . ($usedspace ? " used" : " free");
                      $tmp_output = $tmp_output . ": ". ($usedspace ? $space_used : $space_free) . " " . $uom;
                      $tmp_output = $tmp_output . " (" . ($usedspace ? $space_used_percent : $space_free_percent) . "%) / $space_total $uom (100%)";
+                     $tmp_output = $tmp_output . " - provisionned: " . $space_provisionned ." (" . $space_provisionned_percent . "%)";
                      $tmp_output = $tmp_output . $multiline;
                      }
                   }
