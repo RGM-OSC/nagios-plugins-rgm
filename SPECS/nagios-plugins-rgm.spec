@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 19.rgm
+Release: 20.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -188,6 +188,11 @@ rm -rf %{buildroot}
 %{rgmdatadir}
 
 %changelog
+
+* Fri Jan 15 2021 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-20.rgm
+- add patch provided by V. Fricou :
+  add provisioned storage on check_vmware_esx.pl
+
 * Tue Nov 03 2020 Lucas Fueyo <lfueyo@fr.scc.com> - 1.0-19.rgm
 - add check_veeam_jobs in backup checks 
 - add check_wmi_veeam_licence in backup checks
