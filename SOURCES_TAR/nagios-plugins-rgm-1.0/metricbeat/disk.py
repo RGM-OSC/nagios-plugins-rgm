@@ -61,6 +61,7 @@ class disk_cfg():
         data_ttl,
         filter_pattern,
         filter_not_re,
+        filter_exclude,
         verbose_level,
         display_units,
     ):
@@ -71,6 +72,7 @@ class disk_cfg():
         self.data_ttl = data_ttl
         self.filter_pattern = filter_pattern
         self.filter_not_re = filter_not_re
+        self.filter_exclude = filter_exclude
         self.verbose_level = verbose_level
         self.display_units = display_units
 
@@ -205,14 +207,26 @@ def get_disk(cfg: disk_cfg):
                     [i for i in allfslist if i['system']['filesystem']['mount_point'] == fs],
                     key=lambda timestamp: timestamp['@timestamp']
                 )
-                if pattern and not cfg.filter_not_re:
-                    if pattern.match(item['system']['filesystem']['mount_point']):
-                        fslist.append(_list_append(item))
-                elif pattern and cfg.filter_not_re:
-                    if pattern == item['system']['filesystem']['mount_point']:
+                if cfg.filter_exclude:
+                    # exclude filtering mode
+                    if pattern and not cfg.filter_not_re:
+                        if not pattern.match(item['system']['filesystem']['mount_point']):
+                            fslist.append(_list_append(item))
+                    elif pattern and cfg.filter_not_re:
+                        if pattern != item['system']['filesystem']['mount_point']:
+                            fslist.append(_list_append(item))
+                    else:
                         fslist.append(_list_append(item))
                 else:
-                    fslist.append(_list_append(item))
+                    # include filtering mode
+                    if pattern and not cfg.filter_not_re:
+                        if pattern.match(item['system']['filesystem']['mount_point']):
+                            fslist.append(_list_append(item))
+                    elif pattern and cfg.filter_not_re:
+                        if pattern == item['system']['filesystem']['mount_point']:
+                            fslist.append(_list_append(item))
+                    else:
+                        fslist.append(_list_append(item))
 
             return sorted(fslist, key=_sort_fslist)
         else:
@@ -367,7 +381,7 @@ if __name__ == '__main__':
 
         Filter returned mountpoint (using a matching pattern)
 
-            disk.py -H srv3 -w 85 -c 95 -t 2 -r -m '^/var/.*'
+            disk.py -H srv3 -w 85 -c 95 -t 2 -r -m '/var/*'
 
         """,
         epilog="version {}, copyright {}".format(__version__, __copyright__)
@@ -395,6 +409,10 @@ if __name__ == '__main__':
         '-r', '--noregexp', action='store_true',
         help='do not use regexp for mountpoint filtering', default=False
     )
+    parser.add_argument(
+        '-e', '--exclude', action='store_true',
+        help='exclude mode for mountpoint filtering (default: include mode)', default=False
+    )
     args = parser.parse_args()
 
     if validate_elastichost(args.elastichost):
@@ -406,6 +424,7 @@ if __name__ == '__main__':
             data_ttl=args.timeout,
             filter_pattern=args.name,
             filter_not_re=args.noregexp,
+            filter_exclude=args.exclude,
             verbose_level=args.verbose,
             display_units=args.unit
         )
