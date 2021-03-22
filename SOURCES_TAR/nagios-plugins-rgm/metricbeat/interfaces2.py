@@ -65,6 +65,7 @@ def get_interfaces(elastichost, hostname, data_validity, verbose):
                     {'match_phrase': {'event.module': {'query': metricset_module}}},
                     {'match_phrase': {'metricset.name': {'query': metricset_name}}},
                     {'match_phrase': {'host.name': {'query': hostname}}},
+                    {'exists': {'field': 'system.network'}},
                     {'range': {'@timestamp': {
                         'gte': str(oldest_valid_timestamp),
                         'lte': str(newest_valid_timestamp),

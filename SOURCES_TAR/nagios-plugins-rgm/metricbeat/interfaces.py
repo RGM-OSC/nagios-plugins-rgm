@@ -59,6 +59,7 @@ def custom_api_payload(hostname, data_validity):
         custom_payload['query']['bool']['must'].append({'match_phrase': {'event.module': {'query': metricset_module}}})
         custom_payload['query']['bool']['must'].append({'match_phrase': {'metricset.name': {'query': metricset_name}}})
         custom_payload['query']['bool']['must'].append({'match_phrase': {'host.name': {'query': hostname}}})
+        custom_payload['query']['bool']['must'].append({'exists': {'field': 'system.network'}})
         custom_payload['query']['bool']['must_not'].append({'match': {'system.network.name': {'query': 'lo'}}})
         custom_payload['query']['bool']['must'].append(
             {'range': {'@timestamp': {
