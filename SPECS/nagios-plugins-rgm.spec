@@ -1,8 +1,8 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 20.rgm
-Source: %{name}-%{version}.tar.gz
+Release: 21.rgm
+Source: %{name}.tar.gz
 Group: Applications/System
 License: GPL
 
@@ -67,21 +67,21 @@ Currently includes Nagios metricbeat plugins for ElasticSearch/metricbeat
 
 
 %prep
-%setup -q
-%setup -D -a 1
-%setup -D -a 2
-%setup -D -a 3
-%setup -D -a 4
-%setup -D -a 5
-%setup -D -a 6
-%setup -D -a 7
-%setup -D -a 8
-%setup -D -a 9
-%setup -D -a 10
-%setup -D -a 11
-%setup -D -a 12
-%setup -D -a 13
-%setup -D -a 14
+%setup -q -n %{name}
+%setup -D -a 1 -n %{name}
+%setup -D -a 2 -n %{name}
+%setup -D -a 3 -n %{name}
+%setup -D -a 4 -n %{name}
+%setup -D -a 5 -n %{name}
+%setup -D -a 6 -n %{name}
+%setup -D -a 7 -n %{name}
+%setup -D -a 8 -n %{name}
+%setup -D -a 9 -n %{name}
+%setup -D -a 10 -n %{name}
+%setup -D -a 11 -n %{name}
+%setup -D -a 12 -n %{name}
+%setup -D -a 13 -n %{name}
+%setup -D -a 14 -n %{name}
 
 
 %build
@@ -188,6 +188,10 @@ rm -rf %{buildroot}
 %{rgmdatadir}
 
 %changelog
+
+* Mon Mar 22 2021 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-21.rgm
+- add --exclude filter mode on disk.py elastic check
+- fix interfaces.py query parameter for ES 7.10 - backward compatible with ES 7.3
 
 * Fri Jan 15 2021 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-20.rgm
 - add patch provided by V. Fricou :
