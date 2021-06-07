@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 21.rgm
+Release: 22.rgm
 Source: %{name}.tar.gz
 Group: Applications/System
 License: GPL
@@ -188,6 +188,8 @@ rm -rf %{buildroot}
 %{rgmdatadir}
 
 %changelog
+* Mon Jun 07 2021 Michael Aubertin <maubertin@fr.scc.com> - 1.0-22.rgm
+- Update to comply Vmware SDK compliant.
 
 * Mon Mar 22 2021 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-21.rgm
 - add --exclude filter mode on disk.py elastic check

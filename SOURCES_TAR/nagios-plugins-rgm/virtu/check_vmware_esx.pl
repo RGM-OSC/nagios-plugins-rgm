@@ -7582,6 +7582,7 @@ sub vm_runtime_info
 
 use strict;
 use warnings;
+use lib "/opt/VMware-vSphere-Perl-SDK/lib/perl5/";
 use File::Basename;
 use HTTP::Date;
 use Getopt::Long;
@@ -7591,7 +7592,6 @@ use Time::HiRes qw(usleep);
 
 # Own modules
 
-#use lib "/usr/lib/nagios/vmware/modules";
 
 
 
@@ -8011,6 +8011,8 @@ if (defined($sslport))
 
 $url2connect = "https://" . $url2connect . "/sdk/webService";
 
+#print "url: $url2connect\n";
+
 # Now let's do the login stuff
 
 if (!defined($nosession))
@@ -8119,6 +8121,7 @@ if (!defined($nosession))
       if ($@ ne '')
          {
          unlink $sessionfile_name;
+#print "url2: $url2connect\n";
          Util::connect($url2connect, $username, $password);
          Vim::save_session(session_file => $sessionfile_name);
          }
@@ -8137,12 +8140,15 @@ if (!defined($nosession))
       print SESSION_LOCK_FILE "$PID\n"; 
       close (SESSION_LOCK_FILE);    
    
+
+#print "url3: $url2connect\n";
       Util::connect($url2connect, $username, $password);
       Vim::save_session(session_file => $sessionfile_name);
       }
    }
 else
    {
+#print "url4: $url2connect\n";
    Util::connect($url2connect, $username, $password);
    }
 
