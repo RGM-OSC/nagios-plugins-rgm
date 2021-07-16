@@ -107,7 +107,9 @@ class Unit:
         return self._get_value(self.volume_total-self.volume_used)
 
     def get_usage_percent(self):
-        return round((int(self.volume_used * 100)) / self.volume_total, 2)
+        if self.volume_total != 0:
+            return round((int(self.volume_used * 100)) / self.volume_total, 2)
+        return 0
 
 
 cfg = None
@@ -207,7 +209,10 @@ def get_disk(cfg: disk_cfg):
                     [i for i in allfslist if i['system']['filesystem']['mount_point'] == fs],
                     key=lambda timestamp: timestamp['@timestamp']
                 )
-                if cfg.filter_exclude:
+                if int(item['system']['filesystem']['total']) == 0:
+                    # les FS d'une capacité de 0 octets sont des FS virtuels et sont ignorés
+                    continue
+                elif cfg.filter_exclude:
                     # exclude filtering mode
                     if pattern and not cfg.filter_not_re:
                         if not pattern.match(item['system']['filesystem']['mount_point']):
