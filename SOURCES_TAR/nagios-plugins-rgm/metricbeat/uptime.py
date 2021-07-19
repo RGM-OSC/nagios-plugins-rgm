@@ -126,7 +126,7 @@ def rgm_uptime_output(elastichost, plugin_hostname,warning_treshold,critical_tre
 
         if rc == 3:
             upstr = ['Uptime has not been returned']
-        print("{} - {} | 'uptime': {}s".format(
+        print("{} - {} | 'uptime'={}s;;;;".format(
             NagiosRetCode[rc],
             " ".join(upstr),
             str(uptime)))

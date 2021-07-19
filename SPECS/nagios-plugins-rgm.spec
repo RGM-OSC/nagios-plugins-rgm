@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 22.rgm
+Release: 23.rgm
 Source: %{name}.tar.gz
 Group: Applications/System
 License: GPL
@@ -188,6 +188,9 @@ rm -rf %{buildroot}
 %{rgmdatadir}
 
 %changelog
+* Mon Jul 19 2021 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-23.rgm
+- fix ES uptime perfdata output
+
 * Mon Jun 07 2021 Michael Aubertin <maubertin@fr.scc.com> - 1.0-22.rgm
 - Update to comply Vmware SDK compliant.
 
