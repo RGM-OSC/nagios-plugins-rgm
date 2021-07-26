@@ -176,6 +176,8 @@ def get_disk(cfg: disk_cfg):
     def _sort_fslist(element):
         return len(element['mount_point'])
 
+    excluded_fs_types = ['overlay', 'squashfs']
+
     try:
         # Get prerequisites for ElasticSearch API:
         # resp_entries_range = 0
@@ -211,6 +213,9 @@ def get_disk(cfg: disk_cfg):
                 )
                 if int(item['system']['filesystem']['total']) == 0:
                     # les FS d'une capacité de 0 octets sont des FS virtuels et sont ignorés
+                    continue
+                if item['system']['filesystem']['type'] in excluded_fs_types:
+                    # les FS de type overlayfs ou squashfs sont ignorés
                     continue
                 elif cfg.filter_exclude:
                     # exclude filtering mode

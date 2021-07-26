@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 23.rgm
+Release: 24.rgm
 Source: %{name}.tar.gz
 Group: Applications/System
 License: GPL
@@ -188,6 +188,11 @@ rm -rf %{buildroot}
 %{rgmdatadir}
 
 %changelog
+
+* Mon Jul 26 2021 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-24.rgm
+- disk: ignore overlay and squashfs FS mountpoints on Linux
+- process_nb: fix argument processing when no warn or crit parameters provided
+
 * Mon Jul 19 2021 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-23.rgm
 - fix ES uptime perfdata output
 

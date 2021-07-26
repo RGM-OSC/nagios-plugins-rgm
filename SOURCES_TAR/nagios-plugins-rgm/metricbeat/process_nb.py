@@ -26,6 +26,7 @@ __maintainer__ = "Julien Dumarchey"
 ## MODULES FEATURES #######################################################################################################
 
 # Import the following modules:
+from _typeshed import NoneType
 import sys, re, argparse, requests, json
 from _rgmbeat import generic_api_call, generic_api_payload, get_data_validity_range, validate_elastichost, get_tuple_numeric_args
 
@@ -219,6 +220,13 @@ if __name__ == '__main__':
         total_hit, timestamp = get_timestamp(args.elastichost,args.hostname,args.process,args.timeout,args.verbose,payload_get_timestamp)
         payload_get_process = custom_api_payload_get_process(args.hostname,args.process,args.timeout,timestamp)
         process_nb = get_process_nb(args.elastichost,args.hostname,args.process,args.timeout,args.verbose,payload_get_process)
-        rgm_process_nb_output(args.elastichost,args.hostname,args.process,args.warning,args.critical,args.timeout,args.verbose,process_nb)
+
+        warn = args.warning
+        if warn == None:
+            warn = 0
+        crit = args.critical
+        if crit == None:
+            crit = 0
+        rgm_process_nb_output(args.elastichost, args.hostname, args.process, warn, crit, args.timeout, args.verbose, process_nb)
 
 ## EOF ####################################################################################################################
