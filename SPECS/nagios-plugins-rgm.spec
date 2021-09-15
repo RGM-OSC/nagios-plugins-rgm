@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 24.rgm
+Release: 25.rgm
 Source: %{name}.tar.gz
 Group: Applications/System
 License: GPL
@@ -122,6 +122,7 @@ cp -afv aix %{buildroot}%{rgmdatadir}/
 cp -afv as400 %{buildroot}%{rgmdatadir}/
 cp -afv apache %{buildroot}%{rgmdatadir}/
 cp -afv backup %{buildroot}%{rgmdatadir}/
+cp -afv business %{buildroot}%{rgmdatadir}/
 cp -afv database %{buildroot}%{rgmdatadir}/
 cp -afv downtime %{buildroot}%{rgmdatadir}/
 cp -afv hardware %{buildroot}%{rgmdatadir}/
@@ -135,6 +136,8 @@ cp -afv system %{buildroot}%{rgmdatadir}/
 cp -afv ups %{buildroot}%{rgmdatadir}/
 cp -afv virtu %{buildroot}%{rgmdatadir}/
 cp -afv windows %{buildroot}%{rgmdatadir}/
+
+install -Dm 0400 sudoers/nagios_teleport %{buildroot}%{_sysconfdir}/sudoers.d/nagios_teleport
 
 # install Consol.Labs plugins
 install -d -o %{rgm_user_nagios} -g %{rgm_group} -m 0755 %{buildroot}%{rgmdatadir}/network
@@ -186,8 +189,14 @@ rm -rf %{buildroot}
 %files
 %defattr(0754, %{rgm_user_nagios}, %{rgm_group}, 0755)
 %{rgmdatadir}
+%config %attr(0400,root,root) %{_sysconfdir}/sudoers.d/nagios_teleport
+
 
 %changelog
+
+* Wed Sep 15 2021 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-25.rgm
+- add RGM business check certificate
+- add RGM business teleport check
 
 * Mon Jul 26 2021 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-24.rgm
 - disk: ignore overlay and squashfs FS mountpoints on Linux

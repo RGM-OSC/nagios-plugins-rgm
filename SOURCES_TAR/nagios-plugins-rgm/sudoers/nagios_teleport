@@ -1,0 +1,6 @@
+# RGM nagios commands
+# Allows nagios user to issue some teleport's tctl commands
+
+nagios ALL=NOPASSWD:\
+    /usr/local/bin/tctl status,\
+    /usr/local/bin/tctl get tc
