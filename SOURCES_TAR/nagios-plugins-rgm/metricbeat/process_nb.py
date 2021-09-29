@@ -118,7 +118,7 @@ def custom_api_payload_get_process(hostname,process_name,data_validity,timestamp
             payload_get_process["query"]["bool"]["must"].append( {"range":{"@timestamp":{"gte":""+str(oldest_valid_timestamp)+"","lte":""+str(newest_valid_timestamp)+"","format":"epoch_millis"}}} )
         else :
             payload_get_process = "No_Payload"
-            print("No Event found for Process \"{}\".format(process_name)")
+            print("No Event found for Process \"{}\"".format(process_name))
         return payload_get_process
     except Exception as e:
         print("Error calling \"custom_api_payload\"... Exception {}".format(e))
