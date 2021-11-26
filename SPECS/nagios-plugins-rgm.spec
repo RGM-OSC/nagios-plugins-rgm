@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 25.rgm
+Release: 26.rgm
 Source: %{name}.tar.gz
 Group: Applications/System
 License: GPL
@@ -193,6 +193,9 @@ rm -rf %{buildroot}
 
 
 %changelog
+
+* Wed Sep 15 2021 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-26.rgm
+- fix RGM business check certificate (OCSP URL)
 
 * Wed Sep 15 2021 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-25.rgm
 - add RGM business check certificate

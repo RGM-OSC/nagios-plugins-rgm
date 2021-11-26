@@ -12,20 +12,18 @@ subj_cn, subj_ou, subj_contact = '', '', ''
 yumrepo = configparser.ConfigParser()
 yumrepo.read('/etc/yum.repos.d/rgm.repo')
 certfile = yumrepo['rgm-business-base']['sslclientcert']
-issuerfile = '/etc/pki/ca-trust/source/anchors/rigby_group_monitoring_consumer_sub-ca.crt'
-
 with open(certfile, 'rb') as f:
     cert = x509.load_pem_x509_certificate(f.read(), default_backend())
+
+issuerfile = "/etc/pki/ca-trust/source/anchors/{}.crt".format(
+    cert.issuer.get_attributes_for_oid(x509.name.NameOID.COMMON_NAME)[0].value.lower().replace(' ', '_')
+)
 with open(issuerfile, 'rb') as f:
     issuer = x509.load_pem_x509_certificate(f.read(), default_backend())
 
-for i in cert.subject:
-    if i.oid.dotted_string == '2.5.4.3':
-        subj_cn = i.value
-    if i.oid.dotted_string == '2.5.4.10':
-        subj_ou = i.value
-    if i.oid.dotted_string == '1.2.840.113549.1.9.1':
-        subj_contact = i.value
+subj_cn = cert.subject.get_attributes_for_oid(x509.name.NameOID.COMMON_NAME)[0].value
+subj_ou = cert.subject.get_attributes_for_oid(x509.name.NameOID.ORGANIZATIONAL_UNIT_NAME)[0].value
+subj_contact = cert.subject.get_attributes_for_oid(x509.name.NameOID.EMAIL_ADDRESS)[0].value
 
 now = datetime.now()
 if now < cert.not_valid_before or now > cert.not_valid_after:
@@ -49,7 +47,10 @@ for ext in cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.AUTHORITY
                 '-cert',
                 certfile,
                 '-url',
-                ocspurl
+                ocspurl,
+                '-header',
+                'Host',
+                "{}".format(ocspurl.split('/')[-1])
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
