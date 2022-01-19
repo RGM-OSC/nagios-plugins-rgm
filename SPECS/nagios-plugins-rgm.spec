@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 27.rgm
+Release: 28.rgm
 Source: %{name}.tar.gz
 Group: Applications/System
 License: GPL
@@ -194,9 +194,11 @@ rm -rf %{buildroot}
 
 
 %changelog
-
-* Wed Jul 06 2022 Christophe Cassan <ccassan@fr.scc.com> - 1.0-27.rgm
+* Wed Jul 06 2022 Christophe Cassan <ccassan@fr.scc.com> - 1.0-28.rgm
 - Add azure checks part 1
+
+* Wed Jan 19 2022 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-27.rgm
+- add check_pki_index check for OpenSSL PKI index
 
 * Wed Sep 15 2021 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-26.rgm
 - fix RGM business check certificate (OCSP URL)
