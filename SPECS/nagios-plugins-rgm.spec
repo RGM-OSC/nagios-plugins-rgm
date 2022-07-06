@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 26.rgm
+Release: 27.rgm
 Source: %{name}.tar.gz
 Group: Applications/System
 License: GPL
@@ -121,6 +121,7 @@ install -d -o %{rgm_user_nagios} -g %{rgm_group} -m 0755 %{buildroot}%{rgmdatadi
 cp -afv aix %{buildroot}%{rgmdatadir}/
 cp -afv as400 %{buildroot}%{rgmdatadir}/
 cp -afv apache %{buildroot}%{rgmdatadir}/
+cp -afv azure %{buildroot}%{rgmdatadir}/
 cp -afv backup %{buildroot}%{rgmdatadir}/
 cp -afv business %{buildroot}%{rgmdatadir}/
 cp -afv database %{buildroot}%{rgmdatadir}/
@@ -193,6 +194,9 @@ rm -rf %{buildroot}
 
 
 %changelog
+
+* Wed Jul 06 2022 Christophe Cassan <ccassan@fr.scc.com> - 1.0-27.rgm
+- Add azure checks part 1
 
 * Wed Sep 15 2021 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-26.rgm
 - fix RGM business check certificate (OCSP URL)
