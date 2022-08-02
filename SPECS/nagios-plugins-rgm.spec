@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 28.rgm
+Release: 29.rgm
 Source: %{name}.tar.gz
 Group: Applications/System
 License: GPL
@@ -194,6 +194,9 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Wed Aug 02 2022 Alex Rocher <arocher@fr.scc.com> - 1.0-29.rgm
+- Add generic service check for metricbeat (linux by default)
+
 * Wed Jul 06 2022 Christophe Cassan <ccassan@fr.scc.com> - 1.0-28.rgm
 - Add azure checks part 1
 
