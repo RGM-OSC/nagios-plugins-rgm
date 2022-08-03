@@ -37,18 +37,13 @@ NagiosRetCode = ('OK', 'WARNING', 'CRITICAL', 'UNKNOWN')
 ## Declare Functions ######################################################################################################
 
 # Build a custom Payload for ElasticSearch (here: HTTP Request Body for getting latest Windows/Service event with given beat hostname and service name):
-def custom_api_payload(hostname, service, data_validity, os):
+def custom_api_payload(hostname, service, data_validity, field_name, metricset_name, event_module):
     try:
         # ElasticSearch Custom Variables:
-        if os == 'windows':
-            field_name = "windows.service.name"
-            event_module = "windows"
-        else:
-            field_name = "system.service.name"
-            event_module = "system"
-        
+        #event_module = "docker"
         beat_name = hostname
-        metricset_name = "service"
+        #metricset_name = "event"
+        #field_name = "docker.event.actor.attributes.name"
 
         # Get Data Validity Epoch Timestamp:
         newest_valid_timestamp, oldest_valid_timestamp = get_data_validity_range(data_validity)
@@ -71,7 +66,7 @@ def custom_api_payload(hostname, service, data_validity, os):
 
 
 # Request a custom ElasticSearch API REST Call (here: Get relevant details about the given Service name):
-def get_service(elastichost, verbose, custom_payload, os):
+def get_service(elastichost, verbose, custom_payload, service):
     try:
         # Get prerequisites for ElasticSearch API:
         addr, header = generic_api_call(elastichost)
@@ -89,49 +84,41 @@ def get_service(elastichost, verbose, custom_payload, os):
         # Extract the "Total Hit" from results (= check if LOAD Value has been returned):
         total_hit = int(results_json["hits"]["total"]['value'])
         # If request hits: extract results and display Verbose Mode if requested in ARGS ; otherwise return a static code (0):
-        display_name, service_status = "TBD", "TBD"
+        display_name, service_status = "", "absent"
 
         if total_hit != 0:
             # For debugging purpose
-            # print("{}".format(results_json["hits"]["hits"][0]["_source"]["system"]["service"]))
+            # print("{}".format(results_json["hits"]["hits"][0]["_source"]))
             
-            if os == 'windows':
-                display_name = results_json["hits"]["hits"][0]["_source"]['windows']["service"]["display_name"]
-                service_status = results_json["hits"]["hits"][0]["_source"]['windows']["service"]["state"]
-            else:
-                display_name = results_json["hits"]["hits"][0]["_source"]["system"]["service"]["name"]
-                service_status = results_json["hits"]["hits"][0]["_source"]["system"]["service"]["state"]
+            try:
+                display_name = results_json["hits"]["hits"][0]["_source"]['docker']["event"]["actor"]["attributes"]["name"]
+            except Exception as e:
+                display_name = service
+
+            service_status = "present"
 
         return total_hit, display_name, service_status
     except Exception as e:
-            print("Error calling \"get_service\"... Exception {}".format(e))
-            sys.exit(3)
+        print("Error calling \"get_service\"... Exception {}".format(e))
+        sys.exit(3)
 
 
 # Display Nagios Status (System Information: yes, Performance Data: no) in a format compliant with RGM expectations:
-def rgm_service_output(warning_treshold, critical_treshold, total_hit, display_name, service_status, os):
+def rgm_service_output(warning_treshold, critical_treshold, total_hit, display_name, service_status, service):
     try:
         # Get Memory values:
         retcode = 3
         # Parse value for Alerting returns:
         if total_hit == 0:
-            print("UNKNOWN: Service has not been returned...")
-            sys.exit(retcode)
+            service_status = "absent"
+            display_name = service
 
-        if os == 'windows':
-            if service_status == "Stopped" and critical_treshold == True:
-                retcode = 2
-            if service_status == "Stopped" and warning_treshold == True:
-                retcode = 1
-            elif service_status == "Running":
-                retcode = 0
-        else:
-            if service_status != "active" and critical_treshold == True:
-                retcode = 2
-            if service_status == "inactive" and warning_treshold == True:
-                retcode = 1
-            elif service_status == "active":
-                retcode = 0
+        if service_status != "present" and critical_treshold == True:
+            retcode = 2
+        if service_status == "absent" and warning_treshold == True:
+            retcode = 1
+        elif service_status == "present":
+            retcode = 0
 
         print("{rc} - Service \"{display_name}\" is: {service_status}".format(
             rc = NagiosRetCode[retcode],
@@ -156,15 +143,15 @@ if __name__ == '__main__':
 
         Get Service status for Service "IKEEXT" hosted on monitored machine "srv3" only if monitored data is not anterior at 4 minutes (4: default value). Critical alert if Service Status is Stopped.
 
-            python service.py -H srv3 -S IKEEXT -c
+            python docker.py -H srv3 -S IKEEXT -c
 
         Get Service status for Service "CryptSvc" hosted on monitored machine "srv3" only if monitored data is not anterior at 2 minutes.  Warning alert if Service Status is Stopped.
 
-            python service.py -H srv3 -S CryptSvc -w -t 2
+            python docker.py -H srv3 -S CryptSvc -w -t 2
 
         Get Service status for Service "IKEEXT" hosted on monitored machine "srv3" with Verbose mode enabled.
 
-            python service.py -H srv3 -S IKEEXT -c -v
+            python docker.py -H srv3 -S IKEEXT -c -v
         """,
         epilog="version {}, copyright {}".format(__version__, __copyright__))
 
@@ -175,14 +162,23 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--timeout', type=int, help='Data validity timeout (in minutes)', default=4)
     parser.add_argument('-E', '--elastichost', type=str, help='Connection URL of ElasticSearch server', default="http://localhost:9200")
     parser.add_argument('-v', '--verbose', help='be verbose', action='store_true')
-    parser.add_argument('-o', '--os', help='Should be linux or windows, default to linux', default='linux')
+    parser.add_argument('-m', '--mode', type=str, help='Normal mode querying to ES (normal by default, other value for other value)', default="normal")
 
     args = parser.parse_args()
 
+    if args.mode == 'normal':
+        attribute_name = 'docker.event.actor.attributes.name'
+        metricset_name = 'event'
+        event_module = 'docker'
+    else:
+        attribute_name = 'container.name'
+        metricset_name = 'process'
+        event_module = 'system'
+
     if validate_elastichost(args.elastichost):
-        custom_payload = custom_api_payload(args.hostname, args.service, args.timeout, args.os)
-        total_hit, display_name, service_status = get_service(args.elastichost, args.verbose, custom_payload, args.os)
-        rgm_service_output(args.warning, args.critical, total_hit, display_name, service_status, args.os)
+        custom_payload = custom_api_payload(args.hostname, args.service, args.timeout, attribute_name, metricset_name, event_module)
+        total_hit, display_name, service_status = get_service(args.elastichost, args.verbose, custom_payload, args.service)
+        rgm_service_output(args.warning, args.critical, total_hit, display_name, service_status, args.service)
 
 
 ## EOF ####################################################################################################################
