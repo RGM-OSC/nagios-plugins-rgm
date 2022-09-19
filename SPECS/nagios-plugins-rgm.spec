@@ -194,7 +194,7 @@ rm -rf %{buildroot}
 
 
 %changelog
-* Wed Aug 02 2022 Alex Rocher <arocher@fr.scc.com> - 1.0-29.rgm
+* Wed Aug 03 2022 Alex Rocher <arocher@fr.scc.com> - 1.0-29.rgm
 - Add generic service check for metricbeat (linux by default)
 
 * Wed Jul 06 2022 Christophe Cassan <ccassan@fr.scc.com> - 1.0-28.rgm
@@ -232,7 +232,7 @@ rm -rf %{buildroot}
 - add check_veeam_jobs in backup checks 
 - add check_wmi_veeam_licence in backup checks
 
-* Thu Oct 28 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-18.rgm
+* Wed Oct 28 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-18.rgm
 - fix SPEC file for correct package upgrade
 - fix display typo on metricbeat disk check in verbose mode
 - rename check_oracle_health check_oracle_health_rgm to avoid conflict with upstream ConsolLab check
@@ -260,7 +260,7 @@ rm -rf %{buildroot}
 * Thu Jun 18 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-12.rgm
 - fix spec file issues
 
-* Thu Feb 04 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-11.rgm
+* Wed Feb 04 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-11.rgm
 - fix path for check_bp_status
 
 * Thu Jan 30 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-10.rgm
