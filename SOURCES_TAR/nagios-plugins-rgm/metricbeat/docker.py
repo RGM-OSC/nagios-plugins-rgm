@@ -170,6 +170,10 @@ if __name__ == '__main__':
         attribute_name = 'docker.event.actor.attributes.name'
         metricset_name = 'event'
         event_module = 'docker'
+    elif args.mode == 'container':
+        attribute_name = 'container.name'
+        metricset_name = 'container'
+        event_module = 'docker'
     else:
         attribute_name = 'container.name'
         metricset_name = 'process'
