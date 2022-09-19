@@ -117,7 +117,7 @@ cd ../%{check_printer_health}
 %install
 
 # copy contrib & metricbeat plugins
-install -d -o %{rgm_user_nagios} -g %{rgm_group} -m 0755 %{buildroot}%{rgmdatadir}
+install -d -m 0755 %{buildroot}%{rgmdatadir}
 cp -afv aix %{buildroot}%{rgmdatadir}/
 cp -afv as400 %{buildroot}%{rgmdatadir}/
 cp -afv apache %{buildroot}%{rgmdatadir}/
@@ -141,24 +141,24 @@ cp -afv windows %{buildroot}%{rgmdatadir}/
 install -Dm 0400 sudoers/nagios_teleport %{buildroot}%{_sysconfdir}/sudoers.d/nagios_teleport
 
 # install Consol.Labs plugins
-install -d -o %{rgm_user_nagios} -g %{rgm_group} -m 0755 %{buildroot}%{rgmdatadir}/network
-install -d -o %{rgm_user_nagios} -g %{rgm_group} -m 0755 %{buildroot}%{rgmdatadir}/database
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_nwc_health}/plugins-scripts/check_nwc_health %{buildroot}%{rgmdatadir}/network/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_db2_health}/plugins-scripts/check_db2_health %{buildroot}%{rgmdatadir}/database/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_mssql_health}/plugins-scripts/check_mssql_health %{buildroot}%{rgmdatadir}/database/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_oracle_health}/plugins-scripts/check_oracle_health %{buildroot}%{rgmdatadir}/database/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_sap_health}/plugins-scripts/check_sap_health %{buildroot}%{rgmdatadir}/database/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_sqlbase_health}/plugins-scripts/check_sqlbase_health %{buildroot}%{rgmdatadir}/database/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_mysql_health}/plugins-scripts/check_mysql_health %{buildroot}%{rgmdatadir}/database/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_hpasm}/plugins-scripts/check_hpasm %{buildroot}%{rgmdatadir}/storage/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_ups_health}/plugins-scripts/check_ups_health %{buildroot}%{rgmdatadir}/ups/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_logfiles}/plugins-scripts/check_logfiles %{buildroot}%{rgmdatadir}/backup/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_ntp_health}/plugins-scripts/check_ntp_health %{buildroot}%{rgmdatadir}/system/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_pdu_health}/plugins-scripts/check_pdu_health %{buildroot}%{rgmdatadir}/hardware/
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} %{check_printer_health}/plugins-scripts/check_printer_health %{buildroot}%{rgmdatadir}/system/
+install -d -m 0755 %{buildroot}%{rgmdatadir}/network
+install -d -m 0755 %{buildroot}%{rgmdatadir}/database
+install -m 0755 %{check_nwc_health}/plugins-scripts/check_nwc_health %{buildroot}%{rgmdatadir}/network/
+install -m 0755 %{check_db2_health}/plugins-scripts/check_db2_health %{buildroot}%{rgmdatadir}/database/
+install -m 0755 %{check_mssql_health}/plugins-scripts/check_mssql_health %{buildroot}%{rgmdatadir}/database/
+install -m 0755 %{check_oracle_health}/plugins-scripts/check_oracle_health %{buildroot}%{rgmdatadir}/database/
+install -m 0755 %{check_sap_health}/plugins-scripts/check_sap_health %{buildroot}%{rgmdatadir}/database/
+install -m 0755 %{check_sqlbase_health}/plugins-scripts/check_sqlbase_health %{buildroot}%{rgmdatadir}/database/
+install -m 0755 %{check_mysql_health}/plugins-scripts/check_mysql_health %{buildroot}%{rgmdatadir}/database/
+install -m 0755 %{check_hpasm}/plugins-scripts/check_hpasm %{buildroot}%{rgmdatadir}/storage/
+install -m 0755 %{check_ups_health}/plugins-scripts/check_ups_health %{buildroot}%{rgmdatadir}/ups/
+install -m 0755 %{check_logfiles}/plugins-scripts/check_logfiles %{buildroot}%{rgmdatadir}/backup/
+install -m 0755 %{check_ntp_health}/plugins-scripts/check_ntp_health %{buildroot}%{rgmdatadir}/system/
+install -m 0755 %{check_pdu_health}/plugins-scripts/check_pdu_health %{buildroot}%{rgmdatadir}/hardware/
+install -m 0755 %{check_printer_health}/plugins-scripts/check_printer_health %{buildroot}%{rgmdatadir}/system/
 
 # install snmp2elastic plugin
-install -m 0755 -o %{rgm_user_nagios} -g %{rgm_group} snmp2elastic/nagios_checks/check_el_nwc.py %{buildroot}%{rgmdatadir}/network/
+install -m 0755 snmp2elastic/nagios_checks/check_el_nwc.py %{buildroot}%{rgmdatadir}/network/
 
 # ignore rpmbuild python policy script RC at the end of install
 exit 0
