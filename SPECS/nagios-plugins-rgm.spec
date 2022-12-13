@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 29.rgm
+Release: 30.rgm
 Source: %{name}.tar.gz
 Group: Applications/System
 License: GPL
@@ -194,6 +194,9 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Tue Dec 13 2022 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-30.rgm
+- update ES interfaces check: add nic name filter (pattern/regex/invert)
+
 * Wed Aug 03 2022 Alex Rocher <arocher@fr.scc.com> - 1.0-29.rgm
 - Add generic service check for metricbeat (linux by default)
 
