@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 30.rgm
+Release: 31.rgm
 Source: %{name}.tar.gz
 Group: Applications/System
 License: GPL
@@ -15,10 +15,10 @@ Requires: wget bc wmi
 
 BuildRequires: rpm-macros-rgm autoconf automake gawk perl
 
-AutoReqProv:   0
+AutoReqProv: 0
 
 # disable debuginfo package build
- %define debug_package %{nil}
+%define debug_package %{nil}
 
 ### Consol.Labs plugins
 # https://labs.consol.de/assets/downloads/nagios/
@@ -124,6 +124,7 @@ cp -afv apache %{buildroot}%{rgmdatadir}/
 cp -afv azure %{buildroot}%{rgmdatadir}/
 cp -afv backup %{buildroot}%{rgmdatadir}/
 cp -afv business %{buildroot}%{rgmdatadir}/
+cp -afv citrix %{buildroot}%{rgmdatadir}/
 cp -afv database %{buildroot}%{rgmdatadir}/
 cp -afv downtime %{buildroot}%{rgmdatadir}/
 cp -afv hardware %{buildroot}%{rgmdatadir}/
@@ -131,6 +132,8 @@ cp -afv metricbeat %{buildroot}%{rgmdatadir}/
 cp -afv MIBS %{buildroot}%{rgmdatadir}/
 cp -afv nagios %{buildroot}%{rgmdatadir}/
 cp -afv network %{buildroot}%{rgmdatadir}/
+cp -afv pki %{buildroot}%{rgmdatadir}/
+cp -afv prometheus %{buildroot}%{rgmdatadir}/
 cp -afv snmp %{buildroot}%{rgmdatadir}/
 cp -afv storage %{buildroot}%{rgmdatadir}/
 cp -afv system %{buildroot}%{rgmdatadir}/
@@ -194,6 +197,13 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Tue Jan 3 2023 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-31.rgm
+- add cadvisor check
+- add prometheus node_exporter checks for cpu, fs, memory, uptime
+- add Azure cloud services
+- add Citrix Cloud sessions
+- add ged/stargate check
+
 * Tue Dec 13 2022 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-30.rgm
 - update ES interfaces check: add nic name filter (pattern/regex/invert)
 

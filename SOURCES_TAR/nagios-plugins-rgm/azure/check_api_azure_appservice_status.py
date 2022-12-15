@@ -7,7 +7,7 @@ from ast import arg
 import sys
 import json
 import pprint
-import Class.AzureApi as AzureApi
+from NagiosClasses import AzureApi
 
 parser = argparse.ArgumentParser(description='Check Azur Operation List')
 parser.add_argument('-i','--id', help='Azure VM ID', required=True)

@@ -5,7 +5,7 @@ import re
 import sys
 import json
 import pprint
-import Class.AzureApi as AzureApi
+from NagiosClasses import AzureApi
 
 parser = argparse.ArgumentParser(description='Check Azure VM status')
 parser.add_argument('-d', '--directory', help='Directory (tenant) ID', required=True)

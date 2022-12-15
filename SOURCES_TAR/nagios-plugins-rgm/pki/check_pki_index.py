@@ -51,7 +51,7 @@ class ValidCert:
         for i in dn.split('/'):
             for j in ('C', 'ST', 'L', 'O', 'OU', 'CN', 'emailAddress'):
                 if i.startswith('{}='.format(j)):
-                    self.dn[j] = i.removeprefix('{}='.format(j))
+                    self.dn[j] = i[len(j)+1:]
                     break
         self._registry.append(self)
 
@@ -61,12 +61,12 @@ class ValidCert:
         return False
 
     def is_warning(self) -> bool:
-        if self.daystoexpire >= args.warning and self.daystoexpire < args.critical:
+        if self.daystoexpire <= args.warning and self.daystoexpire > args.critical:
             return True
         return False
 
     def is_critical(self) -> bool:
-        if self.daystoexpire >= args.critical or self.is_exhausted():
+        if self.daystoexpire <= args.critical or self.is_exhausted():
             return True
         return False
 

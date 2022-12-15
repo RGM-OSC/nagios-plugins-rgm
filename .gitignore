@@ -1,5 +1,6 @@
-SOURCES/**/*.pyc
-SOURCES/**/*.pyo
+**/__pycache__
+**/*.pyc
+**/*.pyo
 .vscode/**
 .vstags
 venv/**
