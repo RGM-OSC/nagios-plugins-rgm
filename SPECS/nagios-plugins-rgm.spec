@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 31.rgm
+Release: 32.rgm
 Source: %{name}.tar.gz
 Group: Applications/System
 License: GPL
@@ -197,6 +197,9 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Mon Mar 27 2023 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-32.rgm
+- fix teleport check to report OK when teleport is disabled
+
 * Tue Jan 3 2023 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-31.rgm
 - add cadvisor check
 - add prometheus node_exporter checks for cpu, fs, memory, uptime

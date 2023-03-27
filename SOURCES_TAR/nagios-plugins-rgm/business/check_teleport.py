@@ -35,14 +35,7 @@ def get_pattern(message, pattern):
 
 def check_teleport_status():
     msg = ''
-    rc, stdout = exec_tctl(['status'])
-    if rc != 0:
-        return (2, 'CRITICAL: Unable to access dial Teleport daemon')
-    else:
-        cluster = get_pattern(stdout.splitlines(), r'.*^Cluster\s+([-_\.\w\d]+)\s*$')
-        version = get_pattern(stdout.splitlines(), r'.*^Version\s+([\.\d]+)\s*$')
-        msg = "OK: Teleport cluster '{}' version {} up and running".format(cluster, version)
-    return (rc, msg)
+    return exec_tctl(['status'])
 
 
 def check_teleport_trusted_cluster():
@@ -88,8 +81,21 @@ if __name__ == '__main__':
     msg = 'UNKNOWN mode requested'
     if args.mode == 'status':
         (rc, msg) = check_teleport_status()
+        if rc != 0:
+            msg = 'OK: Teleport daemon is stopped'
+            rc = 0
+        else:
+            cluster = get_pattern(msg.splitlines(), r'.*^Cluster\s+([-_\.\w\d]+)\s*$')
+            version = get_pattern(msg.splitlines(), r'.*^Version\s+([\.\d]+)\s*$')
+            msg = "OK: Teleport cluster '{}' version {} up and running".format(cluster, version)
+
     elif args.mode == 'trusted_cluster':
-        (rc, msg) = check_teleport_trusted_cluster()
+        (rc, msg) = check_teleport_status()
+        if rc == 0:
+            (rc, msg) = check_teleport_trusted_cluster()
+        else:
+            msg = 'OK: Teleport daemon is stopped'
+            rc = 0
 
     print(msg)
     sys.exit(rc)
