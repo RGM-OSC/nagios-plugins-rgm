@@ -1,8 +1,8 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 32.rgm
-Source: %{name}.tar.gz
+Release: 33.rgm
+Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
 
@@ -197,6 +197,9 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Tue Mar 28 2023 Alex Rocher <arocher@fr.scc.com> - 1.0-32.rgm
+- Fix source name
+
 * Mon Mar 27 2023 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-32.rgm
 - fix teleport check to report OK when teleport is disabled
 
