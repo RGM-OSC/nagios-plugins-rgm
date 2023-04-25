@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 33.rgm
+Release: 34.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -248,7 +248,7 @@ rm -rf %{buildroot}
   add provisioned storage on check_vmware_esx.pl
 
 * Tue Nov 03 2020 Lucas Fueyo <lfueyo@fr.scc.com> - 1.0-19.rgm
-- add check_veeam_jobs in backup checks 
+- add check_veeam_jobs in backup checks
 - add check_wmi_veeam_licence in backup checks
 
 * Wed Oct 28 2020 Eric Belhomme <ebelhomme@fr.scc.com> - 1.0-18.rgm
@@ -266,8 +266,8 @@ rm -rf %{buildroot}
   - add verbose levels for Nagios output text
   - add storage unit autodetection (or force specific unit)
 
-* Fri Jun 26 2020 Lucas Fueyo <lfueyo@fr.scc.com> - 1.0.15.rgm 
-- Add clearpass checks 
+* Fri Jun 26 2020 Lucas Fueyo <lfueyo@fr.scc.com> - 1.0.15.rgm
+- Add clearpass checks
 
 * Thu Jun 25 2020 Vincent Fricou <vincent@fricouv.eu> - 1.0-14.rgm
 - Add check_dd6300 for EMC DataDomain 6300
@@ -313,7 +313,7 @@ rm -rf %{buildroot}
 - Fix git merge issue
 
 * Fri Sep 27 2019 Michael Aubertin <maubertin@fr.scc.com> - 1.0-0.rgm
-- First RGM release. 
+- First RGM release.
 
 * Tue Aug 13 2019 Eric Belhomme <ebelhomme@fr.scc.com> - 0.2-2.rgm
 - update files attrs
