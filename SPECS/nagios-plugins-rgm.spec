@@ -10,7 +10,7 @@ Requires: rgm-base nagios-plugins
 Requires: coreutils, fping
 Requires: python python-requests
 Requires: python-rgm >= 1.0-4
-Requires: perl perl-libwww-perl-old perl-LWP-Protocol-https perl-Mail-Sendmail perl-Module-Load perl-Nagios-Plugin perl-Time-Duration perl-WWW-Curl perl-Net-OpenSSH perl-IO-Tty perl-Number-Format perl-DateTime perl-IPC-Cmd perl-Filesys-SmbClient
+Requires: perl perl-libwww-perl perl-LWP-Protocol-https perl-Mail-Sendmail perl-Module-Load perl-Nagios-Plugin perl-Time-Duration perl-WWW-Curl perl-Net-OpenSSH perl-IO-Tty perl-Number-Format perl-DateTime perl-IPC-Cmd perl-Filesys-SmbClient
 Requires: wget bc wmi
 
 BuildRequires: rpm-macros-rgm autoconf automake gawk perl
