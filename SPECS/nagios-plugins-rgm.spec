@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 34.rgm
+Release: 35.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -197,6 +197,9 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Mon Jun 5 2023 Vincent Fricou <vfricou@fr.scc.com> - 1.0-35.rgm
+- Add check bedevent
+
 * Tue Mar 28 2023 Alex Rocher <arocher@fr.scc.com> - 1.0-32.rgm
 - Fix source name
 
