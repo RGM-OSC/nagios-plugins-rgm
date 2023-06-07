@@ -209,7 +209,7 @@ if ($type eq "HOST" || $type eq "SERVICE" || $type eq "HOSTGROUPS" || $type eq "
                     $countwarning = 1;
                     $output = "$output Equipment $equipment[$c_order]($ip_address[$c_order]) is faulted from $occ[$c_order] notification cycles.\n" if ($type eq "HOST" || $type eq "HOSTGROUPS");
                     $output = "$output Equipment $equipment[$c_order]($ip_address[$c_order]) service $service[$c_order] is faulted from $occ[$c_order] notification cycles.\n" if ($type eq "SERVICE" || $type eq "SERVICEGROUPS");
-                    $output = "$output Contract $contract[$c_order] is faulted from $occ[$c_order] notification cycle.\n";
+                    $output = "$output Contract $contract[$c_order] is faulted from $occ[$c_order] notification cycle.\n" if ($type eq "CONTRACT");
                 }
             }
             $out_count = $nb_object;
@@ -218,27 +218,27 @@ if ($type eq "HOST" || $type eq "SERVICE" || $type eq "HOSTGROUPS" || $type eq "
     }
 
     if (defined($evwarning) || defined($evcritical)) {
+        my $c_ev = 0;
         for (my $count = 0; $count < $nb_object; ++$count) {
             my $c_order = $count - 1;
-            my $cur_occ = $occ[$count];
-            if ($cur_occ > $max_occ) {$max_occ = $cur_occ;}
             if ($state[$c_order] eq 2 || $state[$c_order] == 2) {
                 if ($nb_object >= $evcritical) {
                     $countcritical = 1;
+                    $c_ev++;
                     $output = "$output Equipment $equipment[$c_order]($ip_address[$c_order]) was generated $occ[$c_order] events.\n" if ($type eq "HOST" || $type eq "HOSTGROUPS");
                     $output = "$output Service $service[$c_order] was generated $occ[$c_order] events.\n" if ($type eq "SERVICE" || $type eq "SERVICEGROUPS");
-                    $output = "$output Contract $contract[$c_order] was generated $occ[$c_order] critical events.\n";
                 }
             } elsif ($state[$c_order] ge 1 || $state[$c_order] >= 1) {
                 if ($nb_object >= $evwarning && $countcritical < 1) {
                     $countwarning = 1;
+                    $c_ev++;
                     $output = "$output Equipment $equipment[$c_order]($ip_address[$c_order]) was generated $occ[$c_order] events.\n" if ($type eq "HOST" || $type eq "HOSTGROUPS");
                     $output = "$output Service $service[$c_order] was generated $occ[$c_order] events.\n" if ($type eq "SERVICE" || $type eq "SERVICEGROUPS");
-                    $output = "$output Contract $contract[$c_order] was generated $occ[$c_order] warning events.\n";
                 }
             }
             $out_count = $nb_object;
         }
+        $output = "$output Contract $sqlstring was generated $c_ev events.\n" if ($type eq "CONTRACT" && $c_ev >= 1);
         $perf = $o_perf . "=" . $out_count . ";" . $evwarning . ";" . $evcritical . ',' if (defined($o_perf));
     }
 }
