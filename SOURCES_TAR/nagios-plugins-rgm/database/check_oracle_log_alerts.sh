@@ -57,8 +57,8 @@ path="/srv/eyesofnetwork/nagios/plugins/OracleError/error_oracle_${HOST}_${DBNAM
 
 echo "${RequestA}" | sqlplus $USER/$PASSWORD'@'$HOST':'$PORT/$DBNAME > $path
 
-error=`cat $path | grep ORA-`
-crit=`cat $path | egrep 'WARNING|CRITICAL'`
+error=$(cat $path | grep ORA-)
+crit=$(cat $path | egrep 'WARNING|CRITICAL')
 
 if [  "$error" != '' ]; then
 	echo "$crit $error"

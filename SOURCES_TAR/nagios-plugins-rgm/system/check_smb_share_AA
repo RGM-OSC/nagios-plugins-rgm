@@ -18,8 +18,8 @@ export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 
 REVISION=1.1
-PROGNAME=`/bin/basename $0`
-PROGPATH=`echo $0 | /bin/sed -e 's,[\\/][^\\/][^\\/]*$,,'`
+PROGNAME=$(/bin/basename $0)
+PROGPATH=$(echo $0 | /bin/sed -e 's,[\\/][^\\/][^\\/]*$,,')
 
 ACCESS_DENIED='NT_STATUS_ACCESS_DENIED'
 LOGON_DENIED='NT_STATUS_LOGON_FAILURE'

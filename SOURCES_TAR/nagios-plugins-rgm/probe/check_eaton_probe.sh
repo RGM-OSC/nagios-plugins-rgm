@@ -19,20 +19,20 @@ exit 2
 
 if [ "${12}" = "" ]; then usage; fi
 
-ARGS="`echo $@ |sed -e 's:-:\n-:g' | sed -e 's: ::g'`"
+ARGS="$(echo $@ |sed -e 's:-:\n-:g' | sed -e 's: ::g')"
 for i in $ARGS; do
-	if [ -n "`echo ${i} | grep "^\-T"`" ]; then TYPE="`echo ${i} | cut -c 3-`"; if [ ! -n ${TYPE} ]; then usage;fi;fi
-	if [ -n "`echo ${i} | grep "^\-C"`" ]; then COMMUNITY="`echo ${i} | cut -c 3-`"; if [ ! -n ${COMMUNITY} ]; then usage;fi;fi
-	if [ -n "`echo ${i} | grep "^\-H"`" ]; then HOST="`echo ${i} | cut -c 3-`"; if [ ! -n ${HOST} ]; then usage;fi;fi
-	if [ -n "`echo ${i} | grep "^\-t"`" ]; then TIMEOUT="`echo ${i} | cut -c 3-`"; if [ ! -n ${TIMEOUT} ]; then usage;fi;fi
-	if [ -n "`echo ${i} | grep "^\-w"`" ]; then WARNING="`echo ${i} | cut -c 3-`"; if [ ! -n ${WARNING} ]; then usage;fi;fi
-	if [ -n "`echo ${i} | grep "^\-c"`" ]; then CRITICAL="`echo ${i} | cut -c 3-`"; if [ ! -n ${CRITICAL} ]; then usage;fi;fi
-	if [ -n "`echo ${i} | grep "^\-D"`" ]; then DATA="data"; if [ ! -n ${DATA} ]; then usage;fi;fi
+	if [ -n "$(echo ${i} | grep "^\-T")" ]; then TYPE="$(echo ${i} | cut -c 3-)"; if [ ! -n ${TYPE} ]; then usage;fi;fi
+	if [ -n "$(echo ${i} | grep "^\-C")" ]; then COMMUNITY="$(echo ${i} | cut -c 3-)"; if [ ! -n ${COMMUNITY} ]; then usage;fi;fi
+	if [ -n "$(echo ${i} | grep "^\-H")" ]; then HOST="$(echo ${i} | cut -c 3-)"; if [ ! -n ${HOST} ]; then usage;fi;fi
+	if [ -n "$(echo ${i} | grep "^\-t")" ]; then TIMEOUT="$(echo ${i} | cut -c 3-)"; if [ ! -n ${TIMEOUT} ]; then usage;fi;fi
+	if [ -n "$(echo ${i} | grep "^\-w")" ]; then WARNING="$(echo ${i} | cut -c 3-)"; if [ ! -n ${WARNING} ]; then usage;fi;fi
+	if [ -n "$(echo ${i} | grep "^\-c")" ]; then CRITICAL="$(echo ${i} | cut -c 3-)"; if [ ! -n ${CRITICAL} ]; then usage;fi;fi
+	if [ -n "$(echo ${i} | grep "^\-D")" ]; then DATA="data"; if [ ! -n ${DATA} ]; then usage;fi;fi
 done
 
 
 if [ ! -d /tmp/tmp-internal ]; then mkdir -p /tmp/tmp-internal; fi
-TMPDIR="`mktemp -d /tmp/tmp-internal/ups.XXXXXXXX`"
+TMPDIR="$(mktemp -d /tmp/tmp-internal/ups.XXXXXXXX)"
 
 
 
@@ -42,9 +42,9 @@ else
 	/usr/bin/snmpwalk -v 1 -Oa -Ov -Ln -c ${COMMUNITY} -t ${TIMEOUT} ${HOST} 1.3.6.1.4.1.534.1.6.6 | cut -d':' -f2 |sed -e 's: ::g' > $TMPDIR/out.txt
 fi
 
-VALUE="`cat $TMPDIR/out.txt | head -1`"
+VALUE="$(cat $TMPDIR/out.txt | head -1)"
 
-if [ ! -n "`echo $VALUE | grep -v "[a-Z]"`" ]; then
+if [ ! -n "$(echo $VALUE | grep -v "[a-Z]")" ]; then
 	echo "CRITICAL: SNMP Response inadapted."
 	rm -rf ${TMPDIR}
 	exit 2

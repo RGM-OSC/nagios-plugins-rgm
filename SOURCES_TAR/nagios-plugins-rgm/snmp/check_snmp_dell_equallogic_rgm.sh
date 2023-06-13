@@ -18,7 +18,7 @@ CMD_BC="/usr/bin/bc"
 CMD_EXPR="/usr/bin/expr"
 
 # Script name
-SCRIPTNAME=`$CMD_BASENAME $0`
+SCRIPTNAME=$($CMD_BASENAME $0)
 
 # Version
 VERSION="1.0"
@@ -240,22 +240,22 @@ done
 # Plugin processing
 size_convert() {
   if [ $VALUE -ge 1099511627776 ]; then
-    VALUE=`echo "scale=2 ; ( ( ( $VALUE / 1024 ) / 1024 ) / 1024 ) / 1024" | $CMD_BC`
+    VALUE=$(echo "scale=2 ; ( ( ( $VALUE / 1024 ) / 1024 ) / 1024 ) / 1024" | $CMD_BC)
     VALUE="$VALUE To"
   elif [ $VALUE -ge 1073741824 ]; then
-    VALUE=`echo "scale=2 ; ( ( $VALUE / 1024 ) / 1024 ) / 1024" | $CMD_BC`
+    VALUE=$(echo "scale=2 ; ( ( $VALUE / 1024 ) / 1024 ) / 1024" | $CMD_BC)
     VALUE="$VALUE Go"
   elif [ $VALUE -ge 1048576 ]; then
-    VALUE=`echo "scale=2 ; ( $VALUE / 1024 ) / 1024" | $CMD_BC`
+    VALUE=$(echo "scale=2 ; ( $VALUE / 1024 ) / 1024" | $CMD_BC)
     VALUE="$VALUE Mo"
   else
-    VALUE=`echo "scale=2 ; $VALUE / 1024" | $CMD_BC`
+    VALUE=$(echo "scale=2 ; $VALUE / 1024" | $CMD_BC)
     VALUE="$VALUE Octets"
   fi
 }
 
 if [ -n "$NAME" ]; then
-  MEMBER_ID=`$CMD_SNMPWALK -t 2 -r 2 -v 1 -c $COMMUNITY $HOSTNAME $OID_MEMBER_ID | $CMD_GREP -i $NAME | $CMD_AWK '{ print $1}' | $CMD_AWK -F "." '{print $NF}'`
+  MEMBER_ID=$($CMD_SNMPWALK -t 2 -r 2 -v 1 -c $COMMUNITY $HOSTNAME $OID_MEMBER_ID | $CMD_GREP -i $NAME | $CMD_AWK '{ print $1}' | $CMD_AWK -F "." '{print $NF}')
   #echo "MEMBER NAME: $NAME"
   #echo "MEMBER_ID: $MEMBER_ID"
   if [ -n "$MEMBER_ID" ]; then
@@ -265,7 +265,7 @@ if [ -n "$NAME" ]; then
       DESCRIPTION="Member '${NAME}' - Battery status :"
       COMMA=", "
       for CONTROLLER_ID in 1 2; do
-        BATTERY_STATUS=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_BATTERY_STATUS}.${MEMBER_ID}.${CONTROLLER_ID}`
+        BATTERY_STATUS=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_BATTERY_STATUS}.${MEMBER_ID}.${CONTROLLER_ID})
         case $BATTERY_STATUS in
           1)
             DESCRIPTION="$DESCRIPTION cache battery in controller $CONTROLLER_ID is fully functional ${COMMA}"
@@ -306,7 +306,7 @@ if [ -n "$NAME" ]; then
       done
     elif [ $TYPE = "connection" ]; then
       # Number of connection (Usage : ./check_snmp_dell_equallogic -H 127.0.0.1 -C public -n BAIE01 -t connection -w 15 -c 20)
-      CONNECTIONS_ISCSI=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_CONNECTIONS_ISCSI}.${MEMBER_ID}`
+      CONNECTIONS_ISCSI=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_CONNECTIONS_ISCSI}.${MEMBER_ID})
       if [ -n "$CONNECTIONS_ISCSI" ]; then
         if [ $WARNING != 0 ] || [ $CRITICAL != 0 ]; then
           if [ $CONNECTIONS_ISCSI -gt $CRITICAL ] && [ $CRITICAL != 0 ]; then
@@ -323,7 +323,7 @@ if [ -n "$NAME" ]; then
       fi
     elif [ $TYPE = "controller" ]; then
       # Controllers status (Usage : ./check_snmp_dell_equallogic -H 127.0.0.1 -C public -n BAIE01 -t controller)
-      CONTROLLER_NUMBER=`$CMD_SNMPWALK -t 2 -r 2 -v 1 -c $COMMUNITY $HOSTNAME ${OID_CONTROLLER_PRIMSEC}.${MEMBER_ID} | wc -l`
+      CONTROLLER_NUMBER=$($CMD_SNMPWALK -t 2 -r 2 -v 1 -c $COMMUNITY $HOSTNAME ${OID_CONTROLLER_PRIMSEC}.${MEMBER_ID} | wc -l)
       DESCRIPTION="Member '${NAME}' - Controllers status :"
       if [ $CONTROLLER_NUMBER = 2 ]; then
         DESCRIPTION="$DESCRIPTION both controllers are fully functional"
@@ -334,11 +334,11 @@ if [ -n "$NAME" ]; then
       fi
     elif [ $TYPE = "disk" ]; then
       # Disks storage status (Usage : ./check_snmp_dell_equallogic -H 127.0.0.1 -C public -n BAIE01 -t disk -d 1)
-      DISK_SLOT=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_DISK_ID}.${MEMBER_ID}.${DISK}`
-      DISK_TYPE=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_DISK_TYPE}.${MEMBER_ID}.${DISK}`
-      DISK_TOTAL=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_DISK_TOTAL}.${MEMBER_ID}.${DISK}`
-      DISK_STATUS=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_DISK_STATUS}.${MEMBER_ID}.${DISK}`
-      DISK_TOTAL=`$CMD_EXPR $DISK_TOTAL \* 1048576`
+      DISK_SLOT=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_DISK_ID}.${MEMBER_ID}.${DISK})
+      DISK_TYPE=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_DISK_TYPE}.${MEMBER_ID}.${DISK})
+      DISK_TOTAL=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_DISK_TOTAL}.${MEMBER_ID}.${DISK})
+      DISK_STATUS=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_DISK_STATUS}.${MEMBER_ID}.${DISK})
+      DISK_TOTAL=$($CMD_EXPR $DISK_TOTAL \* 1048576)
       case $DISK_TYPE in
         1)
           DISK_TYPE_TEXT="SATA"
@@ -395,9 +395,9 @@ if [ -n "$NAME" ]; then
     elif [ $TYPE = "fan" ]; then
       # Check fans RPM (Usage : ./check_snmp_dell_equallogic -H 127.0.0.1 -C public -n BAIE01 -t fan)
       DESCRIPTION="Member '${NAME}' - Fan speed  :"
-      for FAN_ID in `$CMD_SNMPWALK -t 2 -r 2 -v 1 -c $COMMUNITY $HOSTNAME ${OID_FAN_NAME} | $CMD_AWK '{ print $1}' | $CMD_AWK -F "." '{print $NF}'`; do
-        FAN_NAME=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_FAN_NAME}.${MEMBER_ID}.${FAN_ID} | $CMD_AWK -F '"' '{print $2}'`
-        FAN_VALUE=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_FAN_VALUE}.${MEMBER_ID}.${FAN_ID}`
+      for FAN_ID in $($CMD_SNMPWALK -t 2 -r 2 -v 1 -c $COMMUNITY $HOSTNAME ${OID_FAN_NAME} | $CMD_AWK '{ print $1}' | $CMD_AWK -F "." '{print $NF}'); do
+        FAN_NAME=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_FAN_NAME}.${MEMBER_ID}.${FAN_ID} | $CMD_AWK -F '"' '{print $2}')
+        FAN_VALUE=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_FAN_VALUE}.${MEMBER_ID}.${FAN_ID})
         DESCRIPTION="$DESCRIPTION '${FAN_NAME}' : ${FAN_VALUE} tr/min, "
         PERFORMANCE_DATA="$PERFORMANCE_DATA '${FAN_NAME}'=${FAN_VALUE}"
       done
@@ -405,7 +405,7 @@ if [ -n "$NAME" ]; then
       STATE=$STATE_OK
     elif [ $TYPE = "health" ]; then
       # Check global system status (Usage : ./check_snmp_dell_equallogic -H 127.0.0.1 -C public -n BAIE01 -t health)
-      HEALTH_STATUS=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_HEALTH_STATUS}.${MEMBER_ID}`
+      HEALTH_STATUS=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_HEALTH_STATUS}.${MEMBER_ID})
       DESCRIPTION="Member '${NAME}' - Global system status : "
       case $HEALTH_STATUS in
         1)
@@ -427,29 +427,29 @@ if [ -n "$NAME" ]; then
       esac
     elif [ $TYPE = "info" ]; then
       # Information (Usage : ./check_snmp_dell_equallogic -H 127.0.0.1 -C public -n BAIE01 -t info)
-      MODEL=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_MODEL}.${MEMBER_ID} | $CMD_AWK -F '"' '{print $2}'`
-      SERIALNUMBER=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_SERIALNUMBER}.${MEMBER_ID} | $CMD_AWK -F '"' '{print $2}'`
-      CONTROLLERS=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_NUMBERCONTROLLERS}.${MEMBER_ID}`
-      DISKS=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_NUMBERDISKS}.${MEMBER_ID}`
+      MODEL=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_MODEL}.${MEMBER_ID} | $CMD_AWK -F '"' '{print $2}')
+      SERIALNUMBER=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_SERIALNUMBER}.${MEMBER_ID} | $CMD_AWK -F '"' '{print $2}')
+      CONTROLLERS=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_NUMBERCONTROLLERS}.${MEMBER_ID})
+      DISKS=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_NUMBERDISKS}.${MEMBER_ID})
       DESCRIPTION="Member '${NAME}' - Info : Storage Array Dell EqualLogic '${MODEL}' (${SERIALNUMBER}) has $CONTROLLERS controllers and $DISKS hard drives"
       STATE=$STATE_OK
     elif [ $TYPE = "io" ]; then
       # Check I/O performance (Usage : ./check_snmp_dell_equallogic -H 127.0.0.1 -C public -n BAIE01 -t io)
-      IO_READ=`$CMD_SNMPGET -t 2 -r 2 -v 2c -c $COMMUNITY -Ovq $HOSTNAME ${OID_IO_READ}.${MEMBER_ID}`
-      IO_WRITE=`$CMD_SNMPGET -t 2 -r 2 -v 2c -c $COMMUNITY -Ovq $HOSTNAME ${OID_IO_WRITE}.${MEMBER_ID}`
+      IO_READ=$($CMD_SNMPGET -t 2 -r 2 -v 2c -c $COMMUNITY -Ovq $HOSTNAME ${OID_IO_READ}.${MEMBER_ID})
+      IO_WRITE=$($CMD_SNMPGET -t 2 -r 2 -v 2c -c $COMMUNITY -Ovq $HOSTNAME ${OID_IO_WRITE}.${MEMBER_ID})
       DESCRIPTION="Member '${NAME}' -  I/O Operations Per Second : Read counter's value is ${IO_READ} and write counter's value is $IO_WRITE | read=${IO_READ}c;0;0;0 write=${IO_WRITE}c;0;0;0"
       STATE=$STATE_OK
     elif [ $TYPE = "latency" ]; then
       # Check average latency (Usage : ./check_snmp_dell_equallogic -H 127.0.0.1 -C public -n BAIE01 -t latency)
-      LATENCY_READ=`$CMD_SNMPGET -t 2 -r 2 -v 2c -c $COMMUNITY -Ovq $HOSTNAME ${OID_LATENCY_READ}.${MEMBER_ID}`
-      LATENCY_WRITE=`$CMD_SNMPGET -t 2 -r 2 -v 2c -c $COMMUNITY -Ovq $HOSTNAME ${OID_LATENCY_WRITE}.${MEMBER_ID}`
+      LATENCY_READ=$($CMD_SNMPGET -t 2 -r 2 -v 2c -c $COMMUNITY -Ovq $HOSTNAME ${OID_LATENCY_READ}.${MEMBER_ID})
+      LATENCY_WRITE=$($CMD_SNMPGET -t 2 -r 2 -v 2c -c $COMMUNITY -Ovq $HOSTNAME ${OID_LATENCY_WRITE}.${MEMBER_ID})
       DESCRIPTION="Member '${NAME}' - Reading average latency value is : $LATENCY_READ ms, writing average latency value is $LATENCY_WRITE ms | read=${LATENCY_READ};0;0;0 write=${LATENCY_WRITE};0;0;0"
       STATE=$STATE_OK
     elif [ $TYPE = "network" ]; then
       # Network interface status (Usage : ./check_snmp_dell_equallogic -H 127.0.0.1 -C public -n BAIE01 -t network -i eth0)
-      NETWORK_IP=`$CMD_SNMPWALK -t 2 -r 2 -v 1 -c $COMMUNITY $HOSTNAME ${OID_NETWORK_NAME}.${MEMBER_ID} | $CMD_GREP -i $NETWORK | $CMD_AWK '{print $1}' | $CMD_AWK -F "${MEMBER_ID}." '{print $2}'`
-      NETWORK_ID=`$CMD_SNMPWALK -t 2 -r 2 -v 1 -c $COMMUNITY $HOSTNAME ${OID_NETWORK_ID} | $CMD_GREP -i $NETWORK | $CMD_AWK '{ print $1}' | $CMD_AWK -F "." '{print $NF}'`
-      NETWORK_STATUS=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_NETWORK_STATUS}.${NETWORK_ID}`
+      NETWORK_IP=$($CMD_SNMPWALK -t 2 -r 2 -v 1 -c $COMMUNITY $HOSTNAME ${OID_NETWORK_NAME}.${MEMBER_ID} | $CMD_GREP -i $NETWORK | $CMD_AWK '{print $1}' | $CMD_AWK -F "${MEMBER_ID}." '{print $2}')
+      NETWORK_ID=$($CMD_SNMPWALK -t 2 -r 2 -v 1 -c $COMMUNITY $HOSTNAME ${OID_NETWORK_ID} | $CMD_GREP -i $NETWORK | $CMD_AWK '{ print $1}' | $CMD_AWK -F "." '{print $NF}')
+      NETWORK_STATUS=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_NETWORK_STATUS}.${NETWORK_ID})
       DESCRIPTION="Member '${NAME}' - Network interface '${NETWORK}' (${NETWORK_IP}) status :"
       if [ $NETWORK_STATUS = "up" ]; then
          DESCRIPTION="$DESCRIPTION Network interface is fully fonctionnal"
@@ -463,8 +463,8 @@ if [ -n "$NAME" ]; then
       DESCRIPTION="Member '${NAME}' - Power supply status :"
       COMMA=", "
       for POWERSUPPLY_ID in 1 2; do
-        POWERSUPPLY_NAME=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY $HOSTNAME ${OID_POWERSUPPLY_NAME}.${MEMBER_ID}.${POWERSUPPLY_ID} | $CMD_AWK -F '"' '{print $2}'`
-        POWERSUPPLY_STATUS=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_POWERSUPPLY_STATUS}.${MEMBER_ID}.${POWERSUPPLY_ID}`
+        POWERSUPPLY_NAME=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY $HOSTNAME ${OID_POWERSUPPLY_NAME}.${MEMBER_ID}.${POWERSUPPLY_ID} | $CMD_AWK -F '"' '{print $2}')
+        POWERSUPPLY_STATUS=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_POWERSUPPLY_STATUS}.${MEMBER_ID}.${POWERSUPPLY_ID})
         case $POWERSUPPLY_STATUS in
           1)
             DESCRIPTION="$DESCRIPTION '${POWERSUPPLY_NAME}' is fully fonctionnal${COMMA}"
@@ -490,7 +490,7 @@ if [ -n "$NAME" ]; then
       done
     elif [ $TYPE = "raid" ]; then
       # RAID status (Usage : ./check_snmp_dell_equallogic -H 127.0.0.1 -C public -n BAIE01 -t raid)
-      RAID_STATUS=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_RAID_STATUS}.${MEMBER_ID}`
+      RAID_STATUS=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_RAID_STATUS}.${MEMBER_ID})
       DESCRIPTION="Member '${NAME}' - RAID status :"
       case $RAID_STATUS in
         1)
@@ -529,9 +529,9 @@ if [ -n "$NAME" ]; then
     elif [ $TYPE = "temperature" ]; then
       # Check temperature (Usage : ./check_snmp_dell_equallogic -H 127.0.0.1 -C public -n BAIE01 -t temperature)
       DESCRIPTION="Member '${NAME}' - Temperatures :"
-      for TEMPERATURE_ID in `$CMD_SNMPWALK -t 2 -r 2 -v 1 -c $COMMUNITY $HOSTNAME ${OID_TEMPERATURE_NAME} | $CMD_AWK '{ print $1}' | $CMD_AWK -F "." '{print $NF}'`; do
-        TEMPERATURE_NAME=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_TEMPERATURE_NAME}.${MEMBER_ID}.${TEMPERATURE_ID} | $CMD_AWK -F '"' '{print $2}'`
-        TEMPERATURE_VALUE=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_TEMPERATURE_VALUE}.${MEMBER_ID}.${TEMPERATURE_ID}`
+      for TEMPERATURE_ID in $($CMD_SNMPWALK -t 2 -r 2 -v 1 -c $COMMUNITY $HOSTNAME ${OID_TEMPERATURE_NAME} | $CMD_AWK '{ print $1}' | $CMD_AWK -F "." '{print $NF}'); do
+        TEMPERATURE_NAME=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_TEMPERATURE_NAME}.${MEMBER_ID}.${TEMPERATURE_ID} | $CMD_AWK -F '"' '{print $2}')
+        TEMPERATURE_VALUE=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_TEMPERATURE_VALUE}.${MEMBER_ID}.${TEMPERATURE_ID})
         DESCRIPTION="$DESCRIPTION '${TEMPERATURE_NAME}' : ${TEMPERATURE_VALUE} Degres Celcius, "
         PERFORMANCE_DATA="$PERFORMANCE_DATA '${TEMPERATURE_NAME}'=${TEMPERATURE_VALUE}"
       done
@@ -539,27 +539,27 @@ if [ -n "$NAME" ]; then
       STATE=$STATE_OK
     elif [ $TYPE = "usage" ]; then
       # Disk usage (Usage : ./check_snmp_dell_equallogic -H 127.0.0.1 -C public -n BAIE01 -t usage -w 90 -c 95)
-      USAGE_TOTAL=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_USAGE_TOTAL}.${MEMBER_ID}`
-      USAGE_USED=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_USAGE_USED}.${MEMBER_ID}`
-      USAGE_SNAPSHOTS=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_USAGE_SNAPSHOTS}.${MEMBER_ID}`
-      USAGE_REPLICAS=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_USAGE_REPLICAS}.${MEMBER_ID}`
+      USAGE_TOTAL=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_USAGE_TOTAL}.${MEMBER_ID})
+      USAGE_USED=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_USAGE_USED}.${MEMBER_ID})
+      USAGE_SNAPSHOTS=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_USAGE_SNAPSHOTS}.${MEMBER_ID})
+      USAGE_REPLICAS=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_USAGE_REPLICAS}.${MEMBER_ID})
 
       if [ $USAGE_TOTAL != 0 ]; then
-        USAGE_TOTAL=`$CMD_EXPR $USAGE_TOTAL \* 1048576`
-        USAGE_USED=`$CMD_EXPR $USAGE_USED \* 1048576`
-        USAGE_SNAPSHOTS=`$CMD_EXPR $USAGE_SNAPSHOTS \* 1048576`
-        USAGE_REPLICAS=`$CMD_EXPR $USAGE_REPLICAS \* 1048576`
+        USAGE_TOTAL=$($CMD_EXPR $USAGE_TOTAL \* 1048576)
+        USAGE_USED=$($CMD_EXPR $USAGE_USED \* 1048576)
+        USAGE_SNAPSHOTS=$($CMD_EXPR $USAGE_SNAPSHOTS \* 1048576)
+        USAGE_REPLICAS=$($CMD_EXPR $USAGE_REPLICAS \* 1048576)
 
-        USAGE_USED_POURCENT=`$CMD_EXPR \( $USAGE_USED \* 100 \) / $USAGE_TOTAL`
-        USAGE_SNAPSHOTS_POURCENT=`$CMD_EXPR \( $USAGE_SNAPSHOTS \* 100 \) / $USAGE_TOTAL`
-        USAGE_REPLICAS_POURCENT=`$CMD_EXPR \( $USAGE_REPLICAS \* 100 \) / $USAGE_TOTAL`
+        USAGE_USED_POURCENT=$($CMD_EXPR \( $USAGE_USED \* 100 \) / $USAGE_TOTAL)
+        USAGE_SNAPSHOTS_POURCENT=$($CMD_EXPR \( $USAGE_SNAPSHOTS \* 100 \) / $USAGE_TOTAL)
+        USAGE_REPLICAS_POURCENT=$($CMD_EXPR \( $USAGE_REPLICAS \* 100 \) / $USAGE_TOTAL)
 
         PERFDATA_WARNING=0
         PERFDATA_CRITICAL=0
 
         if [ $WARNING != 0 ] || [ $CRITICAL != 0 ]; then
-          PERFDATA_WARNING=`$CMD_EXPR \( $USAGE_TOTAL \* $WARNING \) / 100`
-          PERFDATA_CRITICAL=`$CMD_EXPR \( $USAGE_TOTAL \* $CRITICAL \) / 100`
+          PERFDATA_WARNING=$($CMD_EXPR \( $USAGE_TOTAL \* $WARNING \) / 100)
+          PERFDATA_CRITICAL=$($CMD_EXPR \( $USAGE_TOTAL \* $CRITICAL \) / 100)
 
           if [ $USAGE_USED_POURCENT -gt $CRITICAL ] && [ $CRITICAL != 0 ]; then
             STATE=$STATE_CRITICAL
@@ -585,7 +585,7 @@ if [ -n "$NAME" ]; then
     elif [ $TYPE = "volume" ]; then
       # Volume status (Usage : ./check_snmp_dell_equallogic -H 127.0.0.1 -C public -n BAIE01 -t volume -v volume01 -w 90 -c 95)
       echo "OID passe en argument: ${OID_VOLUME_NAME}.${MEMBER_ID}"
-      VOLUME_ID=`$CMD_SNMPWALK -t 2 -r 2 -v 1 -c $COMMUNITY $HOSTNAME ${OID_VOLUME_NAME}.${MEMBER_ID} | $CMD_GREP -i $VOLUME | $CMD_AWK '{print $1}' | $CMD_AWK -F "." '{print $NF}'`
+      VOLUME_ID=$($CMD_SNMPWALK -t 2 -r 2 -v 1 -c $COMMUNITY $HOSTNAME ${OID_VOLUME_NAME}.${MEMBER_ID} | $CMD_GREP -i $VOLUME | $CMD_AWK '{print $1}' | $CMD_AWK -F "." '{print $NF}')
 
       #VOLUME_ID=`$CMD_SNMPWALK -t 2 -r 2 -v 1 -c $COMMUNITY $HOSTNAME ${OID_VOLUME_NAME}.${MEMBER_ID} | $CMD_GREP -i $VOLUME | $CMD_AWK '{print $1}' | sed -e "s/$OID_VOLUME_NAME//"`
       echo "VOLUME_ID RECUPERE: $VOLUME_ID"
@@ -594,9 +594,9 @@ if [ -n "$NAME" ]; then
 
 
 
-      VOLUME_STATUS=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_VOLUME_STATUS}.${MEMBER_ID}.${VOLUME_ID}`
-      VOLUME_STORAGEPOOL_ID=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_VOLUME_STORAGEPOOL_ID}.${MEMBER_ID}.${VOLUME_ID}`
-      VOLUME_STORAGEPOOL_NAME=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_STORAGEPOOL_NAME}.${VOLUME_STORAGEPOOL_ID} | $CMD_AWK -F '"' '{print $2}'`
+      VOLUME_STATUS=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_VOLUME_STATUS}.${MEMBER_ID}.${VOLUME_ID})
+      VOLUME_STORAGEPOOL_ID=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_VOLUME_STORAGEPOOL_ID}.${MEMBER_ID}.${VOLUME_ID})
+      VOLUME_STORAGEPOOL_NAME=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_STORAGEPOOL_NAME}.${VOLUME_STORAGEPOOL_ID} | $CMD_AWK -F '"' '{print $2}')
       case $VOLUME_STATUS in
         1)
           VOLUME_STATUS_DESC="online"
@@ -618,19 +618,19 @@ if [ -n "$NAME" ]; then
         ;;
       esac
       DESCRIPTION="Member '${NAME}' - Volume '${VOLUME}' (${VOLUME_STATUS_DESC}) in RAID group '${VOLUME_STORAGEPOOL_NAME}' :"
-      VOLUME_TOTAL=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_VOLUME_TOTAL}.${MEMBER_ID}.${VOLUME_ID}`
-      VOLUME_USED=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_VOLUME_USED}.${MEMBER_ID}.${VOLUME_ID}`
+      VOLUME_TOTAL=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_VOLUME_TOTAL}.${MEMBER_ID}.${VOLUME_ID})
+      VOLUME_USED=$($CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_VOLUME_USED}.${MEMBER_ID}.${VOLUME_ID})
 
       if [ $VOLUME_TOTAL != 0 ]; then
-        VOLUME_TOTAL=`$CMD_EXPR $VOLUME_TOTAL \* 1048576`
-        VOLUME_USED=`$CMD_EXPR $VOLUME_USED \* 1048576`
-        VOLUME_USED_POURCENT=`$CMD_EXPR \( $VOLUME_USED \* 100 \) / $VOLUME_TOTAL`
+        VOLUME_TOTAL=$($CMD_EXPR $VOLUME_TOTAL \* 1048576)
+        VOLUME_USED=$($CMD_EXPR $VOLUME_USED \* 1048576)
+        VOLUME_USED_POURCENT=$($CMD_EXPR \( $VOLUME_USED \* 100 \) / $VOLUME_TOTAL)
         PERFDATA_WARNING=0
         PERFDATA_CRITICAL=0
 
         if [ $WARNING != 0 ] || [ $CRITICAL != 0 ]; then
-          PERFDATA_WARNING=`$CMD_EXPR \( $VOLUME_TOTAL \* $WARNING \) / 100`
-          PERFDATA_CRITICAL=`$CMD_EXPR \( $VOLUME_TOTAL \* $CRITICAL \) / 100`
+          PERFDATA_WARNING=$($CMD_EXPR \( $VOLUME_TOTAL \* $WARNING \) / 100)
+          PERFDATA_CRITICAL=$($CMD_EXPR \( $VOLUME_TOTAL \* $CRITICAL \) / 100)
 
           if [ $VOLUME_USED_POURCENT -gt $CRITICAL ] && [ $CRITICAL != 0 ]; then
             STATE=$STATE_CRITICAL

@@ -61,11 +61,11 @@ getDirectory="/tmp/tmp-internal-Solaris/infos_solaris"
 getFile="Export_${HOST}_${DBNAME}.lst"
 getStatus="/tmp/tmp-internal-Solaris/infos_solaris/Export_${HOST}_${DBNAME}.lst"
 
-datelimite=`date "+%s"` - 86400
+datelimite=$(date "+%s") - 86400
 echo datelimite = $datelimite
-datefichier=`stat -c %y $getStatus|awk -F"." '{print $1}'`
+datefichier=$(stat -c %y $getStatus|awk -F"." '{print $1}')
 echo datefichier = $datefichier
-datefichierSec=`date -d "${datefichier}" "+%s"
+datefichierSec=$(date -d "${datefichier}" "+%s")
 echo datefichierSec = $datefichierSec
 #echo "${RequestA}" | sqlplus $USER/$PASSWORD'@'$HOST':'$PORT/$DBNAME | egrep 'OK|WARNING|CRITICAL' > $getStatus
 

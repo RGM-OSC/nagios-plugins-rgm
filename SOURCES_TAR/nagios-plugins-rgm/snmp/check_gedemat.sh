@@ -26,15 +26,15 @@ if [ "${6}" = "" ]; then usage; fi
 WARNING=0
 CRITICAL=0
 NAMESPACE="NULL"
-ARGS="`echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g'`"
+ARGS="$(echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g')"
 
 for i in $ARGS; do
-        if [ -n "`echo ${i} | grep "^\-H"`" ]; then HOSTTARGET="`echo ${i} | cut -c 3-`"; if [ ! -n ${HOSTTARGET} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-w"`" ]; then WARNING="`echo ${i} | cut -c 3-`"; if [ ! -n ${WARNING} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-c"`" ]; then CRITICAL="`echo ${i} | cut -c 3-`"; if [ ! -n ${CRITICAL} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-p"`" ]; then PORT="`echo ${i} | cut -c 3-`"; if [ ! -n ${PORT} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-I"`" ]; then INFO="`echo ${i} | sed -e 's: ::g' | cut -c 3- | tr '[a-z]' '[A-Z]'`"; if [ ! -n ${INFO} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-n"`" ]; then NAMESPACE="`echo ${i} | sed -e 's: ::g' | cut -c 3- | tr '[a-z]' '[A-Z]'`"; if [ ! -n ${NAMESPACE} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-H")" ]; then HOSTTARGET="$(echo ${i} | cut -c 3-)"; if [ ! -n ${HOSTTARGET} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-w")" ]; then WARNING="$(echo ${i} | cut -c 3-)"; if [ ! -n ${WARNING} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-c")" ]; then CRITICAL="$(echo ${i} | cut -c 3-)"; if [ ! -n ${CRITICAL} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-p")" ]; then PORT="$(echo ${i} | cut -c 3-)"; if [ ! -n ${PORT} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-I")" ]; then INFO="$(echo ${i} | sed -e 's: ::g' | cut -c 3- | tr '[a-z]' '[A-Z]')"; if [ ! -n ${INFO} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-n")" ]; then NAMESPACE="$(echo ${i} | sed -e 's: ::g' | cut -c 3- | tr '[a-z]' '[A-Z]')"; if [ ! -n ${NAMESPACE} ]; then usage;fi;fi
 done
 
 COUNTWARNING=0
@@ -57,21 +57,21 @@ OpenOffice="Alfresco:Name=OpenOffice available"
 JMXLocation="/srv/eyesofnetwork/nagios/plugins"
 
 valuelimit() {
-	WARNINGONE="`echo $WARNING | cut -d':' -f1`"
-        WARNINGTWO="`echo $WARNING | cut -d':' -f2`"
-        WARNINGTHREE="`echo $WARNING | cut -d':' -f3`"
-        CRITICALONE="`echo $CRITICAL | cut -d':' -f1`"
-        CRITICALTWO="`echo $CRITICAL | cut -d':' -f2`"
-        CRITICALTHREE="`echo $CRITICAL | cut -d':' -f3`"
+	WARNINGONE="$(echo $WARNING | cut -d':' -f1)"
+        WARNINGTWO="$(echo $WARNING | cut -d':' -f2)"
+        WARNINGTHREE="$(echo $WARNING | cut -d':' -f3)"
+        CRITICALONE="$(echo $CRITICAL | cut -d':' -f1)"
+        CRITICALTWO="$(echo $CRITICAL | cut -d':' -f2)"
+        CRITICALTHREE="$(echo $CRITICAL | cut -d':' -f3)"
 }
 
 if [ "${INFO}" == "SPACESTORE" ];then
 	valuelimit
 	if [ ! -n ${WARNINGONE} ] || [ ! -n ${WARNINGTWO} ]; then usage;fi
 
-	VARINFO=`echo get -b $ARCHIVESpacesStore | java -jar $JMXLocation/jmxterm-1.0-alpha-4-uber.jar -lservice:jmx:rmi://ignored/jndi/rmi://$HOSTTARGET:$PORT/alfresco/jmxrmi -p change_asap -u controlRole -v silent -n | tr '\n' ';' | cut -d';' -f1,4 | tr ';' '\n'`
-	NumberOfDocuments=`echo $VARINFO | cut -d' ' -f3`
-	ActualSize=`echo $VARINFO | cut -d' ' -f6`
+	VARINFO=$(echo get -b $ARCHIVESpacesStore | java -jar $JMXLocation/jmxterm-1.0-alpha-4-uber.jar -lservice:jmx:rmi://ignored/jndi/rmi://$HOSTTARGET:$PORT/alfresco/jmxrmi -p change_asap -u controlRole -v silent -n | tr '\n' ';' | cut -d';' -f1,4 | tr ';' '\n')
+	NumberOfDocuments=$(echo $VARINFO | cut -d' ' -f3)
+	ActualSize=$(echo $VARINFO | cut -d' ' -f6)
 
 	if [ ${NumberOfDocuments} -gt ${CRITICALONE} ] || [ ${ActualSize} -gt ${CRITICALTWO} ] ; then
 		OUTPUT="NumberOfDocuments $NumberOfDocuments : Limit $CRITICALONE,ActualSize $ActualSize : Limit $CRITICALTWO"
@@ -91,9 +91,9 @@ if [ "${INFO}" == "USERSTORE" ];then
 	valuelimit
 	if [ ! -n ${WARNINGONE} ] || [ ! -n ${WARNINGTWO} ]; then usage;fi
 
-	VARINFO=`echo get -b $USERAlfrescoUserStore | java -jar $JMXLocation/jmxterm-1.0-alpha-4-uber.jar -lservice:jmx:rmi://ignored/jndi/rmi://$HOSTTARGET:$PORT/alfresco/jmxrmi -p change_asap -u controlRole -v silent -n | tr '\n' ';' | cut -d';' -f1,4 | tr ';' '\n'`
-	NumberOfDocuments=`echo $VARINFO | cut -d' ' -f3`
-	ActualSize=`echo $VARINFO | cut -d' ' -f6`
+	VARINFO=$(echo get -b $USERAlfrescoUserStore | java -jar $JMXLocation/jmxterm-1.0-alpha-4-uber.jar -lservice:jmx:rmi://ignored/jndi/rmi://$HOSTTARGET:$PORT/alfresco/jmxrmi -p change_asap -u controlRole -v silent -n | tr '\n' ';' | cut -d';' -f1,4 | tr ';' '\n')
+	NumberOfDocuments=$(echo $VARINFO | cut -d' ' -f3)
+	ActualSize=$(echo $VARINFO | cut -d' ' -f6)
 
 	if [ ${NumberOfDocuments} -gt ${CRITICALONE} ] || [ ${ActualSize} -gt ${CRITICALTWO} ] ; then
 		OUTPUT="NumberOfDocuments $NumberOfDocuments : Limit $CRITICALONE,ActualSize $ActualSize : Limit $CRITICALTWO"
@@ -113,11 +113,11 @@ if [ "${INFO}" == "CONTENTSTORE" ];then
 	valuelimit
 	if [ ! -n ${NAMESPACE} ]; then usage ;fi
 
-	VARINFO=`echo get -b $ContentStore | java -jar $JMXLocation/jmxterm-1.0-alpha-4-uber.jar -lservice:jmx:rmi://ignored/jndi/rmi://$HOSTTARGET:$PORT/alfresco/jmxrmi -p change_asap -u controlRole -v silent -n | tr '\n' ';' | cut -d';' -f1,4 | tr ';' '\n'`
-	SpaceTotal=`echo $VARINFO | cut -d' ' -f3`
-	SpaceFree=`echo $VARINFO | cut -d' ' -f6`
+	VARINFO=$(echo get -b $ContentStore | java -jar $JMXLocation/jmxterm-1.0-alpha-4-uber.jar -lservice:jmx:rmi://ignored/jndi/rmi://$HOSTTARGET:$PORT/alfresco/jmxrmi -p change_asap -u controlRole -v silent -n | tr '\n' ';' | cut -d';' -f1,4 | tr ';' '\n')
+	SpaceTotal=$(echo $VARINFO | cut -d' ' -f3)
+	SpaceFree=$(echo $VARINFO | cut -d' ' -f6)
 
-	PctFree=`echo $SpaceFree $SpaceTotal | awk '{printf("%d",(($1*100)/$2));}' | cut -d',' -f1`
+	PctFree=$(echo $SpaceFree $SpaceTotal | awk '{printf("%d",(($1*100)/$2));}' | cut -d',' -f1)
 	if [ ${PctFree} -lt ${CRITICALONE} ];then
 		OUTPUT="Critical : Space left on $NAMESPACEREQUIRED : $PctFree%"
 		COUNTCRITICAL=1
@@ -136,9 +136,9 @@ if [ "${INFO}" == "CONNECTIONPOOL" ];then
 	valuelimit
         if [ ! -n ${WARNINGONE} ] || [ ! -n ${WARNINGTWO} ]; then usage;fi
 
-	VARINFO=`echo get -b $ConnectionPool | java -jar $JMXLocation/jmxterm-1.0-alpha-4-uber.jar -lservice:jmx:rmi://ignored/jndi/rmi://$HOSTTARGET:$PORT/alfresco/jmxrmi -p change_asap -u controlRole -v silent -n | tr '\n' ';' | cut -d';' -f1,4 | tr ';' '\n'`
-	NumActive=`echo $VARINFO | cut -d' ' -f3`
-        NumIdle=`echo $VARINFO | cut -d' ' -f6`
+	VARINFO=$(echo get -b $ConnectionPool | java -jar $JMXLocation/jmxterm-1.0-alpha-4-uber.jar -lservice:jmx:rmi://ignored/jndi/rmi://$HOSTTARGET:$PORT/alfresco/jmxrmi -p change_asap -u controlRole -v silent -n | tr '\n' ';' | cut -d';' -f1,4 | tr ';' '\n')
+	NumActive=$(echo $VARINFO | cut -d' ' -f3)
+        NumIdle=$(echo $VARINFO | cut -d' ' -f6)
 
 	if [ ${NumActive} -gt ${CRITICALONE} ] || [ ${NumIdle} -gt ${CRITICALTWO} ] ; then
                 OUTPUT="Active connection $NumActive : Limit $CRITICALONE,Idle connection $NumIdle : Limit $CRITICALTWO"
@@ -155,8 +155,8 @@ if [ "${INFO}" == "CONNECTIONPOOL" ];then
 fi
 
 if [ "${INFO}" == "OPENOFFICE" ];then
-	VARINFO=`echo get -b $OpenOffice | java -jar $JMXLocation/jmxterm-1.0-alpha-4-uber.jar -lservice:jmx:rmi://ignored/jndi/rmi://$HOSTTARGET:$PORT/alfresco/jmxrmi -p change_asap -u controlRole -v silent -n | tr '\n' ';' | cut -d';' -f1,4 | tr ';' '\n'`
-	OOOState=`echo $VARINFO | cut -d' ' -f3`
+	VARINFO=$(echo get -b $OpenOffice | java -jar $JMXLocation/jmxterm-1.0-alpha-4-uber.jar -lservice:jmx:rmi://ignored/jndi/rmi://$HOSTTARGET:$PORT/alfresco/jmxrmi -p change_asap -u controlRole -v silent -n | tr '\n' ';' | cut -d';' -f1,4 | tr ';' '\n')
+	OOOState=$(echo $VARINFO | cut -d' ' -f3)
 
 	if [ ${OOOState} == "false" ]; then
 		OUTPUT="OpenOffice : Unavailable"
@@ -167,7 +167,7 @@ if [ "${INFO}" == "OPENOFFICE" ];then
 
 fi
 
-if [ `echo $OUTPUT | tr ',' '\n' | wc -l` -gt 2 ] ;then
+if [ $(echo $OUTPUT | tr ',' '\n' | wc -l) -gt 2 ] ;then
 	if [ $COUNTCRITICAL -gt 0 ] && [ $COUNTWARNING -gt 0 ]; then
 		echo "CRITICAL: Click for detail, "
 	else

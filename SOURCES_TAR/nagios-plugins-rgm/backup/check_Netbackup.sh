@@ -31,9 +31,9 @@ case $OPTION in
 done
 
 if [[ $CHECK == "Processes" ]]; then
-	cmd=`/srv/eyesofnetwork/nagios/plugins/check_by_ssh -f -t 120 -H $HOSTNAME -C "/home/nagios/exploit/check_$CHECK.py $NUMBER"`
+	cmd=$(/srv/eyesofnetwork/nagios/plugins/check_by_ssh -f -t 120 -H $HOSTNAME -C "/home/nagios/exploit/check_$CHECK.py $NUMBER")
 else
-	cmd=`/srv/eyesofnetwork/nagios/plugins/check_by_ssh -f -t 120 -H $HOSTNAME -C /home/nagios/exploit/check_$CHECK.sh`
+	cmd=$(/srv/eyesofnetwork/nagios/plugins/check_by_ssh -f -t 120 -H $HOSTNAME -C /home/nagios/exploit/check_$CHECK.sh)
 fi
 
 if [[ $CHECK == "DriveDown" ]]; then
@@ -102,9 +102,9 @@ if [[ $CHECK == "DiskPool" ]]; then
 	while [ $counter -lt $total ]; do
 		let counter++
 		if [[ $counter == 1 ]]; then
-			state=`echo "$cmd" | awk '{ print $4 }' | head -$counter`
+			state=$(echo "$cmd" | awk '{ print $4 }' | head -$counter)
 		else
-			state=`echo "$cmd" | awk '{ print $4 }' | head -$counter | tail -1`
+			state=$(echo "$cmd" | awk '{ print $4 }' | head -$counter | tail -1)
 		fi
 
 		if [[ $counter == 1 ]]; then
@@ -211,8 +211,8 @@ if [[ $CHECK == "InventoryLibrary" ]]; then
 	STATE=0
 	echo "$cmd" | sed "1,4d" > /tmp/file_netbackup_$HOSTNAME
 	while read line; do
-		nb_actually_tape=`echo $line | awk '{ print $4 }'`
-		nb_desire_tape=`echo $line | awk '{ print $7 }'`
+		nb_actually_tape=$(echo $line | awk '{ print $4 }')
+		nb_desire_tape=$(echo $line | awk '{ print $7 }')
 
 		if [ $nb_actually_tape -lt $nb_desire_tape ]; then
 			STATE=2

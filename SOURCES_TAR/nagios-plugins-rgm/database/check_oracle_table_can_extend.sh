@@ -63,13 +63,13 @@ echo "${RequestA}" | sqlplus -s $USER/$PASSWORD'@'$HOST':'$PORT/$DBNAME > $path
 
 
 ## analyse des resultats
-if [ `grep "aucune ligne selectionnee" $path|wc -l` -eq 1 ]; then
+if [ $(grep "aucune ligne selectionnee" $path|wc -l) -eq 1 ]; then
     crit=OK
-elif [ `grep "aucune ligne s�lectionn�e" $path|wc -l` -eq 1 ]; then
+elif [ $(grep "aucune ligne s�lectionn�e" $path|wc -l) -eq 1 ]; then
     crit=OK
-elif [ `grep "no rows selected" $path|wc -l` -eq 1 ]; then
+elif [ $(grep "no rows selected" $path|wc -l) -eq 1 ]; then
     crit=OK
-elif [ `grep 'CRITICAL' $path|wc -l` -gt 0 ]; then
+elif [ $(grep 'CRITICAL' $path|wc -l) -gt 0 ]; then
      crit=CRITICAL
 else
      crit=''

@@ -28,7 +28,7 @@ export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 #      thanks to puckel
 
 
-PROGNAME=`basename $0`
+PROGNAME=$(basename $0)
 VERSION="Version 1.0,"
 AUTHOR="2013, Daniel Due�as Domingo (mail:dduenasd@gmail.com)"
 
@@ -138,21 +138,21 @@ oid_upsAlarmTime='1.3.6.1.2.1.33.1.6.2.1.3'
 
 
 num_input_lines(){
-	val=`getsnmp $1`
+	val=$(getsnmp $1)
 	f_error $?
 	output="number of input lines = $val"
 	perfdata="'lines'=$val"
 }
 
 num_output_lines(){
-	val=`getsnmp $1`
+	val=$(getsnmp $1)
 	f_error $?
 	output="number of output lines = $val"
 	perfdata="'lines'=$val"
 }
 
 alarm(){
-	val=`getsnmp $1`
+	val=$(getsnmp $1)
 	f_error $?
 	alarmtext=""
 	if test $val -eq 0
@@ -165,14 +165,14 @@ alarm(){
 	      do
           oid1="$2.$counter"
 		  oid2="$3.$counter"
-		  oidalarmdesc=`getsnmp $oid1`
-		  alarmdesc=`snmptranslate -M $4 -m ALL $oidalarmdesc|awk -F:: '{print $2}'`
+		  oidalarmdesc=$(getsnmp $oid1)
+		  alarmdesc=$(snmptranslate -M $4 -m ALL $oidalarmdesc|awk -F:: '{print $2}')
 		  if test "$alarmdesc" = ""
 		     then alarmdesc=$oidalarmdesc
 		  fi
-		  alarmtime=`getsnmp $oid2`
+		  alarmtime=$(getsnmp $oid2)
 	      alarmtext=$alarmtext" Alarm"$val":"$alarmdesc" "$alarmtime
-	      counter=`expr $counter + 1`
+	      counter=$(expr $counter + 1)
       done
     else
 	   state=$ST_UK
@@ -182,7 +182,7 @@ alarm(){
 }
 
 temperature(){
-	val=`getsnmp $1`
+	val=$(getsnmp $1)
     f_error $?
 	output="battery temperature = "$val"�C"
 	perfdata="'temperature'=$val;$2;$3"
@@ -198,7 +198,7 @@ temperature(){
 }
 
 output_load(){
-   numlines=`getsnmp $4`
+   numlines=$(getsnmp $4)
    if test $numlines -le 0
       then echo "error number of lines=$numlines"
 	       exit $ST_UK
@@ -207,8 +207,8 @@ output_load(){
    while test $counter -le $numlines
    do
       oid="$1.$counter"
-	  percentload[$counter]=`getsnmp $oid`
-	  counter=`expr $counter + 1`
+	  percentload[$counter]=$(getsnmp $oid)
+	  counter=$(expr $counter + 1)
    done
    output="Percent Load of $numlines lines:"
    perfdata=""
@@ -236,12 +236,12 @@ output_load(){
 	  fi
 	  output=$output" L$counter=${percentload[$counter]}%"
 	  perfdata=$perfdata"'L$counter'=${percentload[$counter]}%;$2;$3;0;100 "
-      counter=`expr $counter + 1`
+      counter=$(expr $counter + 1)
    done
 }
 
 input_voltage(){
-   numlines=`getsnmp $4`
+   numlines=$(getsnmp $4)
    f_error $?
    if test $numlines -le 0
       then echo "error number of lines=$numlines"
@@ -251,18 +251,18 @@ input_voltage(){
    while test $counter -le $numlines
    do
       oid="$1.$counter"
-	  voltage[$counter]=`getsnmp $oid`
+	  voltage[$counter]=$(getsnmp $oid)
 	  f_error $?
-	  counter=`expr $counter + 1`
+	  counter=$(expr $counter + 1)
    done
    output="Voltage of $numlines input lines:"
    perfdata=""
    counter=1
    flag=0
-   warningup=`echo $2 | awk -F: '{print $2}'`
-   warningdown=`echo $2 | awk -F: '{print $1}'`
-   criticalup=`echo $3 | awk -F: '{print $2}'`
-   criticaldown=`echo $3 | awk -F: '{print $1}'`
+   warningup=$(echo $2 | awk -F: '{print $2}')
+   warningdown=$(echo $2 | awk -F: '{print $1}')
+   criticalup=$(echo $3 | awk -F: '{print $2}')
+   criticaldown=$(echo $3 | awk -F: '{print $1}')
    for valor in ${voltage[*]}
 	  do
 	  if test ${voltage[$counter]} -gt $criticalup
@@ -293,12 +293,12 @@ input_voltage(){
 	  fi
 	  output=$output" L$counter=${voltage[$counter]}V"
 	  perfdata=$perfdata"'L$counter'=${voltage[$counter]};$2;$3;; "
-      counter=`expr $counter + 1`
+      counter=$(expr $counter + 1)
    done
 }
 
 battery_status(){
-	val=`getsnmp $1`
+	val=$(getsnmp $1)
 	f_error $?
 	case $val in
 	   1)battery_status="unknown"
@@ -318,9 +318,9 @@ battery_status(){
 }
 
 battery_charge_remain(){
-	percent=`getsnmp $1`
-	val=`getsnmp $2`
-	valinsecs=`expr $val \* 60`
+	percent=$(getsnmp $1)
+	val=$(getsnmp $2)
+	valinsecs=$(expr $val \* 60)
     f_error $?
 	output="estimated battery charge: $percent%, estimated minutes to depleted: $val min "
 	perfdata="'charge'="$percent"%;$3;$4;; 'time_to_depleted'="$valinsecs"s;;;0;"
@@ -338,7 +338,7 @@ battery_charge_remain(){
 
 #obtain the value of the oid
 getsnmp(){
-	text=`snmpget -v $snmpversion -c $community $host $1`
+	text=$(snmpget -v $snmpversion -c $community $host $1)
 	if [ $? -ne 0 ]
 	  then
 		echo "plugin $PROGNAME failure, snmpget command error"

@@ -137,7 +137,7 @@ while [ $i -le $NBR_INDEX ]; do
         fi
 
 
-        case `echo $SENSOR_STATUS` in
+        case $(echo $SENSOR_STATUS) in
                 1) array=( ${array[@]} ${SENSOR_INFO}=${SENSOR_VALUE}${SENSOR_TYPE}, )
                    perfdata=( ${perfdata[@]}${SENSOR_VALUE}";" )
                 ;;

@@ -66,15 +66,15 @@ out() {
 }
 parseargs() {
 for i in $ARGS; do
-        if [ -n "`echo ${i} | grep "^\-H"`" ]; then HOSTTARGET="`echo ${i} | cut -c 3-`"; if [ ! -n ${HOSTTARGET} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-u"`" ]; then URI="`echo ${i} | cut -c 3-`"; if [ ! -n ${URI} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-U"`" ]; then USERNAME="`echo ${i} | cut -c 3-`"; if [ ! -n ${USERNAME} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-P"`" ]; then PASSWORD="`echo ${i} | cut -c 3-`"; if [ ! -n ${PASSWORD} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-p"`" ]; then PORT="`echo ${i} | cut -c 3-`"; if [ ! -n ${PORT} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-t"`" ]; then TYPEG="`echo ${i} | cut -c 3-`"; if [ ! -n ${TYPEG} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-f"`" ]; then FOLDER="`echo ${i} | cut -c 3-`"; if [ ! -n ${FOLDER} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-s"`" ]; then MAPSERVICE="`echo ${i} | cut -c 3-`"; if [ ! -n ${MAPSERVICE} ]; then usage;fi;fi
-		if [ -n "`echo ${i} | grep "^\-S"`" ]; then MAPTYPE="`echo ${i} | cut -c 3-`"; if [ ! -n ${MAPTYPE} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-H")" ]; then HOSTTARGET="$(echo ${i} | cut -c 3-)"; if [ ! -n ${HOSTTARGET} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-u")" ]; then URI="$(echo ${i} | cut -c 3-)"; if [ ! -n ${URI} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-U")" ]; then USERNAME="$(echo ${i} | cut -c 3-)"; if [ ! -n ${USERNAME} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-P")" ]; then PASSWORD="$(echo ${i} | cut -c 3-)"; if [ ! -n ${PASSWORD} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-p")" ]; then PORT="$(echo ${i} | cut -c 3-)"; if [ ! -n ${PORT} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-t")" ]; then TYPEG="$(echo ${i} | cut -c 3-)"; if [ ! -n ${TYPEG} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-f")" ]; then FOLDER="$(echo ${i} | cut -c 3-)"; if [ ! -n ${FOLDER} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-s")" ]; then MAPSERVICE="$(echo ${i} | cut -c 3-)"; if [ ! -n ${MAPSERVICE} ]; then usage;fi;fi
+		if [ -n "$(echo ${i} | grep "^\-S")" ]; then MAPTYPE="$(echo ${i} | cut -c 3-)"; if [ ! -n ${MAPTYPE} ]; then usage;fi;fi
 done
 }
 checkargs_mandatory() {

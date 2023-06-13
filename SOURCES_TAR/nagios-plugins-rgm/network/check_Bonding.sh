@@ -23,7 +23,7 @@ case $OPTION in
  esac
 done
 
-cmd=`/srv/eyesofnetwork/nagios/plugins/check_by_ssh -H $HOSTNAME -t 10 -C "exploit/check_linux_bonding --ignore-num-ad"`
+cmd=$(/srv/eyesofnetwork/nagios/plugins/check_by_ssh -H $HOSTNAME -t 10 -C "exploit/check_linux_bonding --ignore-num-ad")
 
 echo $cmd | grep -q "2 slaves"
 ret=$?

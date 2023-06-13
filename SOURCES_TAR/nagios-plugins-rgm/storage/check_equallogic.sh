@@ -101,7 +101,7 @@ PATH=/usr/local/bin:/usr/bin:/bin # Set path
 
 for cmd in snmpwalk awk grep wc [
 do
- if ! `which ${cmd} 1>/dev/null`
+ if ! $(which ${cmd} 1>/dev/null)
  then
  echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
  exit ${STATE_UNKNOWN}
@@ -519,7 +519,7 @@ conn)
 getmembernames
 connections=0
 for line in $(snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.12740.2.1.12.1.1)
-  do connections=`expr ${connections} + ${line}`
+  do connections=$(expr ${connections} + ${line})
 done
 
 if [ -n "${warning}" ] || [ -n "${critical}" ]
@@ -569,7 +569,7 @@ declare -a fannames=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.
 declare -a fancrit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.12740.2.1.7.1.4 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
 c=0
 for line in ${fancrit[@]}
-  do fancrit[$c]=`expr ${fancrit[$c]} - 1`
+  do fancrit[$c]=$(expr ${fancrit[$c]} - 1)
   let c++
 done
 
@@ -584,7 +584,7 @@ done
 declare -a fanwarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.12740.2.1.7.1.4 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 w=0
 for line in ${fanwarn[@]}
-  do fanwarn[$w]=`expr ${fanwarn[$w]} - 1`
+  do fanwarn[$w]=$(expr ${fanwarn[$w]} - 1)
   let w++
 done
 
@@ -613,35 +613,35 @@ poolusage)
 getmembernames
 exitstate=0
 c=1
-for x in `snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.12740.16.1.2.1.1`
+for x in $(snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.12740.16.1.2.1.1)
   do
   pooltotal[$c]=${x}
   let c=c+1
 done
 
 c=1
-for x in `snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.12740.16.1.2.1.2`
+for x in $(snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.12740.16.1.2.1.2)
   do
   poolused[$c]=${x}
   let c=c+1
 done
 
 c=1
-for x in `snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.12740.16.1.2.1.17`
+for x in $(snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.12740.16.1.2.1.17)
   do
   pooldelegated[$c]=${x}
   let c=c+1
 done
 
 c=1
-for x in `snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.12740.16.1.2.1.9`
+for x in $(snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.12740.16.1.2.1.9)
   do
   poolreplication[$c]=${x}
   let c=c+1
 done
 
 c=1
-for x in `snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.12740.16.1.1.1.3`
+for x in $(snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.12740.16.1.1.1.3)
   do
   poolname[$c]=${x}
   let c=c+1
@@ -697,14 +697,14 @@ memberusage)
 getmembernames
 bad=0
 c=1
-for x in `snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.12740.2.1.10.1.1`
+for x in $(snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.12740.2.1.10.1.1)
   do
   pooltotal[$c]=$x
   let c=c+1
 done
 
 c=1
-for x in `snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.12740.2.1.10.1.2`
+for x in $(snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.12740.2.1.10.1.2)
   do
   poolused[$c]=$x
   let c=c+1
@@ -759,7 +759,7 @@ ignorevolumes=($(snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.12740
 k=0
 while [ ${k} -lt ${#ignorevolumes[@]} ]
   do
-  finalignore[$k]=`expr ${ignorevolumes[$k]} - 1`
+  finalignore[$k]=$(expr ${ignorevolumes[$k]} - 1)
   unset volumenames[${finalignore[$k]}]
   unset volumeavailspace[${finalignore[$k]}]
   unset volumeusedspace[${finalignore[$k]}]
@@ -767,7 +767,7 @@ while [ ${k} -lt ${#ignorevolumes[@]} ]
 done
 
 # How many real volumes (manmade) do exist
-realvolumescount=`expr ${volumescount} - ${#ignorevolumes[@]}`
+realvolumescount=$(expr ${volumescount} - ${#ignorevolumes[@]})
 
 # Calculate Free Space and Percentage per Volume
 i=0
@@ -775,8 +775,8 @@ while [ ${i} -le ${volumescount} ]
   do
   if [ ${volumenames[${i}]} ]
     then
-    volumefreespace[${i}]=`expr ${volumeavailspace[${i}]} - ${volumeusedspace[${i}]}`
-    volumepercentage[${i}]=`expr ${volumeusedspace[${i}]} \* 100 / ${volumeavailspace[${i}]}`
+    volumefreespace[${i}]=$(expr ${volumeavailspace[${i}]} - ${volumeusedspace[${i}]})
+    volumepercentage[${i}]=$(expr ${volumeusedspace[${i}]} \* 100 / ${volumeavailspace[${i}]})
     #       echo "$i: ${volumenames[$i]}, free Space: ${volumefreespace[${i}]} used: ${volumepercentage[${i}]} %" # For Debug
     perfavailspace[${i}]=$((${volumeavailspace[${i}]}*1024*1024))
     perfusedspace[${i}]=$((${volumeusedspace[${i}]}*1024*1024))
@@ -883,7 +883,7 @@ ignorevolumes=($(snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.12740
 k=0
 while [ ${k} -lt ${#ignorevolumes[@]} ]
   do
-  finalignore[$k]=`expr ${ignorevolumes[$k]} - 1`
+  finalignore[$k]=$(expr ${ignorevolumes[$k]} - 1)
   unset volumenames[${finalignore[$k]}]
   unset volumeavailspace[${finalignore[$k]}]
   unset volumeusedspace[${finalignore[$k]}]
@@ -891,7 +891,7 @@ while [ ${k} -lt ${#ignorevolumes[@]} ]
 done
 
 # How many real volumes (manmade) do exist
-realvolumescount=`expr ${volumescount} - ${#ignorevolumes[@]}`
+realvolumescount=$(expr ${volumescount} - ${#ignorevolumes[@]})
 
 # Calculate Percentage Free space for snapshots and compare with Warn Level
 i=0
@@ -899,7 +899,7 @@ while [ ${i} -le ${realvolumescount} ]
   do
   if [ ${volumenames[${i}]} ] && [ ${volumestatusreservedspace[${i}]} -gt 0 ]
     then
-    volumesnapfree[${i}]=`expr ${volumestatusreservedspaceavail[${i}]} \* 100 / ${volumestatusreservedspace[${i}]}`
+    volumesnapfree[${i}]=$(expr ${volumestatusreservedspaceavail[${i}]} \* 100 / ${volumestatusreservedspace[${i}]})
     #echo "$i: ${volumenames[$i]}, percentfree: ${volumesnapfree[${i}]} %, warnlevel ${volumesnapwarnlevel[${i}]} %" # For Debug
     let i++
   else
@@ -914,7 +914,7 @@ while [ ${j} -le ${realvolumescount} ]
   if [ ${volumenames[${j}]} ]  && [ ${volumestatusreservedspace[${j}]} -gt 0 ]
     then
     #If a critical threshold is specific at run time, check to make sure this ammount of space if available
-    if [ -n "${critical}" ] && [ `expr 100 - ${volumesnapfree[${j}]}` -ge  ${critical} ]
+    if [ -n "${critical}" ] && [ $(expr 100 - ${volumesnapfree[${j}]}) -ge  ${critical} ]
       then volumecritical[${j}]="${volumenames[${j}]}: ${volumesnapfree[${j}]}% free"
     #If the amount of reserve space is below the threshold set for that volume, issue a warning
     elif [  ${volumesnapfree[${j}]} -lt  ${volumesnapwarnlevel[${j}]} ]

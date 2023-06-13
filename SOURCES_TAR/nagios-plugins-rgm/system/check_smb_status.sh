@@ -16,8 +16,8 @@ export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 #============:==============================================================
 #        1.0 : may/08/2011
 #
-PROGPATH=`echo $0 | /bin/sed -e 's,[\\/][^\\/][^\\/]*$,,'`
-REVISION=`echo '$Revision: 1.0 $' | sed -e 's/[^0-9.]//g'`
+PROGPATH=$(echo $0 | /bin/sed -e 's,[\\/][^\\/][^\\/]*$,,')
+REVISION=$(echo '$Revision: 1.0 $' | sed -e 's/[^0-9.]//g')
 
 SMBSTATUS_P="/tmp/smbstatus_p"
 SMBSTATUS_L="/tmp/smbstatus_L"

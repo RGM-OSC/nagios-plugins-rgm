@@ -2,7 +2,7 @@
 unset PATH
 export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
-cmd=`traceroute -m 2 172.22.11.20 | grep -v traceroute | cut -d ' ' -f 4 | sed -n 2p`
+cmd=$(traceroute -m 2 172.22.11.20 | grep -v traceroute | cut -d ' ' -f 4 | sed -n 2p)
 
 if [ "10.222.1.4" == $cmd ] ; then
 	echo "WARNING : Le lien de secours est actif";

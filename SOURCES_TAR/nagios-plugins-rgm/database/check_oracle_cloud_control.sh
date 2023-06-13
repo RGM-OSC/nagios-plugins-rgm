@@ -54,11 +54,11 @@ done
 
 cd /tmp/tmp-internal-Solaris/infos_solaris
 crit=''
-if [ `grep "Down" $HOST.grid.log|wc -l` -ge 1 ]; then
+if [ $(grep "Down" $HOST.grid.log|wc -l) -ge 1 ]; then
   crit=CRITICAL ;
 fi
 
-if [ `grep "Up" $HOST.grid.log|wc -l` -eq 3 ]; then
+if [ $(grep "Up" $HOST.grid.log|wc -l) -eq 3 ]; then
   crit=OK ;
 fi
 

@@ -103,7 +103,7 @@ done
 
 if [ "$TYPE" = "CPU" ]
 then
-	CPUUSAGE=`/usr/bin/snmpwalk -v 2c -c $COMMUNITY $HOSTNAME 1.3.6.1.4.1.2636.3.1.13.1.8.9.1.0.0 | /usr/bin/rev | $AWK '{print $1}' | /usr/bin/rev`
+	CPUUSAGE=$(/usr/bin/snmpwalk -v 2c -c $COMMUNITY $HOSTNAME 1.3.6.1.4.1.2636.3.1.13.1.8.9.1.0.0 | /usr/bin/rev | $AWK '{print $1}' | /usr/bin/rev)
 
 	if [ $CPUUSAGE -le $WARNING ]
 	then
@@ -128,7 +128,7 @@ then
 
 elif [ "$TYPE" = "MEM" ]
 then
-	MEMUSAGE=`/usr/bin/snmpwalk -v 2c -c $COMMUNITY $HOSTNAME 1.3.6.1.4.1.2636.3.1.13.1.11.9.1.0.0 | /usr/bin/rev | $AWK '{print $1}' | /usr/bin/rev`
+	MEMUSAGE=$(/usr/bin/snmpwalk -v 2c -c $COMMUNITY $HOSTNAME 1.3.6.1.4.1.2636.3.1.13.1.11.9.1.0.0 | /usr/bin/rev | $AWK '{print $1}' | /usr/bin/rev)
 
 	if [ $MEMUSAGE -le $WARNING ]
 	then
@@ -152,7 +152,7 @@ then
 
 elif [ "$TYPE" = "TEMP" ]
 then
-	TEMPERATURE=`/usr/bin/snmpwalk -v 2c -c $COMMUNITY $HOSTNAME 1.3.6.1.4.1.2636.3.1.13.1.7.9.1.0.0 | /usr/bin/rev | $AWK '{print $1}' | /usr/bin/rev`
+	TEMPERATURE=$(/usr/bin/snmpwalk -v 2c -c $COMMUNITY $HOSTNAME 1.3.6.1.4.1.2636.3.1.13.1.7.9.1.0.0 | /usr/bin/rev | $AWK '{print $1}' | /usr/bin/rev)
 
 	if [ $TEMPERATURE -le $WARNING ]
 	then
@@ -176,7 +176,7 @@ then
 
 elif [ "$TYPE" = "SES" ]
 then
-	SESSIONS=`/usr/bin/snmpwalk -v 2c -c $COMMUNITY $HOSTNAME 1.3.6.1.4.1.2636.3.39.1.12.1.1.1.6.0 | /usr/bin/rev | $AWK '{print $1}' | /usr/bin/rev`
+	SESSIONS=$(/usr/bin/snmpwalk -v 2c -c $COMMUNITY $HOSTNAME 1.3.6.1.4.1.2636.3.39.1.12.1.1.1.6.0 | /usr/bin/rev | $AWK '{print $1}' | /usr/bin/rev)
 
 	if [ $SESSIONS -le $WARNING ]
 	then

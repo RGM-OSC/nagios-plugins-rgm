@@ -12,10 +12,10 @@ exit 2
 
 if [ "${4}" = "" ]; then usage; fi
 
-ARGS="`echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g'`"
+ARGS="$(echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g')"
 for i in $ARGS; do
-        if [ -n "`echo ${i} | grep "^\-h"`" ]; then HOSTCTMCS="`echo ${i} | cut -c 3-`"; if [ ! -n ${HOSTCTMCS} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-a"`" ]; then HOSTAGENT="`echo ${i} | cut -c 3-`"; if [ ! -n ${HOSTAGENT} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-h")" ]; then HOSTCTMCS="$(echo ${i} | cut -c 3-)"; if [ ! -n ${HOSTCTMCS} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-a")" ]; then HOSTAGENT="$(echo ${i} | cut -c 3-)"; if [ ! -n ${HOSTAGENT} ]; then usage;fi;fi
 done
 
 
@@ -27,9 +27,9 @@ if [ ! -f ${TMPDIR}  ]; then
 	echo "CRITICAL: Impossible to find ${TMPDIR}. Please check pre-requisite."
 	exit 2
 else
-	CHECK_TIME="`cat ${TMPDIR} | head -1`"
-	CUR_TIME="`date +%s`"
-	DELTA_TIME="`expr $CUR_TIME - $CHECK_TIME | sed -e 's:-::g'`"
+	CHECK_TIME="$(cat ${TMPDIR} | head -1)"
+	CUR_TIME="$(date +%s)"
+	DELTA_TIME="$(expr $CUR_TIME - $CHECK_TIME | sed -e 's:-::g')"
 
 	if [ $DELTA_TIME -gt 1200 ];then
 		echo "CRITICAL: Lastcheck of ${HOSTCTMCS} is older than 20 minutes."
@@ -43,15 +43,15 @@ else
 		fi
 	fi
 
-	AGENT_LINE="`cat ${TMPDIR} | grep -v "End_of_check" | grep "^${HOSTAGENT}:"`"
+	AGENT_LINE="$(cat ${TMPDIR} | grep -v "End_of_check" | grep "^${HOSTAGENT}:")"
 	FAILED=""
 	for line in $AGENT_LINE; do
-    	FAILED="`echo $line | grep -v "Available"` $FAILED"
+    	FAILED="$(echo $line | grep -v "Available") $FAILED"
 	done
 	if [ "$AGENT_LINE" == "" ]; then
 		FAILED="Impossible to find this agent on the server $HOSTCTMCS."
 	fi
-    if [ -n "`echo $FAILED | awk '{print $1}'`" ]; then
+    if [ -n "$(echo $FAILED | awk '{print $1}')" ]; then
         STATE="2"
         PLAINSTATE="CRITICAL"
     else

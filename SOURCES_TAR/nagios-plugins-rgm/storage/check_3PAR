@@ -87,15 +87,15 @@ then
 		exit 3
 	fi
 
-	if [ `grep -c failed $TMPDIR/3par_$COMMAND.$INSERV.out` -gt 0 ]
+	if [ $(grep -c failed $TMPDIR/3par_$COMMAND.$INSERV.out) -gt 0 ]
 	then
-		echo CRITICAL! The following PDs have abnormal status : `grep -v normal $TMPDIR/3par_$COMMAND.$INSERV.out | tr -d '\n'`
+		echo CRITICAL! The following PDs have abnormal status : $(grep -v normal $TMPDIR/3par_$COMMAND.$INSERV.out | tr -d '\n')
 		rm -f $TMPDIR/3par_$COMMAND.$INSERV.out
 		exit 2
 	else
-		if [ `grep -c degraded $TMPDIR/3par_$COMMAND.$INSERV.out` -gt 0 ]
+		if [ $(grep -c degraded $TMPDIR/3par_$COMMAND.$INSERV.out) -gt 0 ]
 		then
-	        	echo WARNING! The following PDs have abnormal status : `grep -v normal $TMPDIR/3par_$COMMAND.$INSERV.out | tr -d '\n'`
+	        	echo WARNING! The following PDs have abnormal status : $(grep -v normal $TMPDIR/3par_$COMMAND.$INSERV.out | tr -d '\n')
 			rm -f $TMPDIR/3par_$COMMAND.$INSERV.out
 			exit 1
 		else
@@ -116,15 +116,15 @@ then
                 exit 3
         fi
 
-        if [ `grep -c -i failed $TMPDIR/3par_$COMMAND.$INSERV.out` -gt 0 ]
+        if [ $(grep -c -i failed $TMPDIR/3par_$COMMAND.$INSERV.out) -gt 0 ]
         then
-                echo CRITICAL! The following nodes have abnormal status : `grep -i failed $TMPDIR/3par_$COMMAND.$INSERV.out | tr -s " " | tr -d '\n'`
+                echo CRITICAL! The following nodes have abnormal status : $(grep -i failed $TMPDIR/3par_$COMMAND.$INSERV.out | tr -s " " | tr -d '\n')
                 rm -f $TMPDIR/3par_$COMMAND.$INSERV.out
 		exit 2
         else
-                if [ `grep -c -i degraded $TMPDIR/3par_$COMMAND.$INSERV.out` -gt 0 ]
+                if [ $(grep -c -i degraded $TMPDIR/3par_$COMMAND.$INSERV.out) -gt 0 ]
                 then
-                        echo WARNING! The following nodes have abnormal status : `grep -i degraded $TMPDIR/3par_$COMMAND.$INSERV.out | tr -s " " | tr -d '\n'`
+                        echo WARNING! The following nodes have abnormal status : $(grep -i degraded $TMPDIR/3par_$COMMAND.$INSERV.out | tr -s " " | tr -d '\n')
                         rm -f $TMPDIR/3par_$COMMAND.$INSERV.out
 			exit 1
                 else
@@ -144,15 +144,15 @@ then
                 RC=3
         fi
 
-        if [ `grep -c -i failed $TMPDIR/3par_$COMMAND.$INSERV.out` -gt 0 ]
+        if [ $(grep -c -i failed $TMPDIR/3par_$COMMAND.$INSERV.out) -gt 0 ]
         then
-                echo CRITICAL! The following nodes have abnormal status : `grep -i failed $TMPDIR/3par_$COMMAND.$INSERV.out | tr -s " " | tr -d '\n'`
+                echo CRITICAL! The following nodes have abnormal status : $(grep -i failed $TMPDIR/3par_$COMMAND.$INSERV.out | tr -s " " | tr -d '\n')
                 rm -f $TMPDIR/3par_$COMMAND.$INSERV.out
 		RC=2
         else
-                if [ `grep -c -i degraded $TMPDIR/3par_$COMMAND.$INSERV.out` -gt 0 ]
+                if [ $(grep -c -i degraded $TMPDIR/3par_$COMMAND.$INSERV.out) -gt 0 ]
                 then
-                        echo WARNING! The following nodes have abnormal status : `grep -i degraded $TMPDIR/3par_$COMMAND.$INSERV.out | tr -s " " | tr -d '\n'`
+                        echo WARNING! The following nodes have abnormal status : $(grep -i degraded $TMPDIR/3par_$COMMAND.$INSERV.out | tr -s " " | tr -d '\n')
                         rm -f $TMPDIR/3par_$COMMAND.$INSERV.out
 			RC=1
                 else
@@ -169,15 +169,15 @@ then
                 RC=3
         fi
 
-        if [ `awk '{ if ($0 ~ "------Cage") cage=$5; if ($0 ~ "Failed") print cage" "$0}' $TMPDIR/3par_$COMMAND.$INSERV.out|wc -l` -gt 0 ]
+        if [ $(awk '{ if ($0 ~ "------Cage") cage=$5; if ($0 ~ "Failed") print cage" "$0}' $TMPDIR/3par_$COMMAND.$INSERV.out|wc -l) -gt 0 ]
         then
-                echo CRITICAL! The following cages have abnormal status : `awk '{ if ($0 ~ "------Cage") cage=$5; if ($0 ~ "Failed") print cage" "$0}' $TMPDIR/3par_$COMMAND.$INSERV.out | tr -s " " | tr -d '\n'`
+                echo CRITICAL! The following cages have abnormal status : $(awk '{ if ($0 ~ "------Cage") cage=$5; if ($0 ~ "Failed") print cage" "$0}' $TMPDIR/3par_$COMMAND.$INSERV.out | tr -s " " | tr -d '\n')
                 rm -f $TMPDIR/3par_$COMMAND.$INSERV.out
 		RC=2
         else
-                if [ `awk '{ if ($0 ~ "------Cage") cage=$5; if ($0 ~ "Degraded") print cage" "$0}' $TMPDIR/3par_$COMMAND.$INSERV.out|wc -l` -gt 0 ]
+                if [ $(awk '{ if ($0 ~ "------Cage") cage=$5; if ($0 ~ "Degraded") print cage" "$0}' $TMPDIR/3par_$COMMAND.$INSERV.out|wc -l) -gt 0 ]
                 then
-                        echo WARNING! The following cages have abnormal status : `awk '{ if ($0 ~ "------Cage") cage=$5; if ($0 ~ "Degraded") print cage" "$0}' $TMPDIR/3par_$COMMAND.$INSERV.out | tr -s " " | tr -d '\n'`
+                        echo WARNING! The following cages have abnormal status : $(awk '{ if ($0 ~ "------Cage") cage=$5; if ($0 ~ "Degraded") print cage" "$0}' $TMPDIR/3par_$COMMAND.$INSERV.out | tr -s " " | tr -d '\n')
                         rm -f $TMPDIR/3par_$COMMAND.$INSERV.out
 			RC=1
                 else
@@ -197,13 +197,13 @@ then
 		exit 3
         fi
 
-        if [ `grep -c -i failed $TMPDIR/3par_$COMMAND.$INSERV.out` -gt 0 ]
+        if [ $(grep -c -i failed $TMPDIR/3par_$COMMAND.$INSERV.out) -gt 0 ]
         then
                 echo CRITICAL! There are failed VVs. Contact 3PAR support
                 rm -f $TMPDIR/3par_$COMMAND.$INSERV.out
 		exit 2
         else
-                if [ `grep -c -i degraded $TMPDIR/3par_$COMMAND.$INSERV.out` -gt 0 ]
+                if [ $(grep -c -i degraded $TMPDIR/3par_$COMMAND.$INSERV.out) -gt 0 ]
                 then
                         echo WARNING! There are degraded VVs. Contact 3PAR support
                         rm -f $TMPDIR/3par_$COMMAND.$INSERV.out
@@ -226,13 +226,13 @@ then
                 exit 3
         fi
 
-        if [ `grep -c -i failed $TMPDIR/3par_$COMMAND.$INSERV.out` -gt 0 ]
+        if [ $(grep -c -i failed $TMPDIR/3par_$COMMAND.$INSERV.out) -gt 0 ]
         then
                 echo CRITICAL! There are failed LDs. Contact 3PAR support
                 rm -f $TMPDIR/3par_$COMMAND.$INSERV.out
 		exit 2
         else
-                if [ `grep -c -i degraded $TMPDIR/3par_$COMMAND.$INSERV.out` -gt 0 ]
+                if [ $(grep -c -i degraded $TMPDIR/3par_$COMMAND.$INSERV.out) -gt 0 ]
                 then
                         echo WARNING! There are degraded LDs. Contact 3PAR support
                         rm -f $TMPDIR/3par_$COMMAND.$INSERV.out
@@ -256,13 +256,13 @@ then
 	grep -v -i iscsi $TMPDIR/3par_$COMMAND.$INSERV.out1 | grep -v -i rcip > $TMPDIR/3par_$COMMAND.$INSERV.out
 	rm -f $TMPDIR/3par_$COMMAND.$INSERV.out1
 
-        if [ `grep -c -i error $TMPDIR/3par_$COMMAND.$INSERV.out` -gt 0 ]
+        if [ $(grep -c -i error $TMPDIR/3par_$COMMAND.$INSERV.out) -gt 0 ]
         then
                 echo CRITICAL! Some ports are in the error state
                 rm -f $TMPDIR/3par_$COMMAND.$INSERV.out
                 exit 2
         else
-                if [ `grep -c -i loss_sync $TMPDIR/3par_$COMMAND.$INSERV.out` -gt 0 ] || [ `grep -c -i config_wait $TMPDIR/3par_$COMMAND.$INSERV.out` -gt 0 ] || [ `grep -c -i login_wait $TMPDIR/3par_$COMMAND.$INSERV.out` -gt 0 ] || [ `grep -c -i non_participate $TMPDIR/3par_$COMMAND.$INSERV.out` -gt 0 ]
+                if [ $(grep -c -i loss_sync $TMPDIR/3par_$COMMAND.$INSERV.out) -gt 0 ] || [ $(grep -c -i config_wait $TMPDIR/3par_$COMMAND.$INSERV.out) -gt 0 ] || [ $(grep -c -i login_wait $TMPDIR/3par_$COMMAND.$INSERV.out) -gt 0 ] || [ $(grep -c -i non_participate $TMPDIR/3par_$COMMAND.$INSERV.out) -gt 0 ]
                 then
                         echo WARNING! Some ports are in an abnormal state \(loss_sync, config_wait, login_wait or non_participate\)
                         rm -f $TMPDIR/3par_$COMMAND.$INSERV.out
@@ -286,16 +286,16 @@ then
                 exit 3
         fi
 
-	if [ `tail -1 $TMPDIR/3par_$COMMAND.$INSERV.out` = "No PDs listed" ]
+	if [ $(tail -1 $TMPDIR/3par_$COMMAND.$INSERV.out) = "No PDs listed" ]
 	then
 		echo No FC disks
 		rm -f $TMPDIR/3par_$COMMAND.$INSERV.out
 		exit 0
 	fi
 
-	TOTCAPFC=`cat ${TMPDIR}/3par_${COMMAND}.${INSERV}.out | tail -1 | cut -d, -f1`
-	FREECAPFC=`cat ${TMPDIR}/3par_${COMMAND}.${INSERV}.out | tail -1 | cut -d, -f2`
-	USEDCAPPCFC=`expr 100 \- \( \( $FREECAPFC \* 100 \) \/ $TOTCAPFC \)`
+	TOTCAPFC=$(cat ${TMPDIR}/3par_${COMMAND}.${INSERV}.out | tail -1 | cut -d, -f1)
+	FREECAPFC=$(cat ${TMPDIR}/3par_${COMMAND}.${INSERV}.out | tail -1 | cut -d, -f2)
+	USEDCAPPCFC=$(expr 100 \- \( \( $FREECAPFC \* 100 \) \/ $TOTCAPFC \))
 
 	if [ $USEDCAPPCFC -ge $PCCRITICALFC ]
         then
@@ -326,16 +326,16 @@ then
                 exit 3
         fi
 
-        if [ `tail -1 $TMPDIR/3par_$COMMAND.$INSERV.out` = "No PDs listed" ]
+        if [ $(tail -1 $TMPDIR/3par_$COMMAND.$INSERV.out) = "No PDs listed" ]
         then
                 echo No NL disks
                 rm -f $TMPDIR/3par_$COMMAND.$INSERV.out
 		exit 0
         fi
 
-        TOTCAPNL=`cat ${TMPDIR}/3par_${COMMAND}.${INSERV}.out | tail -1 | cut -d, -f1`
-        FREECAPNL=`cat ${TMPDIR}/3par_${COMMAND}.${INSERV}.out | tail -1 | cut -d, -f2`
-        USEDCAPPCNL=`expr 100 \- \( \( $FREECAPNL \* 100 \) \/ $TOTCAPNL \)`
+        TOTCAPNL=$(cat ${TMPDIR}/3par_${COMMAND}.${INSERV}.out | tail -1 | cut -d, -f1)
+        FREECAPNL=$(cat ${TMPDIR}/3par_${COMMAND}.${INSERV}.out | tail -1 | cut -d, -f2)
+        USEDCAPPCNL=$(expr 100 \- \( \( $FREECAPNL \* 100 \) \/ $TOTCAPNL \))
 
         if [ $USEDCAPPCNL -ge $PCCRITICALNL ]
         then

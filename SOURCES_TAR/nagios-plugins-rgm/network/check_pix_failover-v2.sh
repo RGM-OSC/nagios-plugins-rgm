@@ -29,13 +29,13 @@ exit 2
 
 if [ "${4}" = "" ]; then usage; fi
 
-ARGS="`echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g'`"
+ARGS="$(echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g')"
 
 for i in $ARGS; do
-        if [ -n "`echo ${i} | grep "^\-C"`" ]; then COMMUNITY="`echo ${i} | cut -c 3-`"; if [ ! -n ${COMMUNITY} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-H"`" ]; then HOSTTARGET="`echo ${i} | cut -c 3-`"; if [ ! -n ${HOSTTARGET} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-P"`" ]; then LocationPrimary="`echo ${i} | cut -c 3-`"; if [ ! -n ${LocationPrimary} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-S"`" ]; then LocationSecondary="`echo ${i} | cut -c 3-`"; if [ ! -n ${LocationSecondary} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-C")" ]; then COMMUNITY="$(echo ${i} | cut -c 3-)"; if [ ! -n ${COMMUNITY} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-H")" ]; then HOSTTARGET="$(echo ${i} | cut -c 3-)"; if [ ! -n ${HOSTTARGET} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-P")" ]; then LocationPrimary="$(echo ${i} | cut -c 3-)"; if [ ! -n ${LocationPrimary} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-S")" ]; then LocationSecondary="$(echo ${i} | cut -c 3-)"; if [ ! -n ${LocationSecondary} ]; then usage;fi;fi
 done
 
 if [ $COMMUNITY == NULL ]; then
@@ -46,10 +46,10 @@ if [ $HOSTTARGET == NULL ]; then
 	usage
 fi
 
-PrimaryValueOID=`snmpwalk -v 2c -c $COMMUNITY $HOSTTARGET $PRIMARY | cut -d' ' -f4-`
+PrimaryValueOID=$(snmpwalk -v 2c -c $COMMUNITY $HOSTTARGET $PRIMARY | cut -d' ' -f4-)
 	### Debug Test
 	#PrimaryValueOID=11
-SecondaryValueOID=`snmpwalk -v 2c -c $COMMUNITY $HOSTTARGET $SECONDARY | cut -d' ' -f4-`
+SecondaryValueOID=$(snmpwalk -v 2c -c $COMMUNITY $HOSTTARGET $SECONDARY | cut -d' ' -f4-)
 	### Debug Test
 	#SecondaryValueOID=11
 

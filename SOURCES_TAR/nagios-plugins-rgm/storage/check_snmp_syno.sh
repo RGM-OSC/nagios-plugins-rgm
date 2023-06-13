@@ -50,20 +50,20 @@ while getopts ":C:H:w:c:v" opt ; do
 	esac
 done
 
-SNMPGET=`which snmpget`
-SNMPWALK=`which snmpwalk`
+SNMPGET=$(which snmpget)
+SNMPWALK=$(which snmpwalk)
 
 synoSystem=1.3.6.1.4.1.6574.1
 synoDisks=1.3.6.1.4.1.6574.2
 synoRAIDs=1.3.6.1.4.1.6574.3
 
-result=`$SNMPGET -v2c -c $community -OQnv $host $synoSystem.1.0`
+result=$($SNMPGET -v2c -c $community -OQnv $host $synoSystem.1.0)
 if [ $result -eq 2 ]; then
 	echo "ERROR: $host has failed"
 	exit 2
 fi
 
-result=`$SNMPGET -v2c -c $community -OQnv $host $synoSystem.2.0`
+result=$($SNMPGET -v2c -c $community -OQnv $host $synoSystem.2.0)
 if [ $result -gt $tempWarn -a $result -lt $tempErr ]; then
 	echo "WARNING: $host has $result °C"
 	exit 1
@@ -76,28 +76,28 @@ if [ $verbose -eq 1 ]; then
 	echo "OK: $host temparature is $result °C"
 fi
 
-result=`$SNMPGET -v2c -c $community -OQnv $host $synoSystem.3.0`
+result=$($SNMPGET -v2c -c $community -OQnv $host $synoSystem.3.0)
 if [ $result -ne 1 ]; then
 	echo "ERROR: $host power has failed"
 	exit 2
 fi
 
-result=`$SNMPGET -v2c -c $community -OQnv $host $synoSystem.4.1.0`
+result=$($SNMPGET -v2c -c $community -OQnv $host $synoSystem.4.1.0)
 if [ $result -ne 1 ]; then
 	echo "ERROR: $host system fan failed"
 	exit 2
 fi
 
-result=`$SNMPGET -v2c -c $community -OQnv $host $synoSystem.4.2.0`
+result=$($SNMPGET -v2c -c $community -OQnv $host $synoSystem.4.2.0)
 if [ $result -ne 1 ]; then
 	echo "ERROR: $host cpu fan failed"
 	exit 2
 fi
 
-diskCount=`$SNMPWALK -v2c -c $community -OQnv $host $synoDisks.1.1.5 | wc -l`
+diskCount=$($SNMPWALK -v2c -c $community -OQnv $host $synoDisks.1.1.5 | wc -l)
 i=0
 while [ $i -lt $diskCount ]; do
-	result=`$SNMPGET -v2c -c $community -OQnv $host $synoDisks.1.1.5.$i`
+	result=$($SNMPGET -v2c -c $community -OQnv $host $synoDisks.1.1.5.$i)
 	case $result in
 		1)
 			if [ $verbose -eq 1 ]; then
@@ -121,7 +121,7 @@ while [ $i -lt $diskCount ]; do
 			exit 2
 			;;
 	esac
-	result=`$SNMPGET -v2c -c $community -OQnv $host $synoDisks.1.1.6.$i`
+	result=$($SNMPGET -v2c -c $community -OQnv $host $synoDisks.1.1.6.$i)
 	if [ $result -gt $tempWarn -a $result -lt $tempErr ]; then
 		echo "WARNING: Disk $i temperature is $result °C"
 		exit 1
@@ -136,11 +136,11 @@ while [ $i -lt $diskCount ]; do
 	i=$((i+1))
 done
 
-raidCount=`$SNMPWALK -v2c -c $community -OQnv $host $synoRAIDs.1.1.2 | wc -l`
+raidCount=$($SNMPWALK -v2c -c $community -OQnv $host $synoRAIDs.1.1.2 | wc -l)
 i=0
 while [ $i -lt $raidCount ]; do
-	name=`$SNMPGET -v2c -c $community -OQnv $host $synoRAIDs.1.1.2.$i`
-	result=`$SNMPGET -v2c -c $community -OQnv $host $synoRAIDs.1.1.3.$i`
+	name=$($SNMPGET -v2c -c $community -OQnv $host $synoRAIDs.1.1.2.$i)
+	result=$($SNMPGET -v2c -c $community -OQnv $host $synoRAIDs.1.1.3.$i)
 	case $result in
 		1)
 			if [ $verbose -eq 1 ]; then
