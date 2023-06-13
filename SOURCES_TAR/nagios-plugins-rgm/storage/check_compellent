@@ -1,4 +1,7 @@
-#!/bin/bash 
+#!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
+
 #########################################################################
 # Usage: ./check_compellent -H host -C community -t type [-w warning] [-c critical]
 #########################################################################
@@ -82,7 +85,7 @@ done
                if [ $s_ok -gt 0 ]; then echo "OVERALL HEALTH OK"; exit ${STATE_OK}; fi
                ;;
 
-      
+
        controller)
 	      declare -a controllernames=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.13.1.4 | tr '\n' ' '))
 
@@ -98,7 +101,7 @@ done
                 do controllerfinalcrit[${c}]=${controllernames[$line]}
                 let c++
                 done
-              
+
        		declare -a controllerwarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.13.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${controllerwarn[@]}
@@ -127,7 +130,7 @@ done
                 let o++
                 done
 
-	        
+
 		if [[ ${#controllerfinalcrit[*]} -gt 0 ]]
                 then echo "CRITICAL Controllers: ${controllerfinalcrit[*]}"; exit ${STATE_CRITICAL}
                 elif [[ ${#controllerfinalwarn[*]} -gt 0 ]]
@@ -172,7 +175,7 @@ done
                 do volumefinalcrit[${c}]=${volumenames[$line]}
                 let c++
                 done
-              
+
        		declare -a volumewarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.26.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${volumewarn[@]}
@@ -228,7 +231,7 @@ done
                 do serverfinalcrit[${c}]=${servernames[$line]}
                 let c++
                 done
-              
+
        		declare -a serverwarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.27.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${serverwarn[@]}
@@ -284,7 +287,7 @@ done
                 do diskfinalcrit[${c}]=${disknames[$line]}
                 let c++
                 done
-              
+
        		declare -a diskwarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.14.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${diskwarn[@]}
@@ -340,7 +343,7 @@ done
                 do enclosurefinalcrit[${c}]=${enclosurenames[$line]}
                 let c++
                 done
-              
+
        		declare -a enclosurewarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.15.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${enclosurewarn[@]}
@@ -396,7 +399,7 @@ done
                 do temp1finalcrit[${c}]=${temp1names[$line]}
                 let c++
                 done
-              
+
        		declare -a temp1warn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.19.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${temp1warn[@]}
@@ -452,7 +455,7 @@ done
                 do psufansfinalcrit[${c}]=${psufansnames[$line]}
                 let c++
                 done
-              
+
        		declare -a psufanswarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.20.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${psufanswarn[@]}
@@ -508,7 +511,7 @@ done
                 do folderfinalcrit[${c}]=${foldernames[$line]}
                 let c++
                 done
-              
+
        		declare -a folderwarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.25.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${folderwarn[@]}
@@ -564,7 +567,7 @@ done
                 do cachefinalcrit[${c}]=${cachenames[$line]}
                 let c++
                 done
-              
+
        		declare -a cachewarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.28.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${cachewarn[@]}
@@ -619,7 +622,7 @@ done
                 do cachebatfinalcrit[${c}]=${cachebatnames[$line]}
                 let c++
                 done
-              
+
        		declare -a cachebatwarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.28.1.5 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${cachebatwarn[@]}
@@ -666,7 +669,7 @@ done
                 declare -a foldernames=($(snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.674.11000.2000.500.1.2.25.1.4 | tr '\n' ' ' | sed -e :a -e 's/^\(\([^"]*"[^"]*"[^"]*\)*[^"]*"[^"]*\) /\1/;ta' ))
                 declare -a folderavailspace=($(snmpwalk -v 2c -O vqe -c ${community} ${host}  .1.3.6.1.4.1.674.11000.2000.500.1.2.32.1.5 | tr '\n' ' '))
                 declare -a folderusedspace=($(snmpwalk -v 2c -O vqe -c ${community} ${host}  .1.3.6.1.4.1.674.11000.2000.500.1.2.32.1.6 | tr '\n' ' '))
-		
+
 		# Determine special Compellent folders and remove them from array
                 ignorefolders=($(snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.4.1.674.11000.2000.500.1.2.25.1.4 | grep -n -w "Unassigned" | awk -F : '{print $1}' | tr '\n' ' '))
                 k=0
@@ -681,7 +684,7 @@ done
 
                 # How many real folders (manmade) do exist
                 realfolderscount=`expr ${folderscount} - ${#ignorefolders[@]}`
-		
+
                 # Calculate Free Space and Percentage per folder
                 i=0
                 while [ ${i} -le ${folderscount} ]

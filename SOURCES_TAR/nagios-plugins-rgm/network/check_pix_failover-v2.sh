@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 STATE=99
 
@@ -83,7 +85,7 @@ if [ $PrimaryValueOID != ${ACTIVEVALUE} ] && [ $PrimaryValueOID != ${STANDBYVALU
 			OUTPUT="Critical: Primary $LocationPrimary: Problem, Secondary $LocationSecondary: Passive"
 			COUNTCRITICAL=2
 		fi
-	else 
+	else
 			OUTPUT="Warning: Primary $LocationPrimary: Problem, Secondary $LocationSecondary: Active"
 			COUNTWARNING=1
 	fi

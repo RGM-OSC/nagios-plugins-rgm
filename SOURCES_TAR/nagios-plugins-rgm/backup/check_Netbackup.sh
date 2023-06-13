@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 usage() {
 echo "Usage :check_Netbackup.sh
@@ -39,7 +41,7 @@ if [[ $CHECK == "DriveDown" ]]; then
 		echo "OK, All Drives is UP."
 		exit 0
 	else
-		echo "CRITICAL, awesome Drives are DOWN. Click for details\n${cmd}" 
+		echo "CRITICAL, awesome Drives are DOWN. Click for details\n${cmd}"
 		exit 2
 	fi
 fi
@@ -77,7 +79,7 @@ if [[ $CHECK == "Ano" ]]; then
         #retval=$?
 
         if [[ $retval != 0 ]]; then
-                echo $cmd 
+                echo $cmd
                 #echo $cmd | awk '{ print substr($0, index($0,$13)) }'
                 exit 2
         else
@@ -215,7 +217,7 @@ if [[ $CHECK == "InventoryLibrary" ]]; then
 		if [ $nb_actually_tape -lt $nb_desire_tape ]; then
 			STATE=2
 		fi
-		
+
 	done < /tmp/file_netbackup_$HOSTNAME
 
 	if [[ $STATE == 0 ]]; then

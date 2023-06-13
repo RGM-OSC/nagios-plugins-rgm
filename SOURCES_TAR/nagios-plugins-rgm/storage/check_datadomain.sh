@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 CHECKNAME="check_datadomain.sh"
 REVISION="0.1"
@@ -11,7 +13,7 @@ echo "Usage :check_datadomain.sh
         -P SNMP Port (default : 161)
         -w Warning (If temp, Form : CPU:Ambient:Other) (default = 65:30:45)
         -c Critical (If temp, Form : CPU:Ambient:Other) (default = 75:40:55)
-        -t Type : 
+        -t Type :
         	POWER, Current power module status
         	TEMP, Current temperature sensors (use -w and -c for specific value)
         	DISKSPACE, Current disk occupation (use -w and -c)
@@ -75,7 +77,7 @@ if [ ${TYPE} == "ALERTS" ]; then
 	elif [ ${severity} == "CRITICAL" ]; then
 		OUTPUT="Critical"
 		COUNTCRITICAL=`expr $COUNTCRITICAL + 1`
-	fi 
+	fi
 fi
 
 if [ ${TYPE} == "POWER" ]; then
@@ -85,14 +87,14 @@ if [ ${TYPE} == "POWER" ]; then
 	PSUNames=`snmpwalk -v $VERSION -c $COMMUNITY $HOSTTARGET $PSUNamesIndex -On | cut -d':' -f2 | sed s/\"//g | tr '\n' ';'`
 	PSUStates=`snmpwalk -v $VERSION -c $COMMUNITY $HOSTTARGET $PSUStatesIndex -On | cut -d':' -f2 | sed s/\"//g | tr '\n' ';'`
 	for state in `echo $PSUStates|tr ';' '\n'`; do
-		if [ $state -ne 1 ]; then 
+		if [ $state -ne 1 ]; then
 			OUTPUT="${OUTPUT}`echo $PSUNames | cut -d';' -f${NB_PSU}` isn't in normal state,"
 			COUNTWARNING=`expr $COUNTWARNING + 1`
 		else
 			OUTPUT="${OUTPUT}`echo $PSUNames | cut -d';' -f${NB_PSU}` is ok,"
 		fi
 		NB_PSU=`expr $NB_PSU + 1`
-	done 
+	done
 	OUTPUT=`echo ${OUTPUT} | sed -e "s/, /,/g"`
 fi
 
@@ -113,7 +115,7 @@ if [ ${TYPE} == "TEMP" ]; then
 				elif [ `echo $TEMPValue | cut -d';' -f${NB_TEMP}` -ge `echo $WARNING | cut -d':' -f1` ]; then
 					OUTPUT="${OUTPUT}Warning : Sensor `echo $TEMPNames | cut -d';' -f${NB_TEMP}` is higher : `echo $TEMPValue | cut -d';' -f${NB_TEMP}`°C,"
 					COUNTWARNING=`expr $COUNTWARNING + 1`
-				else 
+				else
 					OUTPUT="${OUTPUT}Sensor `echo $TEMPNames | cut -d';' -f${NB_TEMP}` is ok : `echo $TEMPValue | cut -d';' -f${NB_TEMP}`°C,"
 				fi
 				PERF="$PERF `echo $TEMPNames | cut -d';' -f${NB_TEMP}| tr ' ' '_'`=`echo $TEMPValue | cut -d';' -f${NB_TEMP}`;`echo $WARNING | cut -d':' -f1`;`echo $CRITICAL | cut -d':' -f1`"
@@ -124,31 +126,31 @@ if [ ${TYPE} == "TEMP" ]; then
 				elif [ `echo $TEMPValue | cut -d';' -f${NB_TEMP}` -ge `echo $WARNING | cut -d':' -f3` ]; then
 					OUTPUT="${OUTPUT}Warning : Sensor `echo $TEMPNames | cut -d';' -f${NB_TEMP}` is higher : `echo $TEMPValue | cut -d';' -f${NB_TEMP}`°C,"
 					COUNTWARNING=`expr $COUNTWARNING + 1`
-				else 
+				else
 					OUTPUT="${OUTPUT}Sensor `echo $TEMPNames | cut -d';' -f${NB_TEMP}` is ok : `echo $TEMPValue | cut -d';' -f${NB_TEMP}`°C,"
 				fi
 				PERF="$PERF `echo $TEMPNames | cut -d';' -f${NB_TEMP}| tr ' ' '_'`=`echo $TEMPValue | cut -d';' -f${NB_TEMP}`;`echo $WARNING | cut -d':' -f3`;`echo $CRITICAL | cut -d':' -f3`"
-			else 
+			else
 				if [ `echo $TEMPValue | cut -d';' -f${NB_TEMP}` -ge `echo $CRITICAL | cut -d':' -f2` ]; then
 					OUTPUT="${OUTPUT}Critical : Sensor `echo $TEMPNames | cut -d';' -f${NB_TEMP}` is too higher : `echo $TEMPValue | cut -d';' -f${NB_TEMP}`°C,"
 					COUNTCRITICAL=`expr $COUNTCRITICAL + 1`
 				elif [ `echo $TEMPValue | cut -d';' -f${NB_TEMP}` -ge `echo $WARNING | cut -d':' -f2` ]; then
 					OUTPUT="${OUTPUT}Warning : Sensor `echo $TEMPNames | cut -d';' -f${NB_TEMP}` is higher : `echo $TEMPValue | cut -d';' -f${NB_TEMP}`°C,"
 					COUNTWARNING=`expr $COUNTWARNING + 1`
-				else 
+				else
 					OUTPUT="${OUTPUT}Sensor `echo $TEMPNames | cut -d';' -f${NB_TEMP}` is ok : `echo $TEMPValue | cut -d';' -f${NB_TEMP}`°C,"
 				fi
 				PERF="$PERF `echo $TEMPNames | cut -d';' -f${NB_TEMP}| tr ' ' '_'`=`echo $TEMPValue | cut -d';' -f${NB_TEMP}`;`echo $WARNING | cut -d':' -f2`;`echo $CRITICAL | cut -d':' -f2`"
 			fi
-		else 
+		else
 			OUTPUT="${OUTPUT}Sensor `echo $TEMPNames | cut -d';' -f${NB_TEMP}` isn't present,"
 		fi
 
 		NB_TEMP=`expr $NB_TEMP + 1`
-	done 
+	done
 fi
 
-if [ ${TYPE} == "DISKSPACE" ]; then 
+if [ ${TYPE} == "DISKSPACE" ]; then
 	DISKNamesIndex=".1.3.6.1.4.1.19746.1.3.2.1.1.3"
 	#DISKUsedValueIndex=".1.3.6.1.4.1.19746.1.3.2.1.1.5"
 	#DISKFreeValueIndex=".1.3.6.1.4.1.19746.1.3.2.1.1.6"
@@ -158,7 +160,7 @@ if [ ${TYPE} == "DISKSPACE" ]; then
 	#DISKUsedValues=`snmpwalk -v $VERSION -c $COMMUNITY $HOSTTARGET $DISKUsedValueIndex -On | cut -d':' -f2 | sed s/\"//g | tr '\n' ';' | sed "s/; /;/g"`
 	#DISKFreeValues=`snmpwalk -v $VERSION -c $COMMUNITY $HOSTTARGET $DISKFreeValueIndex -On | cut -d':' -f2 | sed s/\"//g | tr '\n' ';' | sed "s/; /;/g"`
 	DISKUsedPctValues=`snmpwalk -v $VERSION -c $COMMUNITY $HOSTTARGET $DISKUsedPctIndex -On | cut -d':' -f2 | sed s/\"//g | tr '\n' ';' | sed "s/; /;/g"`
-	
+
 	for diskname in `echo ${DISKNames} | tr ';' '\n'`; do
 		if [ `echo ${DISKUsedPctValues} | cut -d';' -f${NB_DISK}` -ge ${CRITICAL} ]; then
 			OUTPUT="${OUTPUT}Critical : Disk `echo $DISKNames | cut -d';' -f${NB_DISK}` is fill at : `echo ${DISKUsedPctValues} | cut -d';' -f${NB_DISK}`%,"
@@ -232,7 +234,7 @@ if [ ${TYPE} == "DISKSTATE" ]; then
 	if [ ${HOTSPARE} -eq 0 ]; then
 		OUTPUT="${OUTPUT}Warning - HotSpare: ${HOTSPARE},"
 		COUNTWARNING=`expr $COUNTWARNING + 1`
-	else 
+	else
 		OUTPUT="${OUTPUT}HotSpare: ${HOTSPARE},"
 	fi
 	if [ ${HS} -gt 0 ]; then

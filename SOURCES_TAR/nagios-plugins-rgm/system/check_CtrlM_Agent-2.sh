@@ -1,5 +1,6 @@
 #!/bin/bash
-
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 export LANG=en_US
 
@@ -29,7 +30,7 @@ else
 	CHECK_TIME="`cat ${TMPDIR} | head -1`"
 	CUR_TIME="`date +%s`"
 	DELTA_TIME="`expr $CUR_TIME - $CHECK_TIME | sed -e 's:-::g'`"
-	
+
 	if [ $DELTA_TIME -gt 1200 ];then
 		echo "CRITICAL: Lastcheck of ${HOSTCTMCS} is older than 20 minutes."
 		exit 2
@@ -46,10 +47,10 @@ else
 	FAILED=""
 	for line in $AGENT_LINE; do
     	FAILED="`echo $line | grep -v "Available"` $FAILED"
-	done    
+	done
 	if [ "$AGENT_LINE" == "" ]; then
 		FAILED="Impossible to find this agent on the server $HOSTCTMCS."
-	fi    
+	fi
     if [ -n "`echo $FAILED | awk '{print $1}'`" ]; then
         STATE="2"
         PLAINSTATE="CRITICAL"

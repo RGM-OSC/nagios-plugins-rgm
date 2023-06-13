@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 export LANG="fr_FR.UTF-8"
 
@@ -6,7 +8,7 @@ usage() {
 echo "Usage :check_AKCPinc_sonde.sh
         -t Could be Status, Temperature
         -H Host target
-        -w Warning 
+        -w Warning
         -c Critical"
 exit 2
 }
@@ -35,7 +37,7 @@ if [ "$TCP_OK" = "0" ]; then
 	if [ ! -f /tmp/tmp-AKCPinc-check/${HOSTTARGET}/test_out.txt ]; then touch /tmp/tmp-AKCPinc-check/${HOSTTARGET}/test_out.txt ; fi
 	TMPDIR="/tmp/tmp-AKCPinc-check/${HOSTTARGET}"
 fi
- 
+
 TEST=""
 
 if [ "$TCP_OK" = "0" ]; then

@@ -1,4 +1,7 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
+
 # script :  check_lefthand_cluster_vol.sh
 # version : 1.1
 # Comment : Script voor Nagios to monitor the used space on HP Lefthand Cluster

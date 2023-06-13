@@ -1,11 +1,13 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 usage() {
 echo "Usage :check_snmp_hpuxi_process.sh
         -H Hostname to check
 	-C Community SNMP
 	-p process to check
-        -w Warning (means maximun number of running process) 
+        -w Warning (means maximun number of running process)
         -c Critical (means minimum number of running process)"
 exit 2
 }
@@ -27,7 +29,7 @@ TMPDIR="`mktemp -d /tmp/tmp-internal/hpux-internal.XXXXXXXX`"
 
 snmpwalk -v 1 -c $COMMUNITY $HOSTTARGET -O 0qv .1.3.6.1.4.1.11.2.3.1.4.2.1.22 | sed -e 's: "$:":g' > $TMPDIR/snmp_process.txt
 
-if [ "`cat $TMPDIR/snmp_process.txt | head -1`" = "" ]; then 
+if [ "`cat $TMPDIR/snmp_process.txt | head -1`" = "" ]; then
 	echo "CRITICAL: Interogation HPUX impossible."
 	rm -rf ${TMPDIR}
 	exit 2
@@ -38,7 +40,7 @@ LIST="`cat $TMPDIR/snmp_process.txt | grep "${PROCESS}" | sed -e 's:"::g' | tr '
 
 if [ $LOAD -lt $CRITICAL ]; then
 	echo "CRITICAL: less than $CRITICAL process running:$LOAD  :$LIST"
-	rm -rf ${TMPDIR}	
+	rm -rf ${TMPDIR}
 	exit 2
 fi
 if [ $LOAD -gt $WARNING ]; then

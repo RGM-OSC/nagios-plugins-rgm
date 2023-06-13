@@ -1,4 +1,7 @@
 #!/bin/sh
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
+
 #------------------------------------------------------------------------------
 #
 #   PROJECT      :  EyesOfNetwork EyesOfReport load project
@@ -9,7 +12,7 @@
 #
 #   HELP         :  see "usage"
 #
-#   COMMENT      : this plugin test if log nagios has been successfully logged in ods database. 
+#   COMMENT      : this plugin test if log nagios has been successfully logged in ods database.
 #
 #------------------------------------------------------------------------------
 export LANG="fr_FR.UTF-8"

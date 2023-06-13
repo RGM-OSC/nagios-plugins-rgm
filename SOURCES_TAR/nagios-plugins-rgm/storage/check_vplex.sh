@@ -1,11 +1,13 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 export LANG="fr_FR.UTF-8"
 
 usage() {
 echo "Usage :check_vplex.sh
-        -u 
-        -p 
+        -u
+        -p
         -H Host target
         -t Type : ehealth (For engine health status), DIRECTORS (directors global health),
         DIRTHRESHOLD (directors sensors threshold), FANS (fans global status),
@@ -38,7 +40,7 @@ out() {
 	rm -f ${TMPDIR}/engine-*/*_*
 	exit 0
 }
- 
+
 
 ARGS=`echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g'`
 for i in $ARGS; do
@@ -83,7 +85,7 @@ if [ ${TYPE} == "EHEALTH" ] ; then
 	OUTPUT="`cat ${TMPDIR}/engine-*/engine_global_health | tr ';' ' '`"
 fi
 
-if [ ${TYPE} == "DIRECTORS" ]; then 
+if [ ${TYPE} == "DIRECTORS" ]; then
 	NB_DIRECTOR=0
 	for ENGINE in $ENGINES ; do
 		if [ ! -f ${TMPDIR}/${ENGINE}/directors-list ] || [ ! -n `find ${TMPDIR}/${ENGINE}/directors-list -mtime 1` ]; then
@@ -111,7 +113,7 @@ if [ ${TYPE} == "DIRECTORS" ]; then
 	OUTPUT="`cat ${TMPDIR}/engine-*/director_global_state | tr ';' ' '| sed "s/ $/,/g"`"
 fi
 
-if [ ${TYPE} == "DIRTHRESHOLD" ]; then 
+if [ ${TYPE} == "DIRTHRESHOLD" ]; then
 	NB_DIRECTOR=0
 	for ENGINE in $ENGINES ; do
 		if [ ! -f ${TMPDIR}/${ENGINE}/directors-list ] || [ ! -n `find ${TMPDIR}/${ENGINE}/directors-list -mtime 1` ]; then
@@ -136,7 +138,7 @@ if [ ${TYPE} == "DIRTHRESHOLD" ]; then
 	OUTPUT="`cat ${TMPDIR}/engine-*/director_threshold | tr ';' ' '`"
 fi
 
-if [ ${TYPE} == "FANS" ]; then 
+if [ ${TYPE} == "FANS" ]; then
 	NB_FAN=0
 	for ENGINE in $ENGINES ; do
 		if [ ! -f ${TMPDIR}/${ENGINE}/fans-list ] || [ ! -n `find ${TMPDIR}/${ENGINE}/fans-list -mtime 1` ]; then
@@ -158,7 +160,7 @@ if [ ${TYPE} == "FANS" ]; then
 	OUTPUT="`cat ${TMPDIR}/engine-*/fan_global_state | tr ';' ' '`"
 fi
 
-if [ ${TYPE} == "FANSTHRESHOLD" ]; then 
+if [ ${TYPE} == "FANSTHRESHOLD" ]; then
 	NB_FAN=0
 	for ENGINE in $ENGINES ; do
 		if [ ! -f ${TMPDIR}/${ENGINE}/fans-list ] || [ ! -n `find ${TMPDIR}/${ENGINE}/fans-list -mtime 1` ]; then
@@ -180,7 +182,7 @@ if [ ${TYPE} == "FANSTHRESHOLD" ]; then
 	OUTPUT="`cat ${TMPDIR}/engine-*/fan_threshold | tr ';' ' '`"
 fi
 
-if [ ${TYPE} == "MGMTMOD" ]; then 
+if [ ${TYPE} == "MGMTMOD" ]; then
 	NB_MGMTMOD=0
 	for ENGINE in $ENGINES ; do
 		if [ ! -f ${TMPDIR}/${ENGINE}/mgmtmods-list ] || [ ! -n `find ${TMPDIR}/${ENGINE}/mgmtmods-list -mtime 1` ]; then
@@ -202,7 +204,7 @@ if [ ${TYPE} == "MGMTMOD" ]; then
 	OUTPUT="`cat ${TMPDIR}/engine-*/mgmtmod_global_state | tr ';' ' '`"
 fi
 
-if [ ${TYPE} == "PSU" ]; then 
+if [ ${TYPE} == "PSU" ]; then
 	NB_PSU=0
 	for ENGINE in $ENGINES ; do
 		if [ ! -f ${TMPDIR}/${ENGINE}/psus-list ] || [ ! -n `find ${TMPDIR}/${ENGINE}/psus-list -mtime 1` ]; then
@@ -246,7 +248,7 @@ if [ ${TYPE} == "PSUDC" ]; then
 	OUTPUT="`cat ${TMPDIR}/engine-*/psu_DC | tr ';' ' ' `"
 fi
 
-if [ ${TYPE} == "PSUTHRESHOLD" ]; then 
+if [ ${TYPE} == "PSUTHRESHOLD" ]; then
 	NB_PSU=0
 	for ENGINE in $ENGINES ; do
 		if [ ! -f ${TMPDIR}/${ENGINE}/psus-list ] || [ ! -n `find ${TMPDIR}/${ENGINE}/psus-list -mtime 1` ]; then
@@ -304,7 +306,7 @@ if [ ${TYPE} == "SBPSUCOND" ]; then
 			NB_SBPSU=`expr $NB_SBPSU + 1`
 			echo "${SBPSU}; `curl -s -k -H Username:$USERNAME -H Password:$PASSWORD "https://$HOSTTARGET/vplex/engines/${ENGINE}/stand-by-power-supplies/${SBPSU}/conditioning" | grep -A 1 -e enabled -e in-progress -e previous-cycle-result |  cut -d'"' -f4 | tr '\n' ':'`" >> ${TMPDIR}/${ENGINE}/sbpsu_conditioning
 			sed -i -e "s/:--:/;/g" -e "s/:$/;/" -e "s/ seconds/_seconds/g" ${TMPDIR}/${ENGINE}/sbpsu_conditioning
-			
+
 			if [ `cat ${TMPDIR}/${ENGINE}/sbpsu_conditioning | tail -1 | cut -d';' -f 2 | cut -d':' -f2` == "true" ] && [ `cat ${TMPDIR}/${ENGINE}/sbpsu_conditioning | tail -1 | cut -d';' -f3 | cut -d':' -f2` == "false" ]; then
 				if [ `cat ${TMPDIR}/${ENGINE}/sbpsu_conditioning | tail -1 | cut -d';' -f 4 | cut -d':' -f2` != "PASS" ]; then
 					COUNTWARNING=1
@@ -314,7 +316,7 @@ if [ ${TYPE} == "SBPSUCOND" ]; then
 			elif [ `cat ${TMPDIR}/${ENGINE}/sbpsu_conditioning | tail -1 | cut -d';' -f 2 | cut -d':' -f2` != "true" ]; then
 				COUNTWARNING=1
 			fi
-		
+
 		done
 	done
 	if [ $COUNTWARNING -gt `expr $NB_SBPSU / 2` ]; then

@@ -1,4 +1,7 @@
-#!/bin/bash 
+#!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
+
 #########################################################################
 # Script:       check_datacore.sh                                       #
 # Author:       Roland RIPOLL							                #
@@ -7,8 +10,8 @@
 #               Can be used to query status and performance info        #
 # Tested on:    Datacore sansynphony 9									#
 # History:                                                              #
-# 20130215 création														#
-# 20130308 amélioration nombre de requettes SNMP						#
+# 20130215 crï¿½ation														#
+# 20130308 amï¿½lioration nombre de requettes SNMP						#
 # 20130325 Ajout champ													#
 # 20130405 Ajout condition attention warinng critique sur les volumes	#
 # 20131226 refonte suite changement OID sur la PSP4						#
@@ -40,11 +43,11 @@ case ${type} in
 DiskPoolUse)
 	state=0;
 	texte=""
-	
+
 	SELECTcheck=( $(snmpwalk -v 2c -O n -c ${community} ${host} 1.3.6.1.4.1.7652.1.1.1 | grep "Monitors the disk pools available space percentage." | cut -b 27-124) );
 	texte="$texte Utilisation des disks Pools : ";
 	inc=-1;
-	for index in "${!SELECTcheck[@]}"; 
+	for index in "${!SELECTcheck[@]}";
 		do
 			inc=$( expr $inc + 1 );
 			OIDState="1.3.6.1.4.1.7652.1.1.1.5.${SELECTcheck[$inc]}";
@@ -54,40 +57,40 @@ DiskPoolUse)
 			MCaption=$(snmpget -v 2c -O vq -c ${community} ${host} $OIDCaption | cut -d\" -f 2);
 			MStMessage=$(snmpget -v 2c -O vq -c ${community} ${host} $OIDStMessage | cut -d\" -f 2);
 			if [ "$MState" = "Healthy" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-				state=$state; 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+				state=$state;
 			fi
 			if [ "$MState" = "Attention" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 0 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 0 ];
+					then
 						state=$state;
-					else	
+					else
 						state=1;
 					fi
 			fi
 			if [ "$MState" = "Warning" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 1 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 1 ];
+					then
 						state=$state;
-					else	
+					else
 						state=2;
 					fi
 			fi
 			if [ "$MState" = "Critical" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 2 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 2 ];
+					then
 						state=$state;
-					else	
+					else
 						state=3;
-					fi 
-			fi					
+					fi
+			fi
 		done
  	if [ "$state" = "0" ];
         then
@@ -106,7 +109,7 @@ Hosts)
 	SELECTcheck=( $(snmpwalk -v 2c -O n -c ${community} ${host} 1.3.6.1.4.1.7652.1.1.1 | grep "Monitors the state of hosts." | cut -b 27-124) );
 	texte="$texte Status des Hotes : ";
 	inc=-1;
-	for index in "${!SELECTcheck[@]}"; 
+	for index in "${!SELECTcheck[@]}";
 		do
 			inc=$( expr $inc + 1 );
 			OIDState="1.3.6.1.4.1.7652.1.1.1.5.${SELECTcheck[$inc]}";
@@ -116,41 +119,41 @@ Hosts)
 			MCaption=$(snmpget -v 2c -O vq -c ${community} ${host} $OIDCaption | cut -d\" -f 2);
 			MStMessage=$(snmpget -v 2c -O vq -c ${community} ${host} $OIDStMessage | cut -d\" -f 2);
 			if [ "$MState" = "Healthy" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-				state=$state; 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+				state=$state;
 			fi
 			if [ "$MState" = "Attention" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 0 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 0 ];
+					then
 						state=$state;
-					else	
+					else
 						state=1;
 					fi
 			fi
 			if [ "$MState" = "Warning" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 1 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 1 ];
+					then
 						state=$state;
-					else	
+					else
 						state=2;
 					fi
 			fi
 			if [ "$MState" = "Critical" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 2 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 2 ];
+					then
 						state=$state;
-					else	
+					else
 						state=3;
-					fi 
-			fi					
-		done	
+					fi
+			fi
+		done
 	if [ "$state" = "0" ];
         then
          echo -e "$texte";
@@ -159,16 +162,16 @@ Hosts)
         echo -e "Erreur sur une ou plusieurs hotes ! $texte";
                 exit ${STATE_CRITICAL};
         fi
-;;		
+;;
 Vdisks)
         state=0;
         texte=""
 
-		
+
 	SELECTcheck=( $(snmpwalk -v 2c -O n -c ${community} ${host} 1.3.6.1.4.1.7652.1.1.1 | grep "Monitors the status of virtual disks." | cut -b 27-124) );
 	texte="$texte Status des Virtuals Disks : ";
 	inc=-1;
-	for index in "${!SELECTcheck[@]}"; 
+	for index in "${!SELECTcheck[@]}";
 		do
 			inc=$( expr $inc + 1 );
 			OIDState="1.3.6.1.4.1.7652.1.1.1.5.${SELECTcheck[$inc]}";
@@ -178,41 +181,41 @@ Vdisks)
 			MCaption=$(snmpget -v 2c -O vq -c ${community} ${host} $OIDCaption | cut -d\" -f 2);
 			MStMessage=$(snmpget -v 2c -O vq -c ${community} ${host} $OIDStMessage | cut -d\" -f 2);
 			if [ "$MState" = "Healthy" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-				state=$state; 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+				state=$state;
 			fi
 			if [ "$MState" = "Attention" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 0 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 0 ];
+					then
 						state=$state;
-					else	
+					else
 						state=1;
 					fi
 			fi
 			if [ "$MState" = "Warning" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 1 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 1 ];
+					then
 						state=$state;
-					else	
+					else
 						state=2;
 					fi
 			fi
 			if [ "$MState" = "Critical" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 2 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 2 ];
+					then
 						state=$state;
-					else	
+					else
 						state=3;
-					fi 
-			fi					
-		done	
+					fi
+			fi
+		done
 	if [ "$state" = "0" ];
         then
          echo -e "$texte";
@@ -230,7 +233,7 @@ FCPorts)
 	SELECTcheck=( $(snmpwalk -v 2c -O n -c ${community} ${host} 1.3.6.1.4.1.7652.1.1.1 | grep "Monitors the state of server FC ports." | cut -b 27-124) );
 	texte="$texte Status des ports FC des Datacores : ";
 	inc=-1;
-	for index in "${!SELECTcheck[@]}"; 
+	for index in "${!SELECTcheck[@]}";
 		do
 			inc=$( expr $inc + 1 );
 			OIDState="1.3.6.1.4.1.7652.1.1.1.5.${SELECTcheck[$inc]}";
@@ -240,41 +243,41 @@ FCPorts)
 			MCaption=$(snmpget -v 2c -O vq -c ${community} ${host} $OIDCaption | cut -d\" -f 2);
 			MStMessage=$(snmpget -v 2c -O vq -c ${community} ${host} $OIDStMessage | cut -d\" -f 2);
 			if [ "$MState" = "Healthy" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-				state=$state; 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+				state=$state;
 			fi
 			if [ "$MState" = "Attention" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 0 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 0 ];
+					then
 						state=$state;
-					else	
+					else
 						state=1;
 					fi
 			fi
 			if [ "$MState" = "Warning" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 1 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 1 ];
+					then
 						state=$state;
-					else	
+					else
 						state=2;
 					fi
 			fi
 			if [ "$MState" = "Critical" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 2 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 2 ];
+					then
 						state=$state;
-					else	
+					else
 						state=3;
-					fi 
-			fi					
-		done	
+					fi
+			fi
+		done
 	if [ "$state" = "0" ];
         then
          echo -e "$texte";
@@ -292,7 +295,7 @@ DiskPool)
 	SELECTcheck=( $(snmpwalk -v 2c -O n -c ${community} ${host} 1.3.6.1.4.1.7652.1.1.1 | grep "Monitors the state of disk pools." | cut -b 27-124) );
 	texte="$texte Status des Disks Pools : ";
 	inc=-1;
-	for index in "${!SELECTcheck[@]}"; 
+	for index in "${!SELECTcheck[@]}";
 		do
 			inc=$( expr $inc + 1 );
 			OIDState="1.3.6.1.4.1.7652.1.1.1.5.${SELECTcheck[$inc]}";
@@ -302,40 +305,40 @@ DiskPool)
 			MCaption=$(snmpget -v 2c -O vq -c ${community} ${host} $OIDCaption | cut -d\" -f 2);
 			MStMessage=$(snmpget -v 2c -O vq -c ${community} ${host} $OIDStMessage | cut -d\" -f 2);
 			if [ "$MState" = "Healthy" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-				state=$state; 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+				state=$state;
 			fi
 			if [ "$MState" = "Attention" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 0 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 0 ];
+					then
 						state=$state;
-					else	
+					else
 						state=1;
 					fi
 			fi
 			if [ "$MState" = "Warning" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 1 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 1 ];
+					then
 						state=$state;
-					else	
+					else
 						state=2;
 					fi
 			fi
 			if [ "$MState" = "Critical" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 2 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 2 ];
+					then
 						state=$state;
-					else	
+					else
 						state=3;
-					fi 
-			fi					
+					fi
+			fi
 		done
 	if [ "$state" = "0" ];
         then
@@ -354,7 +357,7 @@ LinkErrors)
 	SELECTcheck=( $(snmpwalk -v 2c -O n -c ${community} ${host} 1.3.6.1.4.1.7652.1.1.1 | grep "Monitors the link errors on server ports." | cut -b 27-124) );
 	texte="$texte Status des link sur les ports serveurs : ";
 	inc=-1;
-	for index in "${!SELECTcheck[@]}"; 
+	for index in "${!SELECTcheck[@]}";
 		do
 			inc=$( expr $inc + 1 );
 			OIDState="1.3.6.1.4.1.7652.1.1.1.5.${SELECTcheck[$inc]}";
@@ -364,40 +367,40 @@ LinkErrors)
 			MCaption=$(snmpget -v 2c -O vq -c ${community} ${host} $OIDCaption | cut -d\" -f 2);
 			MStMessage=$(snmpget -v 2c -O vq -c ${community} ${host} $OIDStMessage | cut -d\" -f 2);
 			if [ "$MState" = "Healthy" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-				state=$state; 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+				state=$state;
 			fi
 			if [ "$MState" = "Attention" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 0 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 0 ];
+					then
 						state=$state;
-					else	
+					else
 						state=1;
 					fi
 			fi
 			if [ "$MState" = "Warning" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 1 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 1 ];
+					then
 						state=$state;
-					else	
+					else
 						state=2;
 					fi
 			fi
 			if [ "$MState" = "Critical" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 2 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 2 ];
+					then
 						state=$state;
-					else	
+					else
 						state=3;
-					fi 
-			fi					
+					fi
+			fi
 		done
 	if [ "$state" = "0" ];
         then
@@ -412,11 +415,11 @@ DC)
         state=0;
         texte=""
 
-	
+
 	SELECTcheck=( $(snmpwalk -v 2c -O n -c ${community} ${host} 1.3.6.1.4.1.7652.1.1.1 | grep "Monitors the state of DataCore Servers." | cut -b 27-124) );
 	texte="$texte Status des Datacores : ";
 	inc=-1;
-	for index in "${!SELECTcheck[@]}"; 
+	for index in "${!SELECTcheck[@]}";
 		do
 			inc=$( expr $inc + 1 );
 			OIDState="1.3.6.1.4.1.7652.1.1.1.5.${SELECTcheck[$inc]}";
@@ -426,40 +429,40 @@ DC)
 			MCaption=$(snmpget -v 2c -O vq -c ${community} ${host} $OIDCaption | cut -d\" -f 2);
 			MStMessage=$(snmpget -v 2c -O vq -c ${community} ${host} $OIDStMessage | cut -d\" -f 2);
 			if [ "$MState" = "Healthy" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-				state=$state; 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+				state=$state;
 			fi
 			if [ "$MState" = "Attention" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 0 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 0 ];
+					then
 						state=$state;
-					else	
+					else
 						state=1;
 					fi
 			fi
 			if [ "$MState" = "Warning" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 1 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 1 ];
+					then
 						state=$state;
-					else	
+					else
 						state=2;
 					fi
 			fi
 			if [ "$MState" = "Critical" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 2 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 2 ];
+					then
 						state=$state;
-					else	
+					else
 						state=3;
-					fi 
-			fi					
+					fi
+			fi
 		done
 	if [ "$state" = "0" ];
         then
@@ -474,11 +477,11 @@ DiskPoolLatency)
         state=0;
         texte=""
 
-	
+
 	SELECTcheck=( $(snmpwalk -v 2c -O n -c ${community} ${host} 1.3.6.1.4.1.7652.1.1.1 | grep "Monitors the disk pools latency." | cut -b 27-124) );
 	texte="$texte Latence sur les Volumes : ";
 	inc=-1;
-	for index in "${!SELECTcheck[@]}"; 
+	for index in "${!SELECTcheck[@]}";
 		do
 			inc=$( expr $inc + 1 );
 			OIDState="1.3.6.1.4.1.7652.1.1.1.5.${SELECTcheck[$inc]}";
@@ -488,63 +491,63 @@ DiskPoolLatency)
 			MCaption=$(snmpget -v 2c -O vq -c ${community} ${host} $OIDCaption | cut -d\" -f 2);
 			MStMessage=$(snmpget -v 2c -O vq -c ${community} ${host} $OIDStMessage | cut -d\" -f 2);
 			if [ "$MState" = "Healthy" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-				state=$state; 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+				state=$state;
 			fi
 			if [ "$MState" = "Attention" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 0 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 0 ];
+					then
 						state=$state;
-					else	
+					else
 						state=1;
 					fi
 			fi
 			if [ "$MState" = "Warning" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 1 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 1 ];
+					then
 						state=$state;
-					else	
+					else
 						state=2;
 					fi
 			fi
 			if [ "$MState" = "Critical" ];
-			then 
-				texte="$texte $MCaption : $MStMessage, "; 
-					if [ $state -gt 2 ]; 
-					then 
+			then
+				texte="$texte $MCaption : $MStMessage, ";
+					if [ $state -gt 2 ];
+					then
 						state=$state;
-					else	
+					else
 						state=3;
-					fi 
-			fi					
+					fi
+			fi
 		done
-		
-	if [ "$state" = "0" ]; 
+
+	if [ "$state" = "0" ];
 	then
        	echo -e "$texte";
 		exit ${STATE_OK};
 	fi
-	if [ "$state" = "1" ]; 
+	if [ "$state" = "1" ];
 	then
 		echo -e "Latence elevee  $texte";
        	exit ${STATE_WARNING};
 	fi
-	if [ "$state" = "2" ]; 
+	if [ "$state" = "2" ];
 	then
 		echo -e "Warning ESPACE ! $texte" ;
        	exit ${STATE_WARNING};
 	fi
-	if [ "$state" = "3" ]; 
+	if [ "$state" = "3" ];
 	then
 		echo -e "Alerte ESPACE ! $texte";
        	exit ${STATE_CRITICAL};
-	fi 
+	fi
 ;;
-esac	
+esac
 echo "type non reconnu"
 exit ${STATE_UNKNOWN}

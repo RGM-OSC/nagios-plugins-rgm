@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 # Name: check_hyperv-health
 # Checks the health status of your Hyper-V Virtual Machines

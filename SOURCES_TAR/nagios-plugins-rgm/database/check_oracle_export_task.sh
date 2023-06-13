@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 export LANG="en_US.UTF-8"
 
@@ -15,7 +17,7 @@ echo "Usage :check_oracle_export_task.sh
 	-s password
 	-h hostname
         -p port
-        -b database" 
+        -b database"
 exit 2
 }
 
@@ -65,13 +67,13 @@ datefichier=`stat -c %y $getStatus|awk -F"." '{print $1}'`
 echo datefichier = $datefichier
 datefichierSec=`date -d "${datefichier}" "+%s"
 echo datefichierSec = $datefichierSec
-#echo "${RequestA}" | sqlplus $USER/$PASSWORD'@'$HOST':'$PORT/$DBNAME | egrep 'OK|WARNING|CRITICAL' > $getStatus 
+#echo "${RequestA}" | sqlplus $USER/$PASSWORD'@'$HOST':'$PORT/$DBNAME | egrep 'OK|WARNING|CRITICAL' > $getStatus
 
-# On teste l existence du fichier 
-if [ -s $getStatus ] ; then 
+# On teste l existence du fichier
+if [ -s $getStatus ] ; then
 
   # Si le fichier est recent (datejour ou date veille) on teste le contenu sinon erreur
-  if [ $datefichier == $datejour ] -o [ $datefichier == $dateveille ]  ; then 
+  if [ $datefichier == $datejour ] -o [ $datefichier == $dateveille ]  ; then
 ##  if [ "`grep WARNING $getStatus | wc -l`" -eq 1 ]; then
 ##		echo "`cat $getStatus`"
 ##		exit "$EXIT_WARNING"

@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 # Humidity: snmpwalk -v 1 -c public eaton9155.genoyer.com  -t 10 1.3.6.1.4.1.534.1.6.6
 # Temp: snmpwalk -v 1 -c public eaton9155.genoyer.com  -t 10 1.3.6.1.4.1.534.1.6.5
@@ -9,7 +11,7 @@ echo "Usage :check_eaton_probe.sh
 	-C Community
 	-H Host
 	-t timeout connection in seconde
-	-w Warning (Rate minimum in octet/s. ex: -w 1024) enter anything even in case of data only 
+	-w Warning (Rate minimum in octet/s. ex: -w 1024) enter anything even in case of data only
 	-c Critical (Rate minimum in octet/s. ex: -w 1024) enter anything even in case of data only
 	-D Data only"
 exit 2

@@ -1,4 +1,7 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
+
 #########################################################
 #							#
 #		Dell PowerConnect			#
@@ -122,7 +125,7 @@ function CheckPorts () {
 		PORTS_EXIT_STATUS=1
 	fi
 
-	return $PORTS_EXIT_STATUS	
+	return $PORTS_EXIT_STATUS
 }
 
 
@@ -133,7 +136,7 @@ function CheckPorts () {
 #########################################################
 function CheckPort () {
 	PORT_STATUS=$(snmpget -v 2c -Ovq -c $COMMUNITY -On $HOST_NAME 1.3.6.1.2.1.2.2.1.8.$1 2>/dev/null)
-	
+
 	case "$PORT_STATUS" in
 		"up")
 		EXIT_STRING="OK: Port $1 $PORT_STATUS"
@@ -148,8 +151,8 @@ function CheckPort () {
 		PORT_EXIT_STATUS=1
 		;;
 	esac
-	
-	return $PORT_EXIT_STATUS	
+
+	return $PORT_EXIT_STATUS
 }
 
 #########################################################
@@ -175,10 +178,10 @@ function CheckTemps () {
 		TEMP_VALUES=$(snmpwalk -v 2c -Ovq -c $COMMUNITY $HOST_NAME 1.3.6.1.4.1.674.10895.5000.2.89.53.15.1.9.1 2>/dev/null)
 	fi
 	TEMP_IDS=$(echo "$TEMP_VALUES" | wc -l )
-	
+
 	CURRENT_SENSOR=1
 
-	while [ $CURRENT_SENSOR -le $TEMP_IDS ]; 
+	while [ $CURRENT_SENSOR -le $TEMP_IDS ];
 	do
 		TEMP_ID=$CURRENT_SENSOR;
 		if [[ $TEMP_VALUES == *OID* ]]; then
@@ -200,8 +203,8 @@ function CheckTemps () {
 
 		PERFDAT="$PERFDAT Sensor$TEMP_ID=$TEMP;$WARNING;$CRITICAL;"
 		CURRENT_SENSOR=$[ $CURRENT_SENSOR+1 ];
-	
-	done		
+
+	done
 
 	return $TEMPS_EXIT_STATUS
 }
@@ -219,30 +222,30 @@ function CheckFans () {
 	FAN_DESCRIPTIONS=$(snmpwalk -v 2c -Ovq -c $COMMUNITY $HOST_NAME .1.3.6.1.4.1.674.10895.3000.1.2.110.7.1.1.2 2>/dev/null)
 
 	CURRENT_FAN=1
-	
+
 	while [ $CURRENT_FAN -le $NUM_FANS ]; do
 		FAN_DESCR=$(echo "$FAN_DESCRIPTIONS" | tr -d "\"" | awk NR=="$CURRENT_FAN")
 		FAN_STATUS=$(echo "$FAN_CONDITIONS" | awk NR=="$CURRENT_FAN")
 
 		case "$FAN_STATUS" in
-			1) 
+			1)
 			EXIT_STRING="$EXIT_STRING OK: $FAN_DESCR normal."
 			;;
-			2) 
+			2)
 			if [ "$FAN_EXIT_STATUS" -lt 1 ]; then
 			# only set WARNING if nothing else has yet
 				FAN_EXIT_STATUS=1
 			fi
 			EXIT_STRING="$EXIT_STRING WARNING: $FAN_DESCR compromised!"
 			;;
-			3) 
+			3)
 			if [ "$FAN_EXIT_STATUS" -lt 2 ]; then
 			# only set CRITICAL if nothing else has yet
 				FAN_EXIT_STATUS=2
 			fi
 			EXIT_STRING="$EXIT_STRING $FAN_DESCR critical!"
 			;;
-			4) 
+			4)
 			if [ "$FAN_EXIT_STATUS" -lt 2 ]; then
 			# only set CRITICAL if nothing else has yet
 				FAN_EXIT_STATUS=2
@@ -252,7 +255,7 @@ function CheckFans () {
 			5)
 			# This condition is ignore, fan not exist in some models.
 			;;
-			6) 
+			6)
 			if [ "$FAN_EXIT_STATUS" -lt 2 ]; then
 			# only set CRITICAL if nothing else has yet
 				FAN_EXIT_STATUS=2
@@ -260,10 +263,10 @@ function CheckFans () {
 			EXIT_STRING="$EXIT_STRING CRITICAL: $FAN_DESCR not functioning."
 			;;
 		esac
-			
+
 		CURRENT_FAN=$[ $CURRENT_FAN+1 ];
 	done
-	
+
 	return $FAN_EXIT_STATUS
 }
 
@@ -284,14 +287,14 @@ function CheckPSUs () {
 	PSU_TYPES=$(snmpwalk -v 2c -Ovq -c $COMMUNITY $HOST_NAME 1.3.6.1.4.1.674.10895.3000.1.2.110.7.2.1.4 2>/dev/null)
 
 	CURRENT_PSU=1
-	
+
 	while [ $CURRENT_PSU -le $NUM_PSUS ]; do
 		PSU_DESCR=$(echo "$PSU_DESCRIPTIONS" | tr -d "\"" | tr "_" " " | awk NR=="$CURRENT_PSU")
 
 		PSU_TYPE=$(echo "$PSU_TYPES" | awk NR=="$CURRENT_PSU" )
 
 # 60xx series alway show unknown source #
-		
+
 		case "$PSU_TYPE" in
 			1) PSU_DESCR="$PSU_DESCR (unknown source)"
 			;;
@@ -304,41 +307,41 @@ function CheckPSUs () {
 			5) PSU_DESCR="$PSU_DESCR (internal power)"
 			;;
 		esac
-		
+
 		PSU_STATUS=$(echo "$PSU_CONDITIONS" | awk NR=="$CURRENT_PSU")
-	
+
 		case "$PSU_STATUS" in
-			1) 
+			1)
 			EXIT_STRING="$EXIT_STRING OK: $PSU_DESCR normal."
 			;;
-			2) 
+			2)
 			if [ "$PSU_EXIT_STATUS" -lt 1 ]; then
 			# only set WARNING if nothing else has yet
 				PSU_EXIT_STATUS=1
 			fi
 			EXIT_STRING="$EXIT_STRING WARNING: $PSU_DESCR compromised!"
 			;;
-			3) 
+			3)
 			if [ "$PSU_EXIT_STATUS" -lt 2 ]; then
 			# only set CRITICAL if nothing else has yet
 				PSU_EXIT_STATUS=2
 			fi
 			EXIT_STRING="$EXIT_STRING CRITICAL: $PSU_DESCR critical!"
 			;;
-			4) 
+			4)
 			if [ "$PSU_EXIT_STATUS" -lt 2 ]; then
 			# only set CRITICAL if nothing else has yet
 				PSU_EXIT_STATUS=2
 			fi
 			EXIT_STRING="$EXIT_STRING CRITICAL: $PSU_DESCR critical! Please shutdown the unit!"
 			;;
-			5) 
+			5)
 			if [ "$PSU_EXIT_STATUS" -eq 0 ] && [ "$PSU_TYPE" -eq 3 ] && [ "$PSU_STATUS" -ne 5 ] ; then
 				PSU_EXIT_STATUS=3
 				EXIT_STRING="$EXIT_STRING UNKNOWN: $PSU_DESCR not present - please check that you are monitoring the right device and IP address."
 			fi
 			;;
-			6) 
+			6)
 			if [ "$PSU_EXIT_STATUS" -lt 2 ]; then
 			# only set CRITICAL if nothing else has yet
 				PSU_EXIT_STATUS=2
@@ -346,10 +349,10 @@ function CheckPSUs () {
 			EXIT_STRING="$EXIT_STRING CRITICAL: $PSU_DESCR not functioning."
 			;;
 		esac
-			
+
 		CURRENT_PSU=$[ $CURRENT_PSU+1 ]
 	done
-	
+
 	return $PSU_EXIT_STATUS
 }
 
@@ -376,10 +379,10 @@ done
 while getopts "C:H:w:c:t:p:hV" OPTION;
 do
 	case $OPTION in
-		"C") 
-		COMMUNITY=$OPTARG 
+		"C")
+		COMMUNITY=$OPTARG
 		;;
-		"H") 
+		"H")
 		HOST_NAME=$OPTARG
 		;;
 		"w") # Assign WARNING threshold
@@ -395,11 +398,11 @@ do
 		# need to try and be sure -t has been used
 		PARAMETER=$OPTARG
 		;;
-		"h") 
+		"h")
 		print_help
 		exit $?
 		;;
-		"V") 
+		"V")
 		printf "$APPNAME - version $VERSION\n"
 		exit $EXIT_CODE
 		;;
@@ -418,7 +421,7 @@ else
 		EXIT_STRING="WARNING: No SNMP response from $HOST_NAME! Make sure host is up and SNMP is configured properly.\n"
 		EXIT_CODE=1
 	else
-		case "$CHECK_TYPE" in 
+		case "$CHECK_TYPE" in
 			"assets")
 				SWITCH_IDS=$(snmpwalk -v 2c -Ovq -c $COMMUNITY $HOST_NAME .1.3.6.1.4.1.674.10895.3000.1.2.100.8.1.1)
 				for SWITCH_ID in $(echo "$SWITCH_IDS")
@@ -466,7 +469,7 @@ else
 			*)
 				EXIT_STRING="UNKNOWN: No check type specified to -t parameter"
 				EXIT_CODE=3
-			;;	
+			;;
 		esac
 	fi
 fi

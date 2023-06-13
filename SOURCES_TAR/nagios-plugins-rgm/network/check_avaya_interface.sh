@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 export LANG="en_US.UTF-8"
 
 usage() {
@@ -6,7 +8,7 @@ echo "Usage :check_snmp_ctrl_wifi_avaya.sh
         -C Community
         -H Host target
 	-i Interface target
-        -w Warning 
+        -w Warning
         -c Critical
         -m Mode
 		Discards : Discards number
@@ -41,7 +43,7 @@ OIDOutOctets=.1.3.6.1.2.1.2.2.1.16
 OIDOutDiscards=.1.3.6.1.2.1.2.2.1.19
 OIDOutErrors=.1.3.6.1.2.1.2.2.1.20
 
-if [ ${MODE} = "ERRORS" ];then 
+if [ ${MODE} = "ERRORS" ];then
 	if [ -n "$(find ${TMPDIR}/interface_${IFTARGET}_InErrors.txt -mmin 60 -print)" ] || [ ! -n "$(cat ${TMPDIR}/interface_${IFTARGET}_InErrors.txt)" ]; then
 	        snmpwalk -v 2c -c ${COMMUNITY} ${HOSTTARGET} -On $OIDInErrors.$IFTARGET | cut -d' ' -f4 > ${TMPDIR}/interface_${IFTARGET}_InErrors.txt
 	fi
@@ -57,8 +59,8 @@ if [ ${MODE} = "ERRORS" ];then
 	INERRCURDIFF=$(expr $INERRVAL - $OLDINERRVAL)
 	OUTERRCURDIFF=$(expr $OUTERRVAL - $OLDOUTERRVAL)
 
-	if [ ${INERRCURDIFF} -ge ${WARNING} ] || [ ${OUTERRCURDIFF} -ge ${WARNING} ];then 
-		if [ ${INERRCURDIFF} -gt ${CRITICAL} ] || [ ${OUTERRCURDIFF} -gt ${CRITICAL} ];then 
+	if [ ${INERRCURDIFF} -ge ${WARNING} ] || [ ${OUTERRCURDIFF} -ge ${WARNING} ];then
+		if [ ${INERRCURDIFF} -gt ${CRITICAL} ] || [ ${OUTERRCURDIFF} -gt ${CRITICAL} ];then
 			COUNTCRITICAL=1
 			OUTPUTIN="Critical : Inbound interface errors in last hour : ${INERRCURDIFF}"
 			OUTPUTOUT="Critical : Outbound interface errors in last hour : ${OUTERRCURDIFF}"
@@ -76,7 +78,7 @@ if [ ${MODE} = "ERRORS" ];then
 fi
 
 
-if [ ${MODE} = "DISCARDS" ];then 
+if [ ${MODE} = "DISCARDS" ];then
 	if [ -n "$(find ${TMPDIR}/interface_${IFTARGET}_InDiscards.txt -mmin 60 -print)" ] || [ ! -n "$(cat ${TMPDIR}/interface_${IFTARGET}_InDiscards.txt)" ]; then
 	        snmpwalk -v 2c -c ${COMMUNITY} ${HOSTTARGET} -On $OIDInDiscards.$IFTARGET | cut -d' ' -f4 > ${TMPDIR}/interface_${IFTARGET}_InDiscards.txt
 	fi
@@ -93,9 +95,9 @@ if [ ${MODE} = "DISCARDS" ];then
 	OUTDISCURDIFF=$(expr $OUTDISVAL - $OLDOUTDISVAL)
 
 	if [ ${INDISCURDIFF} -ge ${WARNING} ] || [ ${OUTDISCURDIFF} -ge ${WARNING} ];then
-		if [ ${INDISCURDIFF} -gt ${CRITICAL} ] || [ ${OUTDISCURDIFF} -gt ${CRITICAL} ];then 
+		if [ ${INDISCURDIFF} -gt ${CRITICAL} ] || [ ${OUTDISCURDIFF} -gt ${CRITICAL} ];then
 			COUNTCRITICAL=1
-			if [ ${INDISCURDIFF} -gt ${CRITICAL} ];then 
+			if [ ${INDISCURDIFF} -gt ${CRITICAL} ];then
 				OUTPUTIN="Critical : Inbound interface discards in last hour : ${INDISCURDIFF}"
 			else
 				OUTPUTOUT="Critical : Outbound interface discards in last hour : ${OUTDISCURDIFF}"
@@ -117,7 +119,7 @@ if [ ${MODE} = "DISCARDS" ];then
 fi
 
 
-if [ ${MODE} = "DISCARDSRATE" ];then 
+if [ ${MODE} = "DISCARDSRATE" ];then
 	if [ -n "$(find ${TMPDIR}/interface_${IFTARGET}_InDiscards.txt -mmin 60 -print)" ] || [ ! -n "$(cat ${TMPDIR}/interface_${IFTARGET}_InDiscards.txt)" ]; then
 	        snmpwalk -v 2c -c ${COMMUNITY} ${HOSTTARGET} -On $OIDInDiscards.$IFTARGET | cut -d' ' -f4 > ${TMPDIR}/interface_${IFTARGET}_InDiscards.txt
 	fi
@@ -138,7 +140,7 @@ if [ ${MODE} = "DISCARDSRATE" ];then
 	if [ -n "$(find ${TMPDIR}/interface_${IFTARGET}_OutOctets.txt -mmin 60 -print)" ] || [ ! -n "$(cat ${TMPDIR}/interface_${IFTARGET}_OutOctets.txt)" ]; then
 	        snmpwalk -v 2c -c ${COMMUNITY} ${HOSTTARGET} -On $OIDOutOctets.$IFTARGET | cut -d' ' -f4 > ${TMPDIR}/interface_${IFTARGET}_OutOctets.txt
 	fi
-	
+
 	INOCTVAL=$(snmpwalk -v 2c -c ${COMMUNITY} ${HOSTTARGET} -On $OIDInOctets.$IFTARGET | cut -d' ' -f4)
 	OUTOCTVAL=$(snmpwalk -v 2c -c ${COMMUNITY} ${HOSTTARGET} -On $OIDOutOctets.$IFTARGET | cut -d' ' -f4)
 	OLDINOCTVAL=$(cat ${TMPDIR}/interface_${IFTARGET}_InOctets.txt)
@@ -146,21 +148,21 @@ if [ ${MODE} = "DISCARDSRATE" ];then
 
 	INOCTCURDIFF=$(expr $INOCTVAL - $OLDINOCTVAL)
 	OUTOCTCURDIFF=$(expr $OUTOCTVAL - $OLDOUTOCTVAL)
-	
+
 	if [ ! -n ${INOCTCURDIFF} ];then
 		INRATE=$(expr $INDISCURDIFF / $INOCTCURDIFF)
 	fi
 
-	if [ ! -n ${OUTOCTCURDIFF} ];then 
+	if [ ! -n ${OUTOCTCURDIFF} ];then
 		OUTRATE=$(expr $OUTDISCURDIFF / $OUTOCTCURDIFF)
 	fi
-	
+
 	INPCTRATE=$(expr $INRATE * 100)
 	OUTPCTRATE=$(expr $OUTRATE * 100)
-	
+
 	if [ ${INPCTRATE} -ge ${WARNING} ] || [ ${OUTPCTRATE} -ge ${WARNING} ];then
 		if [ ${INPCTRATE} -gt ${CRITICAL} ] || [ ${OUTPCTRATE} -gt ${CRITICAL} ];then
-			if [ ${INPCTRATE} -gt ${CRITICAL} ];then 
+			if [ ${INPCTRATE} -gt ${CRITICAL} ];then
 				OUTPUTIN="Critical : Inbound interface discards in last hour : ${INDISCURDIFF}"
 			else
 				OUTPUTOUT="Critical : Outbound interface discards in last hour : ${OUTDISCURDIFF}"

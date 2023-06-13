@@ -1,19 +1,21 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 # 3PAR Nagios check script v0.2
 # Last update 2010/05/14 fredl@3par.com
 # Last update 2011/03/03 ddu@antemeta.fr
 #
-# This script is provided "as is" without warranty of any kind and 3PAR specifically disclaims all implied warranties of merchantability, 
-# non-infringement and fitness for a particular purpose. In no event shall 3PAR have any liability arising out of or related to 
-# customer's 'use of the script including lost data, lost profits, or any direct or indirect, incidental, special, or 
+# This script is provided "as is" without warranty of any kind and 3PAR specifically disclaims all implied warranties of merchantability,
+# non-infringement and fitness for a particular purpose. In no event shall 3PAR have any liability arising out of or related to
+# customer's 'use of the script including lost data, lost profits, or any direct or indirect, incidental, special, or
 # consequential damages arising there from.
 # In addition, 3PAR reserves the right not to perform fixes or updates to this script
 #
 #
 # Usage : check_3par InServ Username Command
 #
-# Supported commands 
+# Supported commands
 #	check_pd : 	Check status of physical disks
 #			Degraded -> 		Warning
 #			Failed -> 		Critical
@@ -41,7 +43,7 @@
 #                       >= $PCWARNINGFC ->     	Warning
 #                       >= $PCCRITICALFC ->     Critical
 #
-#	check_cap_nl : Check used NL capacity 
+#	check_cap_nl : Check used NL capacity
 #                       >= $PCWARNINGNL ->      Warning
 #                       >= $PCCRITICALNL ->     Critical
 #
@@ -92,7 +94,7 @@ then
 		exit 2
 	else
 		if [ `grep -c degraded $TMPDIR/3par_$COMMAND.$INSERV.out` -gt 0 ]
-		then	
+		then
 	        	echo WARNING! The following PDs have abnormal status : `grep -v normal $TMPDIR/3par_$COMMAND.$INSERV.out | tr -d '\n'`
 			rm -f $TMPDIR/3par_$COMMAND.$INSERV.out
 			exit 1
@@ -297,7 +299,7 @@ then
 
 	if [ $USEDCAPPCFC -ge $PCCRITICALFC ]
         then
-                echo CRITICAL! Used FC capacity = $USEDCAPPCFC\% \( \> $PCCRITICALFC\% \) 
+                echo CRITICAL! Used FC capacity = $USEDCAPPCFC\% \( \> $PCCRITICALFC\% \)
                 rm -f $TMPDIR/3par_$COMMAND.$INSERV.out
 		exit 2
         else

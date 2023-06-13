@@ -1,4 +1,6 @@
 #!/bin/sh
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 # Check for sharename on SMB with nagios
 # Michael Hodges <michael@va.com.au> 2011-03-04
@@ -12,7 +14,7 @@ PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
 
 usage () {
     echo "\
-Nagios plugin to check for SAMBA Share. Use anonymous login if username is not supplied. 
+Nagios plugin to check for SAMBA Share. Use anonymous login if username is not supplied.
 
 Usage:
   $PROGNAME -H <host> -s <"sharename">

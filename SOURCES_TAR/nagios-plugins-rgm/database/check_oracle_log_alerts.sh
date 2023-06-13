@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 export LANG="en_US.UTF-8"
 
@@ -15,7 +17,7 @@ echo "Usage :check_oracle_log_alerts.sh
 	-s password
 	-h hostname
         -p port
-        -b database" 
+        -b database"
 exit 2
 }
 
@@ -60,7 +62,7 @@ crit=`cat $path | egrep 'WARNING|CRITICAL'`
 
 if [  "$error" != '' ]; then
 	echo "$crit $error"
-	
+
 	if [ "$crit" == "WARNING" ]; then
 		exit "$EXIT_WARNING"
 

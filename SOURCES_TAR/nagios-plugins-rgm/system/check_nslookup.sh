@@ -1,5 +1,6 @@
 #! /bin/sh
-
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 STATE_OK=0
 STATE_WARNING=1

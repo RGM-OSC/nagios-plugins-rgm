@@ -1,4 +1,7 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
+
 ################### check_CMT.sh ############################
 # Version 1.1.1
 # Date : Nov 06 2014
@@ -120,7 +123,7 @@ then
         else
                 echo "UNKNOWN -  Unable to find the CPU usage"
                 exit 3
-		
+
 	fi
 
 elif [ "$TYPE" = "MEM" ]

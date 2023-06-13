@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 export LANG="en_US.UTF-8"
 
@@ -61,11 +63,11 @@ echo "${RequestA}" | sqlplus -s $USER/$PASSWORD'@'$HOST':'$PORT/$DBNAME > $path
 
 
 ## analyse des resultats
-if [ `grep "aucune ligne selectionnee" $path|wc -l` -eq 1 ]; then 
+if [ `grep "aucune ligne selectionnee" $path|wc -l` -eq 1 ]; then
     crit=OK
-elif [ `grep "aucune ligne sélectionnée" $path|wc -l` -eq 1 ]; then 
+elif [ `grep "aucune ligne sï¿½lectionnï¿½e" $path|wc -l` -eq 1 ]; then
     crit=OK
-elif [ `grep "no rows selected" $path|wc -l` -eq 1 ]; then 
+elif [ `grep "no rows selected" $path|wc -l` -eq 1 ]; then
     crit=OK
 elif [ `grep 'CRITICAL' $path|wc -l` -gt 0 ]; then
      crit=CRITICAL

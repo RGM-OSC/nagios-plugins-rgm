@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 # check_snmp_dell_equallogic
 # Description : Check the status of Dell EqualLogic storage
@@ -92,7 +94,7 @@ OID_NETWORK_ID=".1.3.6.1.2.1.2.2.1.2"
 
 # 'ifOperStatus', IF-MIB
 OID_NETWORK_STATUS=".1.3.6.1.2.1.2.2.1.8"
-      
+
 # 'eqlMemberHealthDetailsPowerSupplyName', EQLMEMBER-MIB
 OID_POWERSUPPLY_NAME=".1.3.6.1.4.1.12740.2.1.8.1.2.1"
 
@@ -164,8 +166,8 @@ print_usage() {
   echo "  $SCRIPTNAME -i STRING"
   echo "  $SCRIPTNAME -d INTEGER"
   echo "  $SCRIPTNAME -v STRING"
-  echo "  $SCRIPTNAME -w INTEGER" 
-  echo "  $SCRIPTNAME -c INTEGER" 
+  echo "  $SCRIPTNAME -w INTEGER"
+  echo "  $SCRIPTNAME -c INTEGER"
   echo "  $SCRIPTNAME -h"
   echo "  $SCRIPTNAME -V"
 }
@@ -174,7 +176,7 @@ print_version() {
   echo $SCRIPTNAME version $VERSION
   echo ""
   echo "This nagios plugins comes with ABSOLUTELY NO WARRANTY."
-  echo "You may redistribute copies of the plugins under the terms of the GNU General Public License v2." 
+  echo "You may redistribute copies of the plugins under the terms of the GNU General Public License v2."
 }
 
 print_help() {
@@ -201,7 +203,7 @@ print_help() {
   echo "-w INTEGER"
   echo "   Warning level for size in percent (default: 0)"
   echo "-c INTEGER"
-  echo "   Critical level for size in percent (default: 0)"  
+  echo "   Critical level for size in percent (default: 0)"
   echo "-h"
   echo "   Print this help screen"
   echo "-V"
@@ -221,10 +223,10 @@ do
     t) TYPE="$OPTARG" ;;
     i) NETWORK="$OPTARG" ;;
     d) DISK=$OPTARG ;;
-    v) VOLUME="$OPTARG" ;;   
+    v) VOLUME="$OPTARG" ;;
     w) WARNING=$OPTARG ;;
-    c) CRITICAL=$OPTARG ;; 
-    h) 
+    c) CRITICAL=$OPTARG ;;
+    h)
       print_help
       exit $STATE_UNKNOWN
       ;;
@@ -239,10 +241,10 @@ done
 size_convert() {
   if [ $VALUE -ge 1099511627776 ]; then
     VALUE=`echo "scale=2 ; ( ( ( $VALUE / 1024 ) / 1024 ) / 1024 ) / 1024" | $CMD_BC`
-    VALUE="$VALUE To"  
+    VALUE="$VALUE To"
   elif [ $VALUE -ge 1073741824 ]; then
     VALUE=`echo "scale=2 ; ( ( $VALUE / 1024 ) / 1024 ) / 1024" | $CMD_BC`
-    VALUE="$VALUE Go"  
+    VALUE="$VALUE Go"
   elif [ $VALUE -ge 1048576 ]; then
     VALUE=`echo "scale=2 ; ( $VALUE / 1024 ) / 1024" | $CMD_BC`
     VALUE="$VALUE Mo"
@@ -333,11 +335,11 @@ if [ -n "$NAME" ]; then
     elif [ $TYPE = "disk" ]; then
       # Disks storage status (Usage : ./check_snmp_dell_equallogic -H 127.0.0.1 -C public -n BAIE01 -t disk -d 1)
       DISK_SLOT=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_DISK_ID}.${MEMBER_ID}.${DISK}`
-      DISK_TYPE=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_DISK_TYPE}.${MEMBER_ID}.${DISK}`         
+      DISK_TYPE=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_DISK_TYPE}.${MEMBER_ID}.${DISK}`
       DISK_TOTAL=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_DISK_TOTAL}.${MEMBER_ID}.${DISK}`
       DISK_STATUS=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_DISK_STATUS}.${MEMBER_ID}.${DISK}`
       DISK_TOTAL=`$CMD_EXPR $DISK_TOTAL \* 1048576`
-      case $DISK_TYPE in      
+      case $DISK_TYPE in
         1)
           DISK_TYPE_TEXT="SATA"
         ;;
@@ -346,8 +348,8 @@ if [ -n "$NAME" ]; then
         ;;
         *)
           DISK_TYPE_TEXT="Unknown"
-        ;;        
-      esac       
+        ;;
+      esac
       VALUE=$DISK_TOTAL
       size_convert
       DISK_TOTAL=$VALUE
@@ -505,7 +507,7 @@ if [ -n "$NAME" ]; then
         ;;
         4)
           DESCRIPTION="$DESCRIPTION RAID is rebuilding"
-          STATE=$STATE_WARNING    
+          STATE=$STATE_WARNING
         ;;
         5)
           DESCRIPTION="$DESCRIPTION RAID failure"
@@ -514,14 +516,14 @@ if [ -n "$NAME" ]; then
         6)
           DESCRIPTION="$DESCRIPTION RAID failure"
           STATE=$STATE_CRITICAL
-        ;;    
+        ;;
         7)
           DESCRIPTION="$DESCRIPTION RAID is resizing"
           STATE=$STATE_WARNING
-        ;;            
+        ;;
         *)
           DESCRIPTION="$DESCRIPTION RAID is in unknown state"
-          STATE=$STATE_UNKNOWN          
+          STATE=$STATE_UNKNOWN
         ;;
       esac
     elif [ $TYPE = "temperature" ]; then
@@ -619,7 +621,7 @@ if [ -n "$NAME" ]; then
       VOLUME_TOTAL=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_VOLUME_TOTAL}.${MEMBER_ID}.${VOLUME_ID}`
       VOLUME_USED=`$CMD_SNMPGET -t 2 -r 2 -v 1 -c $COMMUNITY -Ovq $HOSTNAME ${OID_VOLUME_USED}.${MEMBER_ID}.${VOLUME_ID}`
 
-      if [ $VOLUME_TOTAL != 0 ]; then     
+      if [ $VOLUME_TOTAL != 0 ]; then
         VOLUME_TOTAL=`$CMD_EXPR $VOLUME_TOTAL \* 1048576`
         VOLUME_USED=`$CMD_EXPR $VOLUME_USED \* 1048576`
         VOLUME_USED_POURCENT=`$CMD_EXPR \( $VOLUME_USED \* 100 \) / $VOLUME_TOTAL`
@@ -640,7 +642,7 @@ if [ -n "$NAME" ]; then
         else
           STATE=$STATE_OK
         fi
-        
+
         VALUE=$VOLUME_TOTAL
         size_convert
         VOLUME_TOTAL_FORMAT=$VALUE
@@ -650,9 +652,9 @@ if [ -n "$NAME" ]; then
         VOLUME_USED_FORMAT=$VALUE
 
         DESCRIPTION="$DESCRIPTION $VOLUME_USED_FORMAT used on $VOLUME_TOTAL_FORMAT (${VOLUME_USED_POURCENT}%) | volume_used=${VOLUME_USED}B;$PERFDATA_WARNING;$PERFDATA_CRITICAL;0"
-      fi   
-    fi    
-  fi  
+      fi
+    fi
+  fi
 fi
 
 echo $DESCRIPTION

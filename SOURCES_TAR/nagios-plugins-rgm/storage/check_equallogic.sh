@@ -1,4 +1,6 @@
-#!/bin/bash 
+#!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 ################################################################################
 # Script:       check_equallogic                                               #
 # Author:       Claudio Kuenzler www.claudiokuenzler.com                       #
@@ -139,7 +141,7 @@ getmembernames () {
   if [ ${#membernames[*]} -eq 0 ]
   then echo "EQUALLOGIC ${type} CRITICAL - SNMP Connection failed"
   exit 2
-  else 
+  else
     # Get the OID and Membername and put them into arrays
     i=0
     while read -r line
@@ -193,7 +195,7 @@ for line in ${sensornames[@]}
   if [ ${sensortemp[${c}]} -gt 0 ]
     then
     perfdata=$perfdata" ${sensornames[$c]}=${sensortemp[${c}]};${sensortemp_min[${c}]};${sensortemp_max[${c}]}"
-    #Check if state is CRITICAL. Compare against MIN and MAX               
+    #Check if state is CRITICAL. Compare against MIN and MAX
     if [ ${sensortemp[${c}]} -gt ${sensortemp_max[${c}]} ] || [ ${sensortemp[${c}]} -lt ${sensortemp_min[${c}]} ]
       then
       sensorfinalcrit[${c}]="${sensornames[$c]} => ${sensortemp[${c}]}"
@@ -212,7 +214,7 @@ elif [[ ${#sensorunknown[*]} -gt 0 ]]
   then echo "UNKNOWN Check Sensors, an unknown error occured | $perfdata"; exit ${STATE_UNKNOWN}
 else echo "All Sensors OK | $perfdata"; exit ${STATE_OK}
 fi
-;; 
+;;
 
 # --- diskold (old disk check) --- #
 diskold)
@@ -265,7 +267,7 @@ if [ ${diskstatusfailed:0} -gt  0 ] || [ ${diskstatustoosmall:0} -gt 0 ] || [ ${
   echo "DISK CRITICAL ${disksumcritical} disk(s) in critical state"; exit ${STATE_CRITICAL}
 elif [ ${diskstatusoff} -gt 0 ] || [ ${diskstatusaltsig} -gt 0 ]
   then disksumwarning=$(( ${diskstatusoff} + ${diskstatusaltsig} ))
-  echo "DISK WARNING $disksumwarning disk(s) in warning state"; exit ${STATE_WARNING}	
+  echo "DISK WARNING $disksumwarning disk(s) in warning state"; exit ${STATE_WARNING}
 else echo "DISK OK ${diskstatusok} disks OK ${diskstatusspare} disks spare"; exit ${STATE_OK}
 fi
 ;;
@@ -294,8 +296,8 @@ totalstorage_perfdata=$(($totalstorage*1024*1024))
 usedstorage_perfdata=$(($usedstorage*1024*1024))
 
 # Human readable output in GB
-finalusedstorage=`expr ${usedstorage} / 1024` 
-finaltotalstorage=`expr ${totalstorage} / 1024` 
+finalusedstorage=`expr ${usedstorage} / 1024`
+finaltotalstorage=`expr ${totalstorage} / 1024`
 
 if [ -n "${warning}" ] || [ -n "${critical}" ]
   then
@@ -372,7 +374,7 @@ done
 if [ $s3 -gt 0 ]; then echo "$s3 of $ps_count PSU(s): FAILED"; exit ${STATE_CRITICAL}; fi
 if [ $s2 -gt 0 ]; then echo "$s2 of $ps_count PSU(s): NO AC POWER"; exit ${STATE_CRITICAL}; fi
 if [ $s1 -gt 0 ]
-  then 
+  then
   fanfail=0; psfan_count=0
   for fan in $psfanstate
   do
@@ -485,7 +487,7 @@ for ((i=2; i<=$(($ifcount+1)); i++))
   iface[$i]=$(snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.2.1.2.2.1.2.${i})  #IF-MIB::ifDescr.${i}
   inerr[$i]=$(snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.2.1.2.2.1.14.${i}) #IF-MIB::ifInErrors.${i}
   outerr[$i]=$(snmpwalk -v 2c -O vqe -c ${community} ${host} 1.3.6.1.2.1.2.2.1.20.${i}) #IF-MIB::ifOutErrors.${i}
-  perfdata=$perfdata" ${iface[$i]}_in=${inerr[$i]};${warning};${critical} ${iface[$i]}_out=${outerr[$i]};${warning};${critical}"                          
+  perfdata=$perfdata" ${iface[$i]}_in=${inerr[$i]};${warning};${critical} ${iface[$i]}_out=${outerr[$i]};${warning};${critical}"
   #...having errors...
   if [ ${inerr[$i]} -ge ${critical} ] || [ ${outerr[$i]} -ge ${critical} ]
     then
@@ -833,7 +835,7 @@ fi
 ;;
 
 # --- vol (single volume) --- #
-vol)	
+vol)
 getmembernames
 # Get Array No. for wanted Volume Name: ./check_equallogic -H x.x.x.x -C public -t vol -v-v  V2
 if [ -z "${volume}" ]

@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 # check_snmp_syno plugin for nagios version 1.1
 # 18.06.2015 Bruno Flueckiger, inform.me@gmx.net

@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 usage() {
 echo "Usage :check_temp_mge_sensor.sh
@@ -27,10 +29,10 @@ J="0"
 while (true); do
 	J="`expr $J + 1`"
 	VALUE="`echo $SENSOR |cut -d' ' -f$J`"
-	if [ $VALUE -gt ${10} ]; then 
+	if [ $VALUE -gt ${10} ]; then
 		CODE_RETOUR=2
 		echo -n "CRITICAL -> "
-	else 
+	else
 		if [ $VALUE -gt ${8} ]; then
 			CODE_RETOUR=1
 			echo -n "WARNING -> "

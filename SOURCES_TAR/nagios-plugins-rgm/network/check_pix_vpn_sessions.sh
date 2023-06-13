@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/bin/basht
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 export LANG="fr_FR.UTF-8"
 
@@ -33,14 +35,14 @@ if [ "$VPNSessions" -gt "$WARNING" ]; then
 	if [ "$VPNSessions" -gt "$CRITICAL" ]; then
 		OUTPUT="Critical, VPN sessions : $VPNSessions"
 		COUNTCRITICAL=1
-	else  
-		OUTPUT="Warning, VPN sessions : $VPNSessions" 
+	else
+		OUTPUT="Warning, VPN sessions : $VPNSessions"
 		COUNTWARNING=1
 	fi
 else
 	OUTPUT="Ok, VPN sessions : $VPNSessions"
 fi
- 
+
 PERF="VPN_Sessions=$VPNSessions;;;"
 
 

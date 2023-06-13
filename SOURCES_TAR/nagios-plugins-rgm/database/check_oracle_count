@@ -1,4 +1,6 @@
 #!/bin/sh
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 #########################################################################################################################
 #
@@ -91,7 +93,7 @@ RESULT=`echo ${REQUEST} |gawk -F "----------" '{ print $2 }' |gawk -F " " '{ pri
 # check return syntax
 if ! echo ${REQUEST} |grep COUNT > /dev/null 2>&1; then
 	echo "REQUEST ERROR !!!"
-       exit ${STATE_UNKNOWN}	
+       exit ${STATE_UNKNOWN}
 fi
 
 # just print the information

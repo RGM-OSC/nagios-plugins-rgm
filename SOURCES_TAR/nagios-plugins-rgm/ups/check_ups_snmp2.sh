@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 # plugin creado por Daniel Due�as
 # Plugin para chequeo a traves de snmp de la tarjeta cs121 y otras tarjetas para ups
@@ -22,7 +24,7 @@
 
 ######       CHANGE LOG        #########
 # V1.0:Include new parameter to select de version of snmp (1 or 2c)
-# V0.2:Fix the UNKNOWN state when warning value configured was the same as the current temperature on the UPS 
+# V0.2:Fix the UNKNOWN state when warning value configured was the same as the current temperature on the UPS
 #      thanks to puckel
 
 
@@ -78,20 +80,20 @@ print_help(){
 	echo "          the oid upsAlarmDescr, you must define the directory of the mibs files with -d Option (./mibs by default)"
 	echo "battery_temp :The ambient temperature at or near the UPS Battery casing."
 	echo "             warninig and critical values requiered"
-	echo "output_load :The percentage of the UPS power capacity presently being used on this output line," 
+	echo "output_load :The percentage of the UPS power capacity presently being used on this output line,"
 	echo "             i.e., the greater of the percent load of true power capacity and the percent load of VA."
 	echo "             warning and critical requiered."
 	echo "input_voltage :The magnitude of the present input voltage in the input lines."
 	echo "             normal value, interval warning and interval critical requiered"
-	echo "             Example: normal value is 400V, warning in 395-405 V interval and critical 390-410 V interval"  
+	echo "             Example: normal value is 400V, warning in 395-405 V interval and critical 390-410 V interval"
 	echo "             use: ./$PROGNAME -H 10.40.80.1 -p input_voltage -w 395:405 -c 390:400"
-	echo "             in the example, normal value is 400V, warning in 395-405 V interval and critical 390-410 V interval"  
+	echo "             in the example, normal value is 400V, warning in 395-405 V interval and critical 390-410 V interval"
 	echo "num_input_lines :The number of input lines utilized in this device. This variable indicates the"
     echo "             number of rows in the input table, percent warning and critical no requiered."
 	echo "num_output_lines :The number of output lines utilized in this device. This variable indicates the"
     echo "             number of rows in the output table, warning and critical no requiered."
-	echo "battery_status :The indication of the capacity remaining in the UPS system's batteries."  	
-	echo "             A value of batteryNormal indicates that the remaining run-time is greater than upsConfigLowBattTime."  
+	echo "battery_status :The indication of the capacity remaining in the UPS system's batteries."
+	echo "             A value of batteryNormal indicates that the remaining run-time is greater than upsConfigLowBattTime."
 	echo "             A value of batteryLow indicates that the remaining battery run-time is less than or"
 	echo "             equal to upsConfigLowBattTime.  A value of batteryDepleted indicates that the UPS will be unable"
 	echo "             to sustain the present load when and if the utility power is lost (including the possibility that the"
@@ -100,7 +102,7 @@ print_help(){
 	echo "battery_charge_remain: An estimate of the battery charge remaining expressed as a percent of full charge and minutes."
 	echo "             Warning and critical required and refered to the percent of charge"
 	echo ""
-	
+
     exit $ST_UK
 }
 
@@ -169,17 +171,17 @@ alarm(){
 		     then alarmdesc=$oidalarmdesc
 		  fi
 		  alarmtime=`getsnmp $oid2`
-	      alarmtext=$alarmtext" Alarm"$val":"$alarmdesc" "$alarmtime		  
+	      alarmtext=$alarmtext" Alarm"$val":"$alarmdesc" "$alarmtime
 	      counter=`expr $counter + 1`
       done
     else
 	   state=$ST_UK
 	fi
 	output="$val alarms present "$alarmtext
-	perfdata="'alarms'=$val"	  
+	perfdata="'alarms'=$val"
 }
 
-temperature(){	
+temperature(){
 	val=`getsnmp $1`
     f_error $?
 	output="battery temperature = "$val"�C"
@@ -188,9 +190,9 @@ temperature(){
 		then state=$ST_CR
 	elif test $val -ge $2
 		then state=$ST_WR
-	elif test $val -lt $2 
+	elif test $val -lt $2
 		then state=$ST_OK
-	else 
+	else
 		state=$ST_UK
 	fi
 }
@@ -218,7 +220,7 @@ output_load(){
 	     then state=$ST_CR
 		      flag=3
 	  elif test ${percentload[$counter]} -gt $2
-	     then if test $flag -le 2 
+	     then if test $flag -le 2
 		         then state=$ST_WR
 				 flag=2
 		      fi
@@ -235,7 +237,7 @@ output_load(){
 	  output=$output" L$counter=${percentload[$counter]}%"
 	  perfdata=$perfdata"'L$counter'=${percentload[$counter]}%;$2;$3;0;100 "
       counter=`expr $counter + 1`
-   done   
+   done
 }
 
 input_voltage(){
@@ -270,12 +272,12 @@ input_voltage(){
 	     then state=$ST_CR
 		      flag=3
 	  elif test ${voltage[$counter]} -gt $warningup
-	     then if test $flag -le 2 
+	     then if test $flag -le 2
 		         then state=$ST_WR
 				 flag=2
 		      fi
 	  elif test ${voltage[$counter]} -lt $warningdown
-	     then if test $flag -le 2 
+	     then if test $flag -le 2
 		         then state=$ST_WR
 				 flag=2
 		      fi
@@ -292,7 +294,7 @@ input_voltage(){
 	  output=$output" L$counter=${voltage[$counter]}V"
 	  perfdata=$perfdata"'L$counter'=${voltage[$counter]};$2;$3;; "
       counter=`expr $counter + 1`
-   done   
+   done
 }
 
 battery_status(){
@@ -315,7 +317,7 @@ battery_status(){
 	output="battery status = "$battery_status
 }
 
-battery_charge_remain(){	
+battery_charge_remain(){
 	percent=`getsnmp $1`
 	val=`getsnmp $2`
 	valinsecs=`expr $val \* 60`
@@ -326,9 +328,9 @@ battery_charge_remain(){
 		then state=$ST_CR
 	elif test $percent -le $3
 		then state=$ST_WR
-	elif test $percent -gt $3 
+	elif test $percent -gt $3
 		then state=$ST_OK
-	else 
+	else
 		state=$ST_UK
 	fi
 }
@@ -337,15 +339,15 @@ battery_charge_remain(){
 #obtain the value of the oid
 getsnmp(){
 	text=`snmpget -v $snmpversion -c $community $host $1`
-	if [ $? -ne 0 ] 
-	  then 
+	if [ $? -ne 0 ]
+	  then
 		echo "plugin $PROGNAME failure, snmpget command error"
 		echo $text
 		exit $ST_UK
 	fi
 	echo $text | awk '{print $4}'
-	
-} 
+
+}
 
 #test error in the exit of function
 f_error(){
@@ -362,11 +364,11 @@ fi
 
 while test -n "$1"; do
    case "$1" in
-    
-		--help|-h) 
+
+		--help|-h)
 			print_help
 			;;
-		--host|-H) 
+		--host|-H)
 			host=$2
 			shift
 			;;
@@ -378,7 +380,7 @@ while test -n "$1"; do
 			snmpversion=$2
 			shift
 			;;
-		--parameter|-p) 
+		--parameter|-p)
 			parameter=$2
 			shift
 			;;
@@ -394,11 +396,11 @@ while test -n "$1"; do
 		    mibsPath=$2
 			shift
 			;;
-        *) 
+        *)
 			echo "Unknown argument: $1"
 			print_use
 			;;
-		
+
     esac
 	shift
 done
@@ -408,7 +410,7 @@ case $parameter in
    ups_alarm)
 	    alarm $oid_upsAlarmsPresent $oid_upsAlarmDescr $oid_upsAlarmTime $mibsPath
 		;;
-   battery_temp) 
+   battery_temp)
         temperature $oid_upsBatteryTemperature $warning $critical
         ;;
    output_load)

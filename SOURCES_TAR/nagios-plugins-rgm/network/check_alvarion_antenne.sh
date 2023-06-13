@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 export LANG="fr_FR.UTF-8"
 
@@ -6,7 +8,7 @@ usage() {
 echo "Usage :check_alvarion_antenne.sh
         -t Could be Ethernet, Status, Noise
         -H Host target
-        -w Warning 
+        -w Warning
         -c Critical"
 exit 2
 }

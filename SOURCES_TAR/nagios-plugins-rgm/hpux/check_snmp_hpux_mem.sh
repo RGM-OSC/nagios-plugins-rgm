@@ -1,4 +1,6 @@
 #!/bin/sh
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 
 ############################## check_snmp_hpux ##############

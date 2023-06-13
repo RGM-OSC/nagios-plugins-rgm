@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 export LANG="en_US.UTF-8"
 
@@ -15,7 +17,7 @@ echo "Usage :check_check_cloud_control.sh
 	-s password
 	-h hostname
         -p port
-        -b database" 
+        -b database"
 exit 2
 }
 
@@ -54,7 +56,7 @@ cd /tmp/tmp-internal-Solaris/infos_solaris
 crit=''
 if [ `grep "Down" $HOST.grid.log|wc -l` -ge 1 ]; then
   crit=CRITICAL ;
-fi 
+fi
 
 if [ `grep "Up" $HOST.grid.log|wc -l` -eq 3 ]; then
   crit=OK ;
@@ -68,7 +70,7 @@ fi
 #crit=`cat $path | egrep 'OK|WARNING|CRITICAL'`
 
 if [  "$crit" != '' ]; then
-	
+
 	if [ "$crit" == "WARNING" ]; then
 		echo "$crit"
 		exit "$EXIT_WARNING"

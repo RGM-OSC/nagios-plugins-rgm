@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 export LANG="fr_FR.UTF-8"
 
@@ -92,12 +94,12 @@ TMPFILE1=`mktemp /tmp/check_gedevents/check_gedevents.XXXXXX`
 if [ ${TYPE} == 'HOST' ]; then
 	#mysql -u ${USERNAME} -p${PASSWORD} -e "select occ,equipment,service,state,ip_address,host_alias,hostgroups,servicegroups,owner,comments from ged.nagios_queue_active where equipment like '${STRINGSQL}' AND owner IS NOT NULL AND comments IS NOT NULL AND ( occ>$CRITICALOCC OR occ>$WARNINGOCC );" --batch | grep -v occ | tr '\t' ';' | tr ' ' '_'  > ${TMPFILE1}
 	mysql -u ${USERNAME} -p${PASSWORD} -e "select occ,equipment,service,state,ip_address,host_alias,hostgroups,servicegroups,owner,comments from ged.nagios_queue_active where equipment like '${STRINGSQL}' ${STRINGCOMPSQL} AND service like 'HOST%' AND owner='' AND comments='' AND ( occ>$CRITICALOCC OR occ>$WARNINGOCC );" --batch | grep -v occ | tr '\t' ';' | tr ' ' '_'  > ${TMPFILE1}
-	
+
 fi
 
 if [ ${TYPE} == 'SERVICE' ]; then
 	mysql -u ${USERNAME} -p${PASSWORD} -e "select occ,equipment,service,state,ip_address,host_alias,hostgroups,servicegroups,owner,comments from ged.nagios_queue_active where service like '${STRINGSQL}' ${STRINGCOMPSQL} AND owner='' AND comments='' AND ( occ>$CRITICALOCC OR occ>$WARNINGOCC );" --batch | grep -v occ | tr '\t' ';' | tr ' ' '_'  > ${TMPFILE1}
-	
+
 fi
 
 if [ ${TYPE} == 'HOSTGROUPS' ]; then
@@ -116,7 +118,7 @@ if [ -n "`cat ${TMPFILE1} | grep "ERROR"`"]; then
 	nb_object=0
 	max_occ=0
 	TMPFILE2=`mktemp /tmp/check_gedevents/check_gedevents.XXXXXX`
-	for EVENT in `cat ${TMPFILE1}`; do 	
+	for EVENT in `cat ${TMPFILE1}`; do
 			current_occ="`echo $EVENT | cut -d';' -f1`"
 			if [ $current_occ -gt $max_occ ]; then
 				max_occ=$current_occ
@@ -126,13 +128,13 @@ if [ -n "`cat ${TMPFILE1} | grep "ERROR"`"]; then
 			if [ ${TYPE} == 'HOST' ] || [ $TYPE == 'HOSTGROUPS' ]; then
 				if [ ! -n "`cat ${TMPFILE2} | grep ${HOST}`" ]; then
 					nb_object=`expr $nb_object + 1`
-					echo $EVENT | cut -d';' -f1,2,3,5,6,7 | tr ';' ' ' | sed -e s/$/,/g >> ${TMPFILE2}	
+					echo $EVENT | cut -d';' -f1,2,3,5,6,7 | tr ';' ' ' | sed -e s/$/,/g >> ${TMPFILE2}
 				fi
 			else
 				nb_object=`expr $nb_object + 1`
-				echo $EVENT | cut -d';' -f1,2,3,5,6,7 | tr ';' ' ' | sed -e s/$/,/g >> ${TMPFILE2}	
+				echo $EVENT | cut -d';' -f1,2,3,5,6,7 | tr ';' ' ' | sed -e s/$/,/g >> ${TMPFILE2}
 			fi
-	done	
+	done
 
 	cur_crit_occ=0
 	cur_warn_occ=0
@@ -171,9 +173,9 @@ fi
 
 
 
-if [ `echo $OUTPUT | tr ',' '\n' | wc -l` -gt 1 ] ;then 
-	if [ $COUNTCRITICAL -gt 0 ] && [ $COUNTWARNING -gt 0 ]; then 
-		echo "CRITICAL: Click for detail, "	
+if [ `echo $OUTPUT | tr ',' '\n' | wc -l` -gt 1 ] ;then
+	if [ $COUNTCRITICAL -gt 0 ] && [ $COUNTWARNING -gt 0 ]; then
+		echo "CRITICAL: Click for detail, "
 	else
 		if [ $COUNTCRITICAL -gt 0 ]; then echo "CRITICAL: Click for detail, " ; fi
 		if [ $COUNTWARNING -gt 0 ]; then echo "WARNING: Click for detail, "; fi

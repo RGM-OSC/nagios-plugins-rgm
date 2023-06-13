@@ -1,4 +1,7 @@
 #!/bin/sh
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
+
 #
 # Nagios plugin to check Oracle tablespace usage.
 #
@@ -200,8 +203,8 @@ checkOptions() {
     if [ $WARN_TRIGGER -eq 1 ]; then
         if [ "`echo $opt_warn_threshold | grep '^[0-9]*\$'`" = "" ]; then
             threshold_error=1
-        elif [ $opt_warn_threshold -gt 100 ] && [ $DATA_THRESHOLD -eq 0 ]; then 
-            threshold_error=1 
+        elif [ $opt_warn_threshold -gt 100 ] && [ $DATA_THRESHOLD -eq 0 ]; then
+            threshold_error=1
         else
             WARN_THRESHOLD=$opt_warn_threshold
         fi
@@ -331,11 +334,11 @@ for row in `cat $TEMP_FILE`; do
            ;;
         7) # autoextensible
            autoext=$row
-           
+
            # Reset column.
            column=0
-          
-	   # Tbs used in MB 
+
+	   # Tbs used in MB
 	   tbs_used=$(($tbs_size-$tbs_free))
 
            # Skip non-autoextensible tablespaces if '-i' was specified and
@@ -356,7 +359,7 @@ for row in `cat $TEMP_FILE`; do
 
 	   # Check threshold
 	   th_unit="%"
-	   if [ $DATA_THRESHOLD -eq "1" ]; then 
+	   if [ $DATA_THRESHOLD -eq "1" ]; then
 		usage=$tbs_used
 		th_unit="MB"
 	   fi
@@ -382,7 +385,7 @@ for row in `cat $TEMP_FILE`; do
                 WARN_STATE_TEXT="${WARN_STATE_TEXT}; ${ts} ${aetext}${usage}${th_unit}"
               else
                 WARN_STATE_TEXT="${WARN_STATE_TEXT}${ts} ${aetext}${usage}${th_unit}"
-              fi              
+              fi
               if [ $VERBOSE -eq 1 ]; then
                   echo "${ts} ${aetext}${usage}${th_unit} WARNING"
               fi
