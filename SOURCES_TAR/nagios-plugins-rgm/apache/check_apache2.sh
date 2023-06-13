@@ -16,7 +16,7 @@ export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-PROGNAME=`basename $0`
+PROGNAME=$(basename $0)
 VERSION="Version 1.3,"
 AUTHOR="2009, Mike Adolphs (http://www.matejunkie.com/)"
 
@@ -185,7 +185,7 @@ $path_binary?"
 }
 
 check_output() {
-    stat_output=`stat -c %s ${output_dir}/server-status`
+    stat_output=$(stat -c %s ${output_dir}/server-status)
     if [ "$stat_output" = 0 ]
     then
         echo "UNKNOWN - Local copy of server-status is empty. Are we \
@@ -198,17 +198,17 @@ allowed to access http://${hostname}:${port}/server-status?"
 get_status() {
     if [ "$secure" = 1 ]
     then
-        server_status1=`wget -qO- --no-check-certificate -t 3 \
--T ${timeout} https://${hostname}:${port}/${status_page}?auto`
+        server_status1=$(wget -qO- --no-check-certificate -t 3 \
+-T ${timeout} https://${hostname}:${port}/${status_page}?auto)
     sleep 1
-        server_status2=`wget -qO- --no-check-certificate -t 3 \
--T ${timeout} https://${hostname}:${port}/${status_page}?auto`
+        server_status2=$(wget -qO- --no-check-certificate -t 3 \
+-T ${timeout} https://${hostname}:${port}/${status_page}?auto)
     else
-        server_status1=`wget -qO- -t 3 -T ${timeout} \
-http://${hostname}:${port}/${status_page}?auto`
+        server_status1=$(wget -qO- -t 3 -T ${timeout} \
+http://${hostname}:${port}/${status_page}?auto)
         sleep 1
-        server_status2=`wget -qO- -t 3 -T ${timeout} \
-http://${hostname}:${port}/${status_page}?auto`
+        server_status2=$(wget -qO- -t 3 -T ${timeout} \
+http://${hostname}:${port}/${status_page}?auto)
     fi
 }
 
@@ -216,20 +216,20 @@ get_vals() {
     cpu_load="$(cpu_load=0; ps -Ao pcpu,args | grep "$path_binary/apache2" \
 | awk '{print $1}' | while read line
     do
-        cpu_load=`echo "scale=3; $cpu_load + $line" | bc -l`
+        cpu_load=$(echo "scale=3; $cpu_load + $line" | bc -l)
     echo $cpu_load
     done)"
-    cpu_load=`echo $cpu_load | awk '{print $NF}' | sed 's/^\./0./'`
+    cpu_load=$(echo $cpu_load | awk '{print $NF}' | sed 's/^\./0./')
 
-    tmp1_req_psec=`echo ${server_status1} | awk '{print $3}'`
-    tmp2_req_psec=`echo ${server_status2} | awk '{print $3}'`
-    req_psec=`echo "scale=2; ${tmp2_req_psec} - ${tmp1_req_psec}" | bc -l \
-| sed 's/^\./0./'`
+    tmp1_req_psec=$(echo ${server_status1} | awk '{print $3}')
+    tmp2_req_psec=$(echo ${server_status2} | awk '{print $3}')
+    req_psec=$(echo "scale=2; ${tmp2_req_psec} - ${tmp1_req_psec}" | bc -l \
+| sed 's/^\./0./')
 
-    bytes_psec=`echo ${server_status1} | awk '{print $14}' | sed 's/^\./0./'`
-    bytes_preq=`echo ${server_status1} | awk '{print $16}' | sed 's/^\./0./'`
-    wkrs_busy=`echo ${server_status1} | awk '{print $18}' | sed 's/^\./0./'`
-    wkrs_idle=`echo ${server_status1} | awk '{print $20}' | sed 's/^\./0./'`
+    bytes_psec=$(echo ${server_status1} | awk '{print $14}' | sed 's/^\./0./')
+    bytes_preq=$(echo ${server_status1} | awk '{print $16}' | sed 's/^\./0./')
+    wkrs_busy=$(echo ${server_status1} | awk '{print $18}' | sed 's/^\./0./')
+    wkrs_idle=$(echo ${server_status1} | awk '{print $20}' | sed 's/^\./0./')
 }
 
 do_output() {
@@ -264,7 +264,7 @@ warning/critical thresholds!"
 else
     if [ "$remote_srv" = 0 ]
     then
-        running=`check_pid`
+        running=$(check_pid)
         check_pid $running
     fi
 

@@ -27,7 +27,7 @@ if [ -z "$1" ]; then
 fi
 
 # dataprotector command which detects the free media pool size
-freesize=`/usr/omni/bin/omnicellinfo -mm | grep $mediapool | tac | tail -n 1 | awk '{print $5}'`
+freesize=$(/usr/omni/bin/omnicellinfo -mm | grep $mediapool | tac | tail -n 1 | awk '{print $5}')
 
 if [ $freesize -lt $warningsize ]; then
         echo "Pool Warning"

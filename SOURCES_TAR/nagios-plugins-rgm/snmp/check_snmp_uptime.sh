@@ -7,8 +7,8 @@ export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 
-PROGNAME=`basename $0`
-REVISION=`echo 'Revision: 0.2 ' `
+PROGNAME=$(basename $0)
+REVISION=$(echo 'Revision: 0.2 ' )
 WARN=$4
 CRIT=$5
 
@@ -70,8 +70,8 @@ else
 fi
 
 UPT=$(snmpget -c $2 -v $3 $V3 $1 DISMAN-EVENT-MIB::sysUpTimeInstance)
-UPTCALC=`echo $UPT |cut -d "(" -f 2 |cut -d ")" -f 1`
-UPTDISPLAY=`echo $UPT |awk -F ") " '{print $2}'`
+UPTCALC=$(echo $UPT |cut -d "(" -f 2 |cut -d ")" -f 1)
+UPTDISPLAY=$(echo $UPT |awk -F ") " '{print $2}')
 RES=$?
 
 UPTMIN=$(expr $(echo $UPTCALC) / 6000 )

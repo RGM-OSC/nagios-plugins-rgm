@@ -8,7 +8,7 @@ STATE_CRITICAL=2
 STATE_UNKNOWN=3
 STATE_DEPENDENT=4
 
-HOSTFOUND="`host $1 | grep "address" | grep -v "SERVFAIL"`"
+HOSTFOUND="$(host $1 | grep "address" | grep -v "SERVFAIL")"
 
 if [  -n "$HOSTFOUND" ]
 then

@@ -9,12 +9,12 @@ export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 HOST=$1
 PSW=$2
 CHNT="/srv/eyesofnetwork/nagios/plugins/check_nt"
-OKVMS=`$CHNT -H $HOST -s $PSW -p 12489 -v COUNTER -l "\Hyper-V Virtual Machine Health Summary\Health OK"`
-CRITVMS=`$CHNT -H $HOST -p 12489 -v COUNTER -l "\\Hyper-V Virtual Machine Health Summary\\Health Critical"`
+OKVMS=$($CHNT -H $HOST -s $PSW -p 12489 -v COUNTER -l "\Hyper-V Virtual Machine Health Summary\Health OK")
+CRITVMS=$($CHNT -H $HOST -p 12489 -v COUNTER -l "\\Hyper-V Virtual Machine Health Summary\\Health Critical")
 OKNUM="$OKVMS"
 CRITNUM="$CRITVMS"
 TOTAL=$(($OKNUM+$CRITNUM))
-CMDERR=`$CHNT -H $1 -p 12489 -v COUNTER -l "\\Hyper-V Virtual Machine Health Summary\\Health OK" |grep -i -o "could not fetch information from server"`
+CMDERR=$($CHNT -H $1 -p 12489 -v COUNTER -l "\\Hyper-V Virtual Machine Health Summary\\Health OK" | grep -i -o "could not fetch information from server")
 
 
 if [ "$CMDERR" == "could not fetch information from server" ] ; then

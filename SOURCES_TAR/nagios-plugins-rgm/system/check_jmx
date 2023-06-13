@@ -3,7 +3,7 @@ unset PATH
 export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 # Nagios JMX plugin.
 
-JAVA_CMD=`which java`
+JAVA_CMD=$(which java)
 
 if [ -z $JAVA_CMD ]; then
     if [ -x $JAVA_HOME/bin/java ]; then
@@ -14,5 +14,5 @@ if [ -z $JAVA_CMD ]; then
     fi
 fi
 
-DIR=`dirname $0`
+DIR=$(dirname $0)
 $JAVA_CMD -jar $DIR/check_jmx.jar "$@"

@@ -16,13 +16,13 @@ exit2
 
 if [ "${8}" = "" ]; then usage; fi
 
-ARGS="`echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g'`"
+ARGS="$(echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g')"
 
 for i in $ARGS; do
-        if [ -n "`echo ${i} | grep "^\-C"`" ]; then COMMUNITY="`echo ${i} | cut -c 3-`"; if [ ! -n ${COMMUNITY} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-H"`" ]; then HOSTTARGET="`echo ${i} | cut -c 3-`"; if [ ! -n ${HOSTTARGET} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-w"`" ]; then WARNING="`echo ${i} | cut -c 3-`"; if [ ! -n ${WARNING} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-c"`" ]; then CRITICAL="`echo ${i} | cut -c 3-`"; if [ ! -n ${CRITICAL} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-C")" ]; then COMMUNITY="$(echo ${i} | cut -c 3-)"; if [ ! -n ${COMMUNITY} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-H")" ]; then HOSTTARGET="$(echo ${i} | cut -c 3-)"; if [ ! -n ${HOSTTARGET} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-w")" ]; then WARNING="$(echo ${i} | cut -c 3-)"; if [ ! -n ${WARNING} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-c")" ]; then CRITICAL="$(echo ${i} | cut -c 3-)"; if [ ! -n ${CRITICAL} ]; then usage;fi;fi
 done
 
 
@@ -39,7 +39,7 @@ snmpwalk -v 2c -c $COMMUNITY $HOSTTARGET -O 0qv .1.3.6.1.4.1.45.7.7.1.3.1.2 | se
 #snmpwalk -v 2c -c $COMMUNITY $HOSTTARGET -O 0qv .1.3.6.1.4.1.45.7.7.1.3.1.2 | sed -e 's: "$:":g' | print $1; | snmpwalk -v 2c -c $COMMUNITY $HOSTTARGET -O 0qv .1.3.6.1.4.1.45.7.2.1.5.1.2 | print $2; > $TMPDIR/snmpwalk_out.txt
 
 
-if [ "`cat $TMPDIR/snmpwalk_out.txt | head -1`" = "" ]; then
+if [ "$(cat $TMPDIR/snmpwalk_out.txt | head -1)" = "" ]; then
 	echo "CRITICAL: Interogation Controleur WIFI impossible."
 #	rm -rf ${TMPDIR}
 	exit 2
@@ -47,7 +47,7 @@ fi
 
 #LOAD="`cat $TMPDIR/snmp_out.txt | grep "${CONNECTEDAP}" | wc -l`"
 #LOAD="`cat $TMPDIR/snmp_out.txt | grep "${CONNECTEDAP}" | sed -e 's:"::g' | tr '\n' ';'`"
-LOAD="`cat $TMPDIR/snmpwalk_out.txt`"
+LOAD="$(cat $TMPDIR/snmpwalk_out.txt)"
 
 
 

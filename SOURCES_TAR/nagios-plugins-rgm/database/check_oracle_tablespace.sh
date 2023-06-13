@@ -181,14 +181,14 @@ checkOptions() {
             esac
     done
 
-    TMP=`$CMD_EGREP \^${ORACLE_SID}\: $ORACLE_ORATAB`
+    TMP=$($CMD_EGREP \^${ORACLE_SID}\: $ORACLE_ORATAB)
     if [ -z "$ORACLE_SID" ] || [ "$TMP" = "" ]; then
         echo "Error: Invalid Oracle SID (see $ORACLE_ORATAB)."
         printInfo
         printHelp
         exit $STATE_UNKNOWN
     else
-        ORACLE_HOME=`echo $TMP | $CMD_AWK 'BEGIN{FS=":"}{print $2}'`
+        ORACLE_HOME=$(echo $TMP | $CMD_AWK 'BEGIN{FS=":"}{print $2}')
     fi
 
     if [ -z "$DB_REGEXP" ]; then
@@ -201,7 +201,7 @@ checkOptions() {
 
     threshold_error=0
     if [ $WARN_TRIGGER -eq 1 ]; then
-        if [ "`echo $opt_warn_threshold | grep '^[0-9]*\$'`" = "" ]; then
+        if [ "$(echo $opt_warn_threshold | grep '^[0-9]*\$')" = "" ]; then
             threshold_error=1
         elif [ $opt_warn_threshold -gt 100 ] && [ $DATA_THRESHOLD -eq 0 ]; then
             threshold_error=1
@@ -210,7 +210,7 @@ checkOptions() {
         fi
     fi
     if [ $CRIT_TRIGGER -eq 1 ]; then
-        if [ "`echo $opt_crit_threshold | grep '^[0-9]*\$'`" = "" ]; then
+        if [ "$(echo $opt_crit_threshold | grep '^[0-9]*\$')" = "" ]; then
             threshold_error=1
         elif [ $opt_crit_threshold -gt 100 ] && [ $DATA_THRESHOLD -eq 0 ]; then
 	    threshold_error=1
@@ -298,7 +298,7 @@ where 	df.TABLESPACE_NAME=fs.TABLESPACE_NAME
 order 	by df.TABLESPACE_NAME asc
 /
 EOF
-if [ "`cat $TEMP_FILE`" = "" ]; then
+if [ "$(cat $TEMP_FILE)" = "" ]; then
     echo "Error: Empty result from sqlplus. Check plugin settings and Oracle status."
     exit $STATE_UNKNOWN
 fi
@@ -314,8 +314,8 @@ if [ $VERBOSE -eq 1 ]; then
 fi
 column=0
 perf_data=""
-for row in `cat $TEMP_FILE`; do
-    column=`expr $column + 1`
+for row in $(cat $TEMP_FILE); do
+    column=$(expr $column + 1)
     case $column in
         1) # tablespace name
            ts=$row
@@ -344,7 +344,7 @@ for row in `cat $TEMP_FILE`; do
            # Skip non-autoextensible tablespaces if '-i' was specified and
            # if same db has autoextensible tablespaces as well.
            if [ $IGNORE_NO_AUTOEXTENSION -eq 1 ] && [ $autoext = "NO" ]; then
-                if [ "`$CMD_EGREP \"^$ts[[:space:]].*YES\$\" $TEMP_FILE`" != "" ]; then
+                if [ "$($CMD_EGREP \"^$ts[[:space:]].*YES\$\" $TEMP_FILE)" != "" ]; then
                     continue
                 fi
            fi

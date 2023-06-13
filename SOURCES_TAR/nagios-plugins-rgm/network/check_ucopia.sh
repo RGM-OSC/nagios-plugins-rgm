@@ -32,14 +32,14 @@ if [ "${6}" = "" ]; then usage; fi
 WARNING=0
 CRITICAL=0
 
-ARGS="`echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g'`"
+ARGS="$(echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g')"
 
 for i in $ARGS; do
-        if [ -n "`echo ${i} | grep "^\-t"`" ]; then TYPE="`echo ${i} | sed -e 's: ::g' | cut -c 3- | tr '[a-z]' '[A-Z]'`"; if [ ! -n ${TYPE} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-C"`" ]; then COMMUNITY="`echo ${i} | cut -c 3-`"; if [ ! -n ${COMMUNITY} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-H"`" ]; then HOSTTARGET="`echo ${i} | cut -c 3-`"; if [ ! -n ${HOSTTARGET} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-w"`" ]; then WARNING="`echo ${i} | cut -c 3-`"; if [ ! -n ${WARNING} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-c"`" ]; then CRITICAL="`echo ${i} | cut -c 3-`"; if [ ! -n ${CRITICAL} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-t")" ]; then TYPE="$(echo ${i} | sed -e 's: ::g' | cut -c 3- | tr '[a-z]' '[A-Z]')"; if [ ! -n ${TYPE} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-C")" ]; then COMMUNITY="$(echo ${i} | cut -c 3-)"; if [ ! -n ${COMMUNITY} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-H")" ]; then HOSTTARGET="$(echo ${i} | cut -c 3-)"; if [ ! -n ${HOSTTARGET} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-w")" ]; then WARNING="$(echo ${i} | cut -c 3-)"; if [ ! -n ${WARNING} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-c")" ]; then CRITICAL="$(echo ${i} | cut -c 3-)"; if [ ! -n ${CRITICAL} ]; then usage;fi;fi
 done
 
 
@@ -50,7 +50,7 @@ COUNTCRITICAL=0
 OUTPUT=" "
 
 if [ "$TYPE" == "TEMP" ]; then
-	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDTemp | cut -d' ' -f4-`"
+	TEST="$(snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDTemp | cut -d' ' -f4-)"
 	if [ $TEST -gt $CRITICAL ] ; then
 		OUTPUT="Critical: Temp $TEST C"
 		COUNTCRITICAL=1
@@ -66,7 +66,7 @@ if [ "$TYPE" == "TEMP" ]; then
 fi
 
 if [ "$TYPE" == "HA" ]; then
-	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDHA | cut -d' ' -f4-`"
+	TEST="$(snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDHA | cut -d' ' -f4-)"
 	if [ "$TEST" != "1" ]; then
 		OUTPUT="Critical: HA Failed"
 		COUNTCRITICAL=1
@@ -76,7 +76,7 @@ if [ "$TYPE" == "HA" ]; then
 fi
 
 if [ "$TYPE" == "USERS" ]; then
-	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDConnectedUsers | cut -d' ' -f4-`"
+	TEST="$(snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDConnectedUsers | cut -d' ' -f4-)"
 	if [ $TEST -gt $CRITICAL ] ; then
 		OUTPUT="Critical: Connected Users $TEST"
 		COUNTCRITICAL=1
@@ -92,7 +92,7 @@ if [ "$TYPE" == "USERS" ]; then
 fi
 
 if [ "$TYPE" == "WEB" ]; then
-	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDWeb | cut -d' ' -f4-`"
+	TEST="$(snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDWeb | cut -d' ' -f4-)"
 	if [ "$TEST" != "1" ]; then
 		OUTPUT="Critical: Web Server Failed"
 		COUNTCRITICAL=1
@@ -102,7 +102,7 @@ if [ "$TYPE" == "WEB" ]; then
 fi
 
 if [ "$TYPE" == "SQL" ]; then
-	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDSQL | cut -d' ' -f4-`"
+	TEST="$(snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDSQL | cut -d' ' -f4-)"
 	if [ "$TEST" != "1" ]; then
 		OUTPUT="Critical: SQL Server Failed"
 		COUNTCRITICAL=1
@@ -112,7 +112,7 @@ if [ "$TYPE" == "SQL" ]; then
 fi
 
 if [ "$TYPE" == "URLSNIF" ]; then
-	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDurlSnif | cut -d' ' -f4-`"
+	TEST="$(snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDurlSnif | cut -d' ' -f4-)"
 	if [ "$TEST" != "1" ]; then
 		OUTPUT="Critical: URL Sniffer Service Failed"
 		COUNTCRITICAL=1
@@ -122,7 +122,7 @@ if [ "$TYPE" == "URLSNIF" ]; then
 fi
 
 if [ "$TYPE" == "PORTAL" ]; then
-	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDportal | cut -d' ' -f4-`"
+	TEST="$(snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDportal | cut -d' ' -f4-)"
 	if [ "$TEST" != "1" ]; then
 		OUTPUT="Critical: Web Portal Failed"
 		COUNTCRITICAL=1
@@ -132,7 +132,7 @@ if [ "$TYPE" == "PORTAL" ]; then
 fi
 
 if [ "$TYPE" == "WEBPROXY" ]; then
-	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDwebProxy | cut -d' ' -f4-`"
+	TEST="$(snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDwebProxy | cut -d' ' -f4-)"
 	if [ "$TEST" != "1" ]; then
 		OUTPUT="Critical: Web Proxy Failed"
 		COUNTCRITICAL=1
@@ -142,8 +142,8 @@ if [ "$TYPE" == "WEBPROXY" ]; then
 fi
 
 if [ "$TYPE" == "DHCPSERVER" ]; then
-	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDdhcpServer | cut -d' ' -f4-`"
-	TESTHA="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDHA | cut -d' ' -f4-`"
+	TEST="$(snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDdhcpServer | cut -d' ' -f4-)"
+	TESTHA="$(snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDHA | cut -d' ' -f4-)"
 	if [ "$TESTHA" != "1" ]; then
 		if [ "$TEST" != "1" ]; then
 			OUTPUT="Critical: DHCP Server Failed"
@@ -159,7 +159,7 @@ if [ "$TYPE" == "DHCPSERVER" ]; then
 fi
 
 if [ "$TYPE" == "DNS" ]; then
-	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDdns | cut -d' ' -f4-`"
+	TEST="$(snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDdns | cut -d' ' -f4-)"
 	if [ "$TEST" != "1" ]; then
 		OUTPUT="Critical: DNS Server Failed"
 		COUNTCRITICAL=1
@@ -169,7 +169,7 @@ if [ "$TYPE" == "DNS" ]; then
 fi
 
 if [ "$TYPE" == "STATICIP" ]; then
-	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDstaticip | cut -d' ' -f4-`"
+	TEST="$(snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDstaticip | cut -d' ' -f4-)"
 	if [ "$TEST" != "1" ]; then
 		OUTPUT="Critical: Static IP Management Failed"
 		COUNTCRITICAL=1
@@ -179,7 +179,7 @@ if [ "$TYPE" == "STATICIP" ]; then
 fi
 
 if [ "$TYPE" == "LDAP" ]; then
-	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDldapDirectory | cut -d' ' -f4-`"
+	TEST="$(snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDldapDirectory | cut -d' ' -f4-)"
 	if [ "$TEST" != "1" ]; then
 		OUTPUT="Critical: LDAP Directory Failed"
 		COUNTCRITICAL=1
@@ -188,7 +188,7 @@ if [ "$TYPE" == "LDAP" ]; then
 	fi
 fi
 
-if [ `echo $OUTPUT | tr ',' '\n' | wc -l` -gt 2 ] ;then
+if [ $(echo $OUTPUT | tr ',' '\n' | wc -l) -gt 2 ] ;then
 	if [ $COUNTCRITICAL -gt 0 ] && [ $COUNTWARNING -gt 0 ]; then
 		echo "CRITICAL: Click for detail, "
 	else

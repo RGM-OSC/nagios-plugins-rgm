@@ -14,10 +14,10 @@ exit 2
 
 if [ "${3}" = "" ]; then usage; fi
 
-ARGS="`echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g'`"
+ARGS="$(echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g')"
 for i in $ARGS; do
-        if [ -n "`echo ${i} | grep "^\-f"`" ]; then PAGE_file="`echo ${i} | cut -c 3-`"; if [ ! -n ${PAGE_file} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-r"`" ]; then RETURNSHA="`echo ${i} | cut -c 3-`"; if [ ! -n ${RETURNSHA} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-f")" ]; then PAGE_file="$(echo ${i} | cut -c 3-)"; if [ ! -n ${PAGE_file} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-r")" ]; then RETURNSHA="$(echo ${i} | cut -c 3-)"; if [ ! -n ${RETURNSHA} ]; then usage;fi;fi
 done
 
 if [ ! -f ${PAGE_file} ]; then
@@ -30,11 +30,11 @@ if [ ! -n "$RETURNSHA" ]; then
 fi
 
 if [ ! -d /tmp/tmp-internal ]; then mkdir -p /tmp/tmp-internal; fi
-TMPDIR="`mktemp -d /tmp/tmp-internal/web-internal.XXXXXXXX`"
+TMPDIR="$(mktemp -d /tmp/tmp-internal/web-internal.XXXXXXXX)"
 
-PAGE="`cat $PAGE_file   | head -1`"
+PAGE="$(cat $PAGE_file   | head -1)"
 
-if [ ! "`echo $PAGE | cut -c -4  | tr [:upper:] [:lower:]`" = "http" ]; then
+if [ ! "$(echo $PAGE | cut -c -4  | tr [:upper:] [:lower:])" = "http" ]; then
 	echo "Url must start with http://"
 	usage
 fi
@@ -50,7 +50,7 @@ if [ $GetSHA -gt 0 ]; then
        exit 2
 fi
 
-SHA="`sha1sum $TMPDIR/page.out.html | awk '{print $1}'`"
+SHA="$(sha1sum $TMPDIR/page.out.html | awk '{print $1}')"
 
 if [ ! "$SHA" = "$RETURNSHA" ]; then
 	echo "CRITICAL: The required page doesnt match expected checksum. $SHA"

@@ -16,9 +16,9 @@ exit 2
 
 if [ "${2}" = "" ]; then usage; fi
 
-ARGS="`echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g'`"
+ARGS="$(echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g')"
 for i in $ARGS; do
-        if [ -n "`echo ${i} | grep "^\-h"`" ]; then HOSTCTMCS="`echo ${i} | cut -c 3-`"; if [ ! -n ${HOSTCTMCS} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-h")" ]; then HOSTCTMCS="$(echo ${i} | cut -c 3-)"; if [ ! -n ${HOSTCTMCS} ]; then usage;fi;fi
 done
 
 
@@ -32,7 +32,7 @@ else
 	if [ ! -s ${TMPDIR}.tmp ]; then
 		scp nagios@${HOSTCTMCS}:/home/nagios/check_agents_CTRLM/Current_State_agstat_Ready ${TMPDIR}.tmp >> ${TMPDIR}_scplog.txt 2>&1
 		# DEBUG PURPOSE ONLY
-			echo "`date` Fic 0 detected. Redo the copy. Thank's Oracle. " >> ${TMPDIR}.debug
+			echo "$(date) Fic 0 detected. Redo the copy. Thank's Oracle. " >> ${TMPDIR}.debug
 		#
 
 	fi
@@ -42,6 +42,6 @@ else
 fi
 
 # DEBUG PURPOSE ONLY
-echo "`date` `cat ${TMPDIR} | head -2 | tail -1`; Nbr Line:`cat ${TMPDIR} | wc -l`; MD5=`md5sum ${TMPDIR} | cut -d' ' -f1`" >> ${TMPDIR}.debug
+echo "$(date) $(cat ${TMPDIR} | head -2 | tail -1); Nbr Line:$(cat ${TMPDIR} | wc -l); MD5=$(md5sum ${TMPDIR} | cut -d' ' -f1)" >> ${TMPDIR}.debug
 
 # /DEBUG

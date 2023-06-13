@@ -20,8 +20,8 @@ if [ "$1" = "-H" ] && [ "$3" = "-C" ] && [ "$5" = "-w" ] && [ "$6" -gt "0" ] && 
   let beforecrit="$8"-1
   crit="$8"
 
-  usedspace=`/srv/eyesofnetwork/nagios/plugins/check_snmp -H "$host" -c "$community" -P 2c -o 1.3.6.1.4.1.9804.3.1.1.2.12.48.1.31.1 | awk -F" " '{print $4}'`
-  totalspace=`/srv/eyesofnetwork/nagios/plugins/check_snmp -H "$host" -c "$community" -P 2c -o 1.3.6.1.4.1.9804.3.1.1.2.12.48.1.29.1 | awk -F" " '{print $4}'`
+  usedspace=$(/srv/eyesofnetwork/nagios/plugins/check_snmp -H "$host" -c "$community" -P 2c -o 1.3.6.1.4.1.9804.3.1.1.2.12.48.1.31.1 | awk -F" " '{print $4}')
+  totalspace=$(/srv/eyesofnetwork/nagios/plugins/check_snmp -H "$host" -c "$community" -P 2c -o 1.3.6.1.4.1.9804.3.1.1.2.12.48.1.29.1 | awk -F" " '{print $4}')
 
   let percent="$totalspace"/100
   let usedpercent="$usedspace"/$percent

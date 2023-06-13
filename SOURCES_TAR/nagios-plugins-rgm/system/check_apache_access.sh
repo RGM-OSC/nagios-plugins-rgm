@@ -18,20 +18,20 @@ exit 2
 
 if [ "${14}" = "" ]; then usage; fi
 
-ARGS="`echo $@ |sed -e 's: -:\n-:g' | sed -e 's: ::g'`"
+ARGS="$(echo $@ |sed -e 's: -:\n-:g' | sed -e 's: ::g')"
 for i in $ARGS; do
-	if [ -n "`echo ${i} | grep "^\-u"`" ]; then COMMUT_PROXY="`echo ${i} | cut -c 3-`"; if [ ! -n ${COMMUT_PROXY} ]; then usage;fi;fi
-	if [ -n "`echo ${i} | grep "^\-p"`" ]; then PROXY_URL="`echo ${i} | cut -c 3-`"; if [ ! -n ${PROXY_URL} ]; then usage;fi;fi
-	if [ -n "`echo ${i} | grep "^\-T"`" ]; then TEST_URL="`echo ${i} | cut -c 3-`"; if [ ! -n ${TEST_URL} ]; then usage;fi;fi
-	if [ -n "`echo ${i} | grep "^\-t"`" ]; then TIMEOUT="`echo ${i} | cut -c 3-`"; if [ ! -n ${TIMEOUT} ]; then usage;fi;fi
-	if [ -n "`echo ${i} | grep "^\-C"`" ]; then CERT="`echo ${i} | cut -c 3-`"; if [ ! -n ${CERT} ]; then usage;fi;fi
-	if [ -n "`echo ${i} | grep "^\-w"`" ]; then WARNING="`echo ${i} | cut -c 3-`"; if [ ! -n ${WARNING} ]; then usage;fi;fi
-	if [ -n "`echo ${i} | grep "^\-c"`" ]; then CRITICAL="`echo ${i} | cut -c 3-`"; if [ ! -n ${CRITICAL} ]; then usage;fi;fi
+	if [ -n "$(echo ${i} | grep "^\-u")" ]; then COMMUT_PROXY="$(echo ${i} | cut -c 3-)"; if [ ! -n ${COMMUT_PROXY} ]; then usage;fi;fi
+	if [ -n "$(echo ${i} | grep "^\-p")" ]; then PROXY_URL="$(echo ${i} | cut -c 3-)"; if [ ! -n ${PROXY_URL} ]; then usage;fi;fi
+	if [ -n "$(echo ${i} | grep "^\-T")" ]; then TEST_URL="$(echo ${i} | cut -c 3-)"; if [ ! -n ${TEST_URL} ]; then usage;fi;fi
+	if [ -n "$(echo ${i} | grep "^\-t")" ]; then TIMEOUT="$(echo ${i} | cut -c 3-)"; if [ ! -n ${TIMEOUT} ]; then usage;fi;fi
+	if [ -n "$(echo ${i} | grep "^\-C")" ]; then CERT="$(echo ${i} | cut -c 3-)"; if [ ! -n ${CERT} ]; then usage;fi;fi
+	if [ -n "$(echo ${i} | grep "^\-w")" ]; then WARNING="$(echo ${i} | cut -c 3-)"; if [ ! -n ${WARNING} ]; then usage;fi;fi
+	if [ -n "$(echo ${i} | grep "^\-c")" ]; then CRITICAL="$(echo ${i} | cut -c 3-)"; if [ ! -n ${CRITICAL} ]; then usage;fi;fi
 done
 
 
 if [ ! -d /tmp/tmp-internal ]; then mkdir -p /tmp/tmp-internal; fi
-TMPDIR="`mktemp -d /tmp/tmp-internal/web-internal.XXXXXXXX`"
+TMPDIR="$(mktemp -d /tmp/tmp-internal/web-internal.XXXXXXXX)"
 
 
 
@@ -45,24 +45,24 @@ fi
 
 
 
-BANDWIDTH="`cat ${TMPDIR}/wget.out |tail -3 | grep "/dev/null" | awk --field-separator=") " '{print $1}' | awk --field-separator="(" '{print $2}'`"
+BANDWIDTH="$(cat ${TMPDIR}/wget.out |tail -3 | grep "/dev/null" | awk --field-separator=") " '{print $1}' | awk --field-separator="(" '{print $2}')"
 
 if [ -n "${BANDWIDTH}" ]; then
-	VALUE_BANDWIDTH="`echo ${BANDWIDTH} | cut -d' ' -f1 | sed -e 's:,:.:g'`"
-	METRIC_BANDWIDTH="`echo ${BANDWIDTH} | cut -d' ' -f2 |sed -e 's:/s::g'`"
+	VALUE_BANDWIDTH="$(echo ${BANDWIDTH} | cut -d' ' -f1 | sed -e 's:,:.:g')"
+	METRIC_BANDWIDTH="$(echo ${BANDWIDTH} | cut -d' ' -f2 |sed -e 's:/s::g')"
 	MULTIPLE="1"
 	if [ "$METRIC_BANDWIDTH" = "GB" ] ; then MULTIPLE="1073741824" ; fi
 	if [ "$METRIC_BANDWIDTH" = "MB" ] ; then MULTIPLE="1048576" ; fi
 	if [ "$METRIC_BANDWIDTH" = "KB" ] ; then MULTIPLE="1024" ; fi
-	VALUE_BANDWIDTH="`echo "$VALUE_BANDWIDTH*$MULTIPLE" |bc | cut -d'.' -f1`"
+	VALUE_BANDWIDTH="$(echo "$VALUE_BANDWIDTH*$MULTIPLE" |bc | cut -d'.' -f1)"
 else
 	echo "CRITICAL: Access web impossible."
 	rm -rf ${TMPDIR}
 	exit 2
 fi
 
-if [ "`echo "${VALUE_BANDWIDTH} < ${WARNING}" | bc`" = "1" ]; then
-	if [ "`echo "${VALUE_BANDWIDTH} < ${CRITICAL}" | bc`" = "1" ]; then
+if [ "$(echo "${VALUE_BANDWIDTH} < ${WARNING}" | bc)" = "1" ]; then
+	if [ "$(echo "${VALUE_BANDWIDTH} < ${CRITICAL}" | bc)" = "1" ]; then
 		echo "CRITICAL: Bande passante insuffisante: ${BANDWIDTH}"
 		rm -rf ${TMPDIR}
 		exit 2

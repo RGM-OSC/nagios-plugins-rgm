@@ -35,14 +35,14 @@ out() {
 	exit 0
 }
 
-ARGS=`echo $@ |sed -e 's:-[a-Z] :\n&:g' | grep -v ^'-S' | sed -e 's: ::g'`
+ARGS=$(echo $@ |sed -e 's:-[a-Z] :\n&:g' | grep -v ^'-S' | sed -e 's: ::g')
 
 for i in $ARGS; do
-        if [ -n "`echo ${i} | grep "^\-u"`" ]; then DBUSER="`echo ${i} | cut -c 3-`"; if [ ! -n ${DBUSER} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-p"`" ]; then DBPASS="`echo ${i} | cut -c 3-`"; if [ ! -n ${DBPASS} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-H"`" ]; then HOSTTARGET="`echo ${i} | cut -c 3-`"; if [ ! -n ${HOSTTARGET} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-d"`" ]; then DB="`echo ${i} | cut -c 3-`"; if [ ! -n ${DB} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-n"`" ]; then SNUM="`echo ${i} | cut -c 3-`"; if [ ! -n ${SNUM} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-u")" ]; then DBUSER="$(echo ${i} | cut -c 3-)"; if [ ! -n ${DBUSER} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-p")" ]; then DBPASS="$(echo ${i} | cut -c 3-)"; if [ ! -n ${DBPASS} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-H")" ]; then HOSTTARGET="$(echo ${i} | cut -c 3-)"; if [ ! -n ${HOSTTARGET} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-d")" ]; then DB="$(echo ${i} | cut -c 3-)"; if [ ! -n ${DB} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-n")" ]; then SNUM="$(echo ${i} | cut -c 3-)"; if [ ! -n ${SNUM} ]; then usage;fi;fi
 done
 
 

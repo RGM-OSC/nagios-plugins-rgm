@@ -28,7 +28,7 @@ if [ "${4}" = "" ]; then usage; fi
 WARNING=0
 CRITICAL=0
 
-ARGS="`echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g'`"
+ARGS="$(echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g')"
 
 #**************** DEBUG ****************
 #echo "ARGS: " $ARGS
@@ -36,8 +36,8 @@ ARGS="`echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g'`"
 
 
 for i in $ARGS; do
-        if [ -n "`echo ${i} | grep "^\-H"`" ]; then HostNagios="`echo ${i} | sed -e 's: ::g' | cut -c 3- | tr '[a-z]' '[A-Z]'`"; if [ ! -n "${HostNagios}" ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-S"`" ]; then ServiceNagios="`echo ${i} | sed -e 's: ::g' | cut -c 3- | tr '[a-z]' '[A-Z]'`"; if [ ! -n "${ServiceNagios}" ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-H")" ]; then HostNagios="$(echo ${i} | sed -e 's: ::g' | cut -c 3- | tr '[a-z]' '[A-Z]')"; if [ ! -n "${HostNagios}" ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-S")" ]; then ServiceNagios="$(echo ${i} | sed -e 's: ::g' | cut -c 3- | tr '[a-z]' '[A-Z]')"; if [ ! -n "${ServiceNagios}" ]; then usage;fi;fi
 done
 
 if [ ! -n "${ServiceNagios}" ]; then usage;fi
@@ -50,8 +50,8 @@ if [ ! -n "${HostNagios}" ]; then usage;fi
 
 
 
-ID_SERV="`echo "select nagios_service.id from nagios_service inner join nagios_host ON nagios_host.id = nagios_service.host  where  LOWER(nagios_service.description) = LOWER('$ServiceNagios') AND LOWER(nagios_host.name) = LOWER('$HostNagios');" | mysql -u$MYSQLUser -p$MYSQLPass $MYSQLDB | grep -v "^id$"`"
-PARAMETERS="`echo "select parameter from nagios_service_check_command_parameter where template is NULL AND nagios_service_check_command_parameter.service = (select nagios_service.id from nagios_service inner join nagios_host ON nagios_host.id = nagios_service.host  where  LOWER(nagios_service.description) = LOWER('$ServiceNagios') AND LOWER(nagios_host.name) = LOWER('$HostNagios')) ORDER BY nagios_service_check_command_parameter.id ASC;" | mysql -u$MYSQLUser -p$MYSQLPass $MYSQLDB | grep -v "^parameter$" | sed -e 's: :+++:g' | tr '\n' ' '`"
+ID_SERV="$(echo "select nagios_service.id from nagios_service inner join nagios_host ON nagios_host.id = nagios_service.host  where  LOWER(nagios_service.description) = LOWER('$ServiceNagios') AND LOWER(nagios_host.name) = LOWER('$HostNagios');" | mysql -u$MYSQLUser -p$MYSQLPass $MYSQLDB | grep -v "^id$")"
+PARAMETERS="$(echo "select parameter from nagios_service_check_command_parameter where template is NULL AND nagios_service_check_command_parameter.service = (select nagios_service.id from nagios_service inner join nagios_host ON nagios_host.id = nagios_service.host  where  LOWER(nagios_service.description) = LOWER('$ServiceNagios') AND LOWER(nagios_host.name) = LOWER('$HostNagios')) ORDER BY nagios_service_check_command_parameter.id ASC;" | mysql -u$MYSQLUser -p$MYSQLPass $MYSQLDB | grep -v "^parameter$" | sed -e 's: :+++:g' | tr '\n' ' ')"
 
 #**************** DEBUG ****************
 #echo "ID_SERV:" $ID_SERV
@@ -59,11 +59,11 @@ PARAMETERS="`echo "select parameter from nagios_service_check_command_parameter 
 #***************************************
 
 
-NagiosARG1="`echo "$PARAMETERS" | awk '{print $1}' | sed -e 's:+++: :g'`"
-NagiosARG2="`echo "$PARAMETERS" | awk '{print $2}' | sed -e 's:+++: :g'`"
-NagiosARG3="`echo "$PARAMETERS" | awk '{print $3}' | sed -e 's:+++: :g'`"
-NagiosARG4="`echo "$PARAMETERS" | awk '{print $4}' | sed -e 's:+++: :g'`"
-NagiosARG5="`echo "$PARAMETERS" | awk '{print $5}' | sed -e 's:+++: :g'`"
+NagiosARG1="$(echo "$PARAMETERS" | awk '{print $1}' | sed -e 's:+++: :g')"
+NagiosARG2="$(echo "$PARAMETERS" | awk '{print $2}' | sed -e 's:+++: :g')"
+NagiosARG3="$(echo "$PARAMETERS" | awk '{print $3}' | sed -e 's:+++: :g')"
+NagiosARG4="$(echo "$PARAMETERS" | awk '{print $4}' | sed -e 's:+++: :g')"
+NagiosARG5="$(echo "$PARAMETERS" | awk '{print $5}' | sed -e 's:+++: :g')"
 
 #**************** DEBUG ****************
 #echo "NagiosARG1:" $NagiosARG1

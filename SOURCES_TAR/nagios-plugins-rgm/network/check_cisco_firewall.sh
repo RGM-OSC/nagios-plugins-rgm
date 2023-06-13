@@ -166,9 +166,9 @@ exit $result_value_Unknwon
 # Failover Status
 failover_status()
 {
-	status_prim=`/usr/bin/snmpwalk $walk_param $mib_failover_prim | cut -d' ' -f4`
+	status_prim=$(/usr/bin/snmpwalk $walk_param $mib_failover_prim | cut -d' ' -f4)
 	check_num $status_prim status_prim
-	status_sec=`/usr/bin/snmpwalk $walk_param $mib_failover_sec | cut -d' ' -f4`
+	status_sec=$(/usr/bin/snmpwalk $walk_param $mib_failover_sec | cut -d' ' -f4)
 	check_num $status_sec status_sec
 }
 
@@ -222,7 +222,7 @@ comm_final="$comm_final - Primary = ${failover_status_value[$status_prim]}, Seco
 # The number of current sessions used
 sessions_current()
 {
-	Used_Sessions=`/usr/bin/snmpwalk $walk_param $mib_sessions_current | cut -d' ' -f4`
+	Used_Sessions=$(/usr/bin/snmpwalk $walk_param $mib_sessions_current | cut -d' ' -f4)
 	check_num $Used_Sessions Used_Sessions
 }
 
@@ -231,9 +231,9 @@ sessions_max()
 {
 	if [ "$version" == "1" ]
 	then
-		Max_Used_Sessions=`/usr/bin/snmpwalk $walk_param $mib_sessions_max | cut -d' ' -f4 | sed -n '2p'`
+		Max_Used_Sessions=$(/usr/bin/snmpwalk $walk_param $mib_sessions_max | cut -d' ' -f4 | sed -n '2p')
 	else
-		Max_Used_Sessions=`/usr/bin/snmpwalk $walk_param $mib_sessions_max | cut -d' ' -f4`
+		Max_Used_Sessions=$(/usr/bin/snmpwalk $walk_param $mib_sessions_max | cut -d' ' -f4)
 	fi
 
 	check_num $Max_Used_Sessions Max_Used_Sessions

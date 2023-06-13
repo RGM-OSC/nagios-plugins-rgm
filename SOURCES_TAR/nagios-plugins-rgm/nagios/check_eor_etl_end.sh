@@ -19,7 +19,7 @@ export LANG="fr_FR.UTF-8"
 
 usage ()
 {
-  nom=`basename $0`
+  nom=$(basename $0)
   echo ""
   echo "Usage : $nom -H <hostname>"
   echo " "

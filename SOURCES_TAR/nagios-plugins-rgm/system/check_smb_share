@@ -7,8 +7,8 @@ export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 # Modified version of check_smb by Dave Love <fx@gnu.org>
 
 REVISION=1.0
-PROGNAME=`/bin/basename $0`
-PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
+PROGNAME=$(/bin/basename $0)
+PROGPATH=$(echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,')
 
 . $PROGPATH/utils.sh
 
@@ -64,18 +64,18 @@ shift
 done
 
 if [ "$username" = "guest" ]; then
-	stdout=`smbclient -N -L "$host" 2>&1`
-	sharetest=`echo "$stdout" | grep -o "$share" |head -n 1`
+	stdout=$(smbclient -N -L "$host" 2>&1)
+	sharetest=$(echo "$stdout" | grep -o "$share" |head -n 1)
 else
-	stdout=`smbclient -L "$host" -U"$username"%"$password" 2>&1`
-	sharetest=`echo "$stdout" | grep -o "$share" |head -n 1`
+	stdout=$(smbclient -L "$host" -U"$username"%"$password" 2>&1)
+	sharetest=$(echo "$stdout" | grep -o "$share" |head -n 1)
 fi
 
 if [ "$sharetest" = "$share" ]; then
-	echo "OK SMB Sharename: `echo "$stdout" | grep "$share" |head -n 1`"
+	echo "OK SMB Sharename: $(echo "$stdout" | grep "$share" |head -n 1)"
 	exit $STATE_OK
 else
-	err=`echo "$stdout" | head -n 1`
+	err=$(echo "$stdout" | head -n 1)
 	echo "CRITICAL SMB Sharename: "$share" "$err""
 	exit $STATE_CRITICAL
 fi

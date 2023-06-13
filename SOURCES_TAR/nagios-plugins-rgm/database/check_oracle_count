@@ -21,7 +21,7 @@ export CLASSPATH ORACLE_TERM ORACLE_HOME TNS_ADMIN LD_LIBRARY_PATH NLS_LANGUAGE
 
 
 # get the program path
-PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
+PROGPATH=$(echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,')
 
 # just include some standard declarations
 . ${PROGPATH}/utils.sh
@@ -85,10 +85,10 @@ if [ "${CRITICAL}" -lt "${WARNING}" ]; then
 fi
 
 # let's check the count request
-REQUEST=`sqlplus ${USER}/${PASS}@${BASE} << **
-${REQ};`
+REQUEST=$(sqlplus ${USER}/${PASS}@${BASE} << **
+${REQ};)
 
-RESULT=`echo ${REQUEST} |gawk -F "----------" '{ print $2 }' |gawk -F " " '{ print $1 }'`
+RESULT=$(echo ${REQUEST} |gawk -F "----------" '{ print $2 }' |gawk -F " " '{ print $1 }')
 
 # check return syntax
 if ! echo ${REQUEST} |grep COUNT > /dev/null 2>&1; then

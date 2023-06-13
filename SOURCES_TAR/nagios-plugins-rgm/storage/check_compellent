@@ -31,7 +31,7 @@ PATH=/usr/local/bin:/usr/bin:/bin # Set path
 
 for cmd in snmpwalk awk grep wc [
 do
- if ! `which ${cmd} 1>/dev/null`
+ if ! $(which ${cmd} 1>/dev/null)
  then
  echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
  exit ${STATE_UNKNOWN}
@@ -92,7 +92,7 @@ done
 		declare -a controllercrit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.13.1.3 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${controllercrit[@]}
-                do controllercrit[$c]=`expr ${controllercrit[$c]} - 1`
+                do controllercrit[$c]=$(expr ${controllercrit[$c]} - 1)
                 let c++
                 done
                 # find the corresponding names of the critical fans
@@ -105,7 +105,7 @@ done
        		declare -a controllerwarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.13.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${controllerwarn[@]}
-                do controllerwarn[$c]=`expr ${controllerwarn[$c]} - 1`
+                do controllerwarn[$c]=$(expr ${controllerwarn[$c]} - 1)
                 let w++
                 done
                 # find the corresponding names of the warning fans
@@ -120,7 +120,7 @@ done
 		declare -a controllerok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.13.1.3 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${controllerok[@]}
-                do controllerok[$o]=`expr ${controllerok[$o]} - 1`
+                do controllerok[$o]=$(expr ${controllerok[$o]} - 1)
                 let o++
                 done
                 # find the corresponding names of the ok controllers
@@ -166,7 +166,7 @@ done
 		declare -a vulumecrit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.26.1.3 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${volumecrit[@]}
-                do volumecrit[$c]=`expr ${volumecrit[$c]} - 1`
+                do volumecrit[$c]=$(expr ${volumecrit[$c]} - 1)
                 let c++
                 done
                 # find the corresponding names of the critical volume
@@ -179,7 +179,7 @@ done
        		declare -a volumewarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.26.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${volumewarn[@]}
-                do volumewarn[$w]=`expr ${volumewarn[$w]} - 1`
+                do volumewarn[$w]=$(expr ${volumewarn[$w]} - 1)
                 let w++
                 done
                 # find the corresponding names of the warning volume
@@ -194,7 +194,7 @@ done
 	        declare -a volumeok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.26.1.3 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${volumeok[@]}
-                do volumeok[$o]=`expr ${volumeok[$o]} - 1`
+                do volumeok[$o]=$(expr ${volumeok[$o]} - 1)
                 let o++
                 done
                 # find the corresponding names of the ok volume
@@ -222,7 +222,7 @@ done
 		declare -a servercrit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.27.1.3 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${servercrit[@]}
-                do servercrit[$c]=`expr ${servercrit[$c]} - 1`
+                do servercrit[$c]=$(expr ${servercrit[$c]} - 1)
                 let c++
                 done
                 # find the corresponding names of the critical server
@@ -235,7 +235,7 @@ done
        		declare -a serverwarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.27.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${serverwarn[@]}
-                do serverwarn[$w]=`expr ${serverwarn[$w]} - 1`
+                do serverwarn[$w]=$(expr ${serverwarn[$w]} - 1)
                 let c++
                 done
                 # find the corresponding names of the warning server
@@ -250,7 +250,7 @@ done
 	        declare -a serverok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.27.1.3 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${serverok[@]}
-                do serverok[$o]=`expr ${serverok[$o]} - 1`
+                do serverok[$o]=$(expr ${serverok[$o]} - 1)
                 let o++
                 done
                 # find the corresponding names of the ok servers
@@ -278,7 +278,7 @@ done
 		declare -a diskcrit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.14.1.3 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${diskcrit[@]}
-                do diskcrit[$c]=`expr ${diskcrit[$c]} - 1`
+                do diskcrit[$c]=$(expr ${diskcrit[$c]} - 1)
                 let c++
                 done
                 # find the corresponding names of the critical disks
@@ -291,7 +291,7 @@ done
        		declare -a diskwarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.14.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${diskwarn[@]}
-                do diskwarn[$w]=`expr ${diskwarn[$w]} - 1`
+                do diskwarn[$w]=$(expr ${diskwarn[$w]} - 1)
                 let c++
                 done
                 # find the corresponding names of the warning disk
@@ -306,7 +306,7 @@ done
 	        declare -a diskok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.14.1.3 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${diskok[@]}
-                do diskok[$o]=`expr ${diskok[$o]} - 1`
+                do diskok[$o]=$(expr ${diskok[$o]} - 1)
                 let o++
                 done
                 # find the corresponding names of the ok disk
@@ -334,7 +334,7 @@ done
 		declare -a enclosurecrit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.15.1.3 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${enclosurecrit[@]}
-                do enclosurecrit[$c]=`expr ${enclosurecrit[$c]} - 1`
+                do enclosurecrit[$c]=$(expr ${enclosurecrit[$c]} - 1)
                 let c++
                 done
                 # find the corresponding names of the critical enclosures
@@ -347,7 +347,7 @@ done
        		declare -a enclosurewarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.15.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${enclosurewarn[@]}
-                do enclosurewarn[$w]=`expr ${enclosurewarn[$w]} - 1`
+                do enclosurewarn[$w]=$(expr ${enclosurewarn[$w]} - 1)
                 let c++
                 done
                 # find the corresponding names of the warning enclosure
@@ -362,7 +362,7 @@ done
 	        declare -a enclosureok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.15.1.3 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${enclosureok[@]}
-                do enclosureok[$o]=`expr ${enclosureok[$o]} - 1`
+                do enclosureok[$o]=$(expr ${enclosureok[$o]} - 1)
                 let o++
                 done
                 # find the corresponding names of the ok enclosure
@@ -390,7 +390,7 @@ done
 		declare -a temp1crit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.19.1.3 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${temp1crit[@]}
-                do temp1crit[$c]=`expr ${temp1crit[$c]} - 1`
+                do temp1crit[$c]=$(expr ${temp1crit[$c]} - 1)
                 let c++
                 done
                 # find the corresponding names of the critical Temps
@@ -403,7 +403,7 @@ done
        		declare -a temp1warn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.19.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${temp1warn[@]}
-                do temp1warn[$w]=`expr ${temp1warn[$w]} - 1`
+                do temp1warn[$w]=$(expr ${temp1warn[$w]} - 1)
                 let c++
                 done
                 # find the corresponding names of the warning Temps
@@ -418,7 +418,7 @@ done
 	        declare -a temp1ok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.19.1.3 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${temp1ok[@]}
-                do temp1ok[$o]=`expr ${temp1ok[$o]} - 1`
+                do temp1ok[$o]=$(expr ${temp1ok[$o]} - 1)
                 let o++
                 done
                 # find the corresponding names of the ok Temps
@@ -446,7 +446,7 @@ done
 		declare -a psufanscrit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.20.1.3 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${psufanscrit[@]}
-                do psufanscrit[$c]=`expr ${psufanscrit[$c]} - 1`
+                do psufanscrit[$c]=$(expr ${psufanscrit[$c]} - 1)
                 let c++
                 done
                 # find the corresponding names of the critical psufans
@@ -459,7 +459,7 @@ done
        		declare -a psufanswarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.20.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${psufanswarn[@]}
-                do psufanswarn[$w]=`expr ${psufanswarn[$w]} - 1`
+                do psufanswarn[$w]=$(expr ${psufanswarn[$w]} - 1)
                 let c++
                 done
                 # find the corresponding names of the warning psufans
@@ -474,7 +474,7 @@ done
 	        declare -a psufansok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.20.1.3 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${psufansok[@]}
-                do psufansok[$o]=`expr ${psufansok[$o]} - 1`
+                do psufansok[$o]=$(expr ${psufansok[$o]} - 1)
                 let o++
                 done
                 # find the corresponding names of the ok psufans
@@ -502,7 +502,7 @@ done
 		declare -a foldercrit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.25.1.3 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${foldercrit[@]}
-                do foldercrit[$c]=`expr ${foldercrit[$c]} - 1`
+                do foldercrit[$c]=$(expr ${foldercrit[$c]} - 1)
                 let c++
                 done
                 # find the corresponding names of the critical folders
@@ -515,7 +515,7 @@ done
        		declare -a folderwarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.25.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${folderwarn[@]}
-                do folderwarn[$w]=`expr ${folderwarn[$w]} - 1`
+                do folderwarn[$w]=$(expr ${folderwarn[$w]} - 1)
                 let c++
                 done
                 # find the corresponding names of the warning folders
@@ -530,7 +530,7 @@ done
 	        declare -a folderok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.25.1.3 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${folderok[@]}
-                do folderok[$o]=`expr ${folderok[$o]} - 1`
+                do folderok[$o]=$(expr ${folderok[$o]} - 1)
                 let o++
                 done
                 # find the corresponding names of the ok folder
@@ -558,7 +558,7 @@ done
 		declare -a cachecrit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.28.1.3 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${cachecrit[@]}
-                do cachecrit[$c]=`expr ${cachecrit[$c]} - 1`
+                do cachecrit[$c]=$(expr ${cachecrit[$c]} - 1)
                 let c++
                 done
                 # find the corresponding names of the critical cache
@@ -571,7 +571,7 @@ done
        		declare -a cachewarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.28.1.3 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${cachewarn[@]}
-                do cachewarn[$w]=`expr ${cachewarn[$w]} - 1`
+                do cachewarn[$w]=$(expr ${cachewarn[$w]} - 1)
                 let c++
                 done
                 # find the corresponding names of the warning cache
@@ -586,7 +586,7 @@ done
 	        declare -a cacheok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.28.1.3 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${cacheok[@]}
-                do cacheok[$o]=`expr ${cacheok[$o]} - 1`
+                do cacheok[$o]=$(expr ${cacheok[$o]} - 1)
                 let o++
                 done
                 # find the corresponding names of the ok cache
@@ -613,7 +613,7 @@ done
 		declare -a cachebatcrit=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.28.1.5 | grep -n "3" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${cachebatcrit[@]}
-                do cachebatcrit[$c]=`expr ${cachebatcrit[$c]} - 1`
+                do cachebatcrit[$c]=$(expr ${cachebatcrit[$c]} - 1)
                 let c++
                 done
                 # find the corresponding names of the critical cachebat
@@ -626,7 +626,7 @@ done
        		declare -a cachebatwarn=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.28.1.5 | grep -n "2" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${cachebatwarn[@]}
-                do cachebatwarn[$w]=`expr ${cachebatwarn[$w]} - 1`
+                do cachebatwarn[$w]=$(expr ${cachebatwarn[$w]} - 1)
                 let c++
                 done
                 # find the corresponding names of the warning cachebat
@@ -641,7 +641,7 @@ done
 	        declare -a cachebatok=($(snmpwalk -v 2c -O vqe -c ${community} ${host} .1.3.6.1.4.1.674.11000.2000.500.1.2.28.1.5 | grep -n "1" | awk -F : '{print $1}' | tr '\n' ' '))
 	        c=0
                 for line in ${cachebatok[@]}
-                do cachebatok[$o]=`expr ${cachebatok[$o]} - 1`
+                do cachebatok[$o]=$(expr ${cachebatok[$o]} - 1)
                 let o++
                 done
                 # find the corresponding names of the ok cachebat
@@ -675,7 +675,7 @@ done
                 k=0
                 while [ ${k} -lt ${#ignorefolders[@]} ]
                 do
-                finalignore[$k]=`expr ${ignorefolders[$k]} - 1`
+                finalignore[$k]=$(expr ${ignorefolders[$k]} - 1)
                 unset foldernames[${finalignore[$k]}]
                 unset folderavailspace[${finalignore[$k]}]
                 unset folderusedspace[${finalignore[$k]}]
@@ -683,7 +683,7 @@ done
                 done
 
                 # How many real folders (manmade) do exist
-                realfolderscount=`expr ${folderscount} - ${#ignorefolders[@]}`
+                realfolderscount=$(expr ${folderscount} - ${#ignorefolders[@]})
 
                 # Calculate Free Space and Percentage per folder
                 i=0

@@ -64,14 +64,14 @@ if [ -s $getStatus ] ; then
   #getStatus=`cat $path | egrep 'OK|WARNING|CRITICAL' `
   #cat $path | egrep 'OK|WARNING|CRITICAL' > $getStatus
 
-  if [ "`grep WARNING $getStatus | wc -l`" -eq 1 ]; then
-		echo "`cat $getStatus`"
+  if [ "$(grep WARNING $getStatus | wc -l)" -eq 1 ]; then
+		echo "$(cat $getStatus)"
 		exit "$EXIT_WARNING"
-  elif [ "`grep CRITICAL $getStatus | wc -l`" -eq 1 ]; then
-		echo "`cat $getStatus`"
+  elif [ "$(grep CRITICAL $getStatus | wc -l)" -eq 1 ]; then
+		echo "$(cat $getStatus)"
 		exit $EXIT_CRITICAL
-  elif [ "`grep OK $getStatus | wc -l`" -eq 1 ]; then
-		echo "`cat $getStatus`"
+  elif [ "$(grep OK $getStatus | wc -l)" -eq 1 ]; then
+		echo "$(cat $getStatus)"
 		exit $EXIT_OK
   fi
 else

@@ -183,7 +183,7 @@ if [ ${MODE} = "DISCARDSRATE" ];then
 	PERF="InRate:$INPCTRATE;$WARNING;$CRITICAL,OutRate:$OUTPCTRATE;$WARNING;$CRITICAL"
 fi
 
-if [ `echo $OUTPUT | tr ',' '\n' | wc -l` -ge 2 ] ;then
+if [ $(echo $OUTPUT | tr ',' '\n' | wc -l) -ge 2 ] ;then
         if [ $COUNTCRITICAL -gt 0 ] && [ $COUNTWARNING -gt 0 ]; then
                 echo "CRITICAL: Click for detail, "
         else

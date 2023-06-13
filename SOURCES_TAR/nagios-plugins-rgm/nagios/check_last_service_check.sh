@@ -33,13 +33,13 @@ if [ ! -f "$NAGIOSTAT" ]; then
         exit 1
 fi
 
-NAGVERSION=`$NAGIOSTAT|grep "Nagios Stats"|sed 's/Nagios Stats //'|tr -d ' '`
+NAGVERSION=$($NAGIOSTAT|grep "Nagios Stats"|sed 's/Nagios Stats //'|tr -d ' ')
 case $NAGVERSION in
         2.*)
-TOTSERVICE=`$NAGIOSTAT|grep "Active Service Checks"|awk -F : '{print $2}'|tr -d ' '`
+TOTSERVICE=$($NAGIOSTAT|grep "Active Service Checks"|awk -F : '{print $2}'|tr -d ' ')
 ;;
         3.*)
-TOTSERVICE=`$NAGIOSTAT|grep "Services Actively Checked"|awk -F : '{print $2}'|tr -d ' '`
+TOTSERVICE=$($NAGIOSTAT|grep "Services Actively Checked"|awk -F : '{print $2}'|tr -d ' ')
 ;;
         *)
 echo "Version of nagiostats not supported"
@@ -49,16 +49,16 @@ esac
 
 case $1 in
         m)
-ATTCHECK=`$NAGIOSTAT|grep "Active Services Last"|awk -F '/' '{print $4}'|awk -F ':' '{print $2}'|tr -d ' '`
+ATTCHECK=$($NAGIOSTAT|grep "Active Services Last"|awk -F '/' '{print $4}'|awk -F ':' '{print $2}'|tr -d ' ')
 ;;
         f)
-ATTCHECK=`$NAGIOSTAT|grep "Active Services Last"|awk -F '/' '{print $5}'|tr -d ' '`
+ATTCHECK=$($NAGIOSTAT|grep "Active Services Last"|awk -F '/' '{print $5}'|tr -d ' ')
 ;;
         q)
-ATTCHECK=`$NAGIOSTAT|grep "Active Services Last"|awk -F '/' '{print $6}'|tr -d ' '`
+ATTCHECK=$($NAGIOSTAT|grep "Active Services Last"|awk -F '/' '{print $6}'|tr -d ' ')
 ;;
         h)
-ATTCHECK=`$NAGIOSTAT|grep "Active Services Last"|awk -F '/' '{print $7}'|tr -d ' '`
+ATTCHECK=$($NAGIOSTAT|grep "Active Services Last"|awk -F '/' '{print $7}'|tr -d ' ')
 ;;
         *)
 echo "Usage: $0 <m|f|q|h> <warning threshold> <critical threshold>"
@@ -66,7 +66,7 @@ echo "Usage: $0 <m|f|q|h> <warning threshold> <critical threshold>"
 ;;
 esac
 
-PERCENTUAL=`echo "($ATTCHECK * 100)/$TOTSERVICE"|bc`
+PERCENTUAL=$(echo "($ATTCHECK * 100)/$TOTSERVICE"|bc)
 PERF="$PERCENTUAL;$2;$3"
 
 if [ $PERCENTUAL -lt $3 ]; then

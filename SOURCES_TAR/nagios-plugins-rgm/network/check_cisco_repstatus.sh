@@ -36,13 +36,13 @@ out() {
 	exit 0
 }
 
-ARGS=`echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g'`
+ARGS=$(echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g')
 if [ ! -n "${ARGS}" ]; then usage;fi
 for i in $ARGS; do
-        if [ -n "`echo ${i} | grep "^\-H"`" ]; then HOSTTARGET="`echo ${i} | cut -c 3-`"; if [ ! -n ${HOSTTARGET} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-C"`" ]; then COMMUNITY="`echo ${i} | cut -c 3-`"; if [ ! -n ${COMMUNITY} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-v"`" ]; then VERSION="`echo ${i} | cut -c 3-`"; if [ ! -n ${VERSION} ]; then usage;fi;fi
-        if [ -n "`echo ${i} | grep "^\-P"`" ]; then PORT="`echo ${i} | cut -c 3-`"; if [ ! -n ${PORT} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-H")" ]; then HOSTTARGET="$(echo ${i} | cut -c 3-)"; if [ ! -n ${HOSTTARGET} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-C")" ]; then COMMUNITY="$(echo ${i} | cut -c 3-)"; if [ ! -n ${COMMUNITY} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-v")" ]; then VERSION="$(echo ${i} | cut -c 3-)"; if [ ! -n ${VERSION} ]; then usage;fi;fi
+        if [ -n "$(echo ${i} | grep "^\-P")" ]; then PORT="$(echo ${i} | cut -c 3-)"; if [ ! -n ${PORT} ]; then usage;fi;fi
 done
 if [ ! -n "${COMMUNITY}" ]; then COMMUNITY="public" ; fi
 if [ ! -n "${PORT}" ]; then PORT=161 ; fi
