@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 export LANG="fr_FR.UTF-8"
 STATE_OK=0

@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 export LANG="fr_FR.UTF-8"
 
@@ -47,12 +49,12 @@ COUNTCRITICAL=0
 
 OUTPUT=" "
 
-if [ "$TYPE" == "TEMP" ]; then 
+if [ "$TYPE" == "TEMP" ]; then
 	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDTemp | cut -d' ' -f4-`"
 	if [ $TEST -gt $CRITICAL ] ; then
 		OUTPUT="Critical: Temp $TEST C"
 		COUNTCRITICAL=1
-	else 
+	else
 		if [ $TEST -gt $WARNING ]; then
 			OUTPUT="Warning: Temp $TEST C"
 			COUNTWARNING=1
@@ -60,94 +62,94 @@ if [ "$TYPE" == "TEMP" ]; then
 	fi
 	if [ $TEST -le $WARNING ]; then
 		OUTPUT="Ok: Temp $TEST C"
-	fi 
+	fi
 fi
 
-if [ "$TYPE" == "HA" ]; then 
+if [ "$TYPE" == "HA" ]; then
 	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDHA | cut -d' ' -f4-`"
-	if [ "$TEST" != "1" ]; then 
+	if [ "$TEST" != "1" ]; then
 		OUTPUT="Critical: HA Failed"
 		COUNTCRITICAL=1
 	else
 		OUTPUT="Ok: HA Activated"
-	fi 
+	fi
 fi
 
-if [ "$TYPE" == "USERS" ]; then 
+if [ "$TYPE" == "USERS" ]; then
 	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDConnectedUsers | cut -d' ' -f4-`"
 	if [ $TEST -gt $CRITICAL ] ; then
-		OUTPUT="Critical: Connected Users $TEST"	
+		OUTPUT="Critical: Connected Users $TEST"
 		COUNTCRITICAL=1
-	else 
+	else
 		if [ $TEST -gt $WARNING ]; then
-			OUTPUT="Warning: Connected Users $TEST"	
+			OUTPUT="Warning: Connected Users $TEST"
 			COUNTWARNING=1
 		fi
 	fi
 	if [ $TEST -le $WARNING ]; then
 		OUTPUT="Ok: Connected Users $TEST"
-	fi 
+	fi
 fi
 
-if [ "$TYPE" == "WEB" ]; then 
+if [ "$TYPE" == "WEB" ]; then
 	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDWeb | cut -d' ' -f4-`"
-	if [ "$TEST" != "1" ]; then 
+	if [ "$TEST" != "1" ]; then
 		OUTPUT="Critical: Web Server Failed"
 		COUNTCRITICAL=1
 	else
 		OUTPUT="Ok: Web Server Activated"
-	fi 
+	fi
 fi
 
-if [ "$TYPE" == "SQL" ]; then 
+if [ "$TYPE" == "SQL" ]; then
 	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDSQL | cut -d' ' -f4-`"
-	if [ "$TEST" != "1" ]; then 
+	if [ "$TEST" != "1" ]; then
 		OUTPUT="Critical: SQL Server Failed"
 		COUNTCRITICAL=1
 	else
 		OUTPUT="Ok: SQL Server Activated"
-	fi 
+	fi
 fi
 
-if [ "$TYPE" == "URLSNIF" ]; then 
+if [ "$TYPE" == "URLSNIF" ]; then
 	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDurlSnif | cut -d' ' -f4-`"
-	if [ "$TEST" != "1" ]; then 
+	if [ "$TEST" != "1" ]; then
 		OUTPUT="Critical: URL Sniffer Service Failed"
 		COUNTCRITICAL=1
 	else
 		OUTPUT="Ok: URL Sniffer Service Activated"
-	fi 
+	fi
 fi
 
-if [ "$TYPE" == "PORTAL" ]; then 
+if [ "$TYPE" == "PORTAL" ]; then
 	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDportal | cut -d' ' -f4-`"
-	if [ "$TEST" != "1" ]; then 
+	if [ "$TEST" != "1" ]; then
 		OUTPUT="Critical: Web Portal Failed"
 		COUNTCRITICAL=1
 	else
 		OUTPUT="Ok: Web Portal Activated"
-	fi 
+	fi
 fi
 
-if [ "$TYPE" == "WEBPROXY" ]; then 
+if [ "$TYPE" == "WEBPROXY" ]; then
 	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDwebProxy | cut -d' ' -f4-`"
-	if [ "$TEST" != "1" ]; then 
+	if [ "$TEST" != "1" ]; then
 		OUTPUT="Critical: Web Proxy Failed"
 		COUNTCRITICAL=1
 	else
 		OUTPUT="Ok: Web Proxy Activated"
-	fi 
+	fi
 fi
 
-if [ "$TYPE" == "DHCPSERVER" ]; then 
+if [ "$TYPE" == "DHCPSERVER" ]; then
 	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDdhcpServer | cut -d' ' -f4-`"
 	TESTHA="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDHA | cut -d' ' -f4-`"
 	if [ "$TESTHA" != "1" ]; then
-		if [ "$TEST" != "1" ]; then 
+		if [ "$TEST" != "1" ]; then
 			OUTPUT="Critical: DHCP Server Failed"
 			COUNTCRITICAL=1
-		fi 
-	else 
+		fi
+	else
 		if [ "$TEST" != "1" ];then
 			OUTPUT="This is slave server. DHCP server is disable."
 		else
@@ -156,39 +158,39 @@ if [ "$TYPE" == "DHCPSERVER" ]; then
 	fi
 fi
 
-if [ "$TYPE" == "DNS" ]; then 
+if [ "$TYPE" == "DNS" ]; then
 	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDdns | cut -d' ' -f4-`"
-	if [ "$TEST" != "1" ]; then 
+	if [ "$TEST" != "1" ]; then
 		OUTPUT="Critical: DNS Server Failed"
 		COUNTCRITICAL=1
 	else
 		OUTPUT="Ok: DNS Server Activated"
-	fi 
+	fi
 fi
 
-if [ "$TYPE" == "STATICIP" ]; then 
+if [ "$TYPE" == "STATICIP" ]; then
 	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDstaticip | cut -d' ' -f4-`"
-	if [ "$TEST" != "1" ]; then 
+	if [ "$TEST" != "1" ]; then
 		OUTPUT="Critical: Static IP Management Failed"
 		COUNTCRITICAL=1
 	else
 		OUTPUT="Ok: Static IP Management Activated"
-	fi 
+	fi
 fi
 
-if [ "$TYPE" == "LDAP" ]; then 
+if [ "$TYPE" == "LDAP" ]; then
 	TEST="`snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET -On $OIDldapDirectory | cut -d' ' -f4-`"
-	if [ "$TEST" != "1" ]; then 
+	if [ "$TEST" != "1" ]; then
 		OUTPUT="Critical: LDAP Directory Failed"
 		COUNTCRITICAL=1
 	else
 		OUTPUT="Ok: LDAP Directory Activated"
-	fi 
+	fi
 fi
 
-if [ `echo $OUTPUT | tr ',' '\n' | wc -l` -gt 2 ] ;then 
-	if [ $COUNTCRITICAL -gt 0 ] && [ $COUNTWARNING -gt 0 ]; then 
-		echo "CRITICAL: Click for detail, "	
+if [ `echo $OUTPUT | tr ',' '\n' | wc -l` -gt 2 ] ;then
+	if [ $COUNTCRITICAL -gt 0 ] && [ $COUNTWARNING -gt 0 ]; then
+		echo "CRITICAL: Click for detail, "
 	else
 		if [ $COUNTCRITICAL -gt 0 ]; then echo "CRITICAL: Click for detail, " ; fi
 		if [ $COUNTWARNING -gt 0 ]; then echo "WARNING: Click for detail, "; fi

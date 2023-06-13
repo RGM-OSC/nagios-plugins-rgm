@@ -1,4 +1,6 @@
 #!//bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 #
 # Author : Vincent FRICOU (vincent@fricouv.eu)
 #

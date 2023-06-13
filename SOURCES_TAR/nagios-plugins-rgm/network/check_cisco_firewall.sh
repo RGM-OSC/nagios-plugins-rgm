@@ -1,4 +1,7 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
+
 #
 # Written By: Pierre SOURDEAU to AMF company [FRANCE]
 # Created: 28/10/2008
@@ -18,7 +21,7 @@
 # Check succesfuly on Cisco PIX-515E and ASA-5500
 #
 # License: This nagios plugin comes with ABSOLUTELY NO WARRANTY. You may redistribute copies of
-# the plugins under the terms of the GNU General Public License. For more information about these 
+# the plugins under the terms of the GNU General Public License. For more information about these
 # matters, see the GNU General Public License.
 # Version: 2.2 (updated 07/03/2009)
 
@@ -26,7 +29,7 @@
 # Varialbles
 ############################################################
 usage="Usage: check_cisco_firewall.sh -H hostname -V version -M failover|sessions [-w|-c|-C|-l|-u|-a|-d|-h]
-### PARAMETERS ### 
+### PARAMETERS ###
 -H Hostname (IP adresse or DNS name)
 -V Version (1|2c|3)
 -M Mode (failover|sessions)
@@ -97,7 +100,7 @@ case $version in
 				exit $result_value_Unknwon
 			fi
 			walk_param="-v $version -c $community $hostname";;
-		3) 
+		3)
 			if [ "$login" == "" ] || [ "$user" == "" ] || [ "$password" == "" ]
 			then
 				echo "Error - Missing parameters - login = $login : user = $user : password = $password"
@@ -232,7 +235,7 @@ sessions_max()
 	else
 		Max_Used_Sessions=`/usr/bin/snmpwalk $walk_param $mib_sessions_max | cut -d' ' -f4`
 	fi
-	
+
 	check_num $Max_Used_Sessions Max_Used_Sessions
 
 	if [ $Used_Sessions -gt $Max_Used_Sessions ]
@@ -288,7 +291,7 @@ done
 check_param
 
 
-### Mode 1 - Failover ### 
+### Mode 1 - Failover ###
 if [ "$mode" == "failover" ]
 then
 	# Functions lunch
@@ -297,7 +300,7 @@ then
 fi
 
 
-### Mode 2 - Sessions ### 
+### Mode 2 - Sessions ###
 if [ "$mode" == "sessions" ]
 then
 	# Parameters Checking

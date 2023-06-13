@@ -1,14 +1,16 @@
 #!/bin/sh
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 # ========================================================================================
 # Brocade Fibre Channel Hardware monitor plugin for Nagios
-# 
+#
 # Written by         	: Steve Bosek (steve.bosek@ephris.net)
 # Release               : 1.1
 # Creation date		: 25 January 2008
 # Revision date         : 5 December 2008
 # Package               : DTB Plugins
-# Description           : Nagios plugin to monitor Brocade Fibre Channel hardware with SNMP. 
+# Description           : Nagios plugin to monitor Brocade Fibre Channel hardware with SNMP.
 #                         You must have SW-MIB from Brocade Communications Systems.
 #
 #                         Status Results:
@@ -21,15 +23,15 @@
 #                         For Temperature, valid values include 3 (below-min), 4 (nominal), and 5 (above-max).
 #                         For Fan, valid values include 3 (below-min), 4 (nominal), and 6 (absent).
 #                         For Power Supply, valid values include 2 (faulty), 4 (nominal), and 6 (absent).
-#						
+#
 # Usage                 : ./check_FCBrocade_hardware.sh [-H | --hostname HOSTNAME] [-c | --community COMMUNITY ] [-h | --help] | [-v | --version]
 # Supported Type        : Test with SilkWorm200E
 # -----------------------------------------------------------------------------------------
 #
 # TODO :  - Add blacklist parameter [-b | --blacklist ] if necessary
 #         - Add SNMP v2 and 3 if necessary
-#         - Add Perfdata 
-#		  
+#         - Add Perfdata
+#
 # =========================================================================================
 #
 # HISTORY :
@@ -125,8 +127,8 @@ while [ $i -le $NBR_INDEX ]; do
         SENSOR_STATUS=$(snmpwalk -v 1 -c $COMMUNITY $HOSTNAME .1.3.6.1.4.1.1588.2.1.1.1.1.22.1.3.$i | sed "s/.*INTEGER:\(.*\)$/\1/")
         SENSOR_INFO=$(snmpwalk -v 1 -c $COMMUNITY $HOSTNAME .1.3.6.1.4.1.1588.2.1.1.1.1.22.1.5.$i | sed "s/.*STRING:\(.*\)$/\1/" | sed "s/\"/\:/g" | sed "s/\://g"| sed "s/ //g")
         SENSOR_TYPE=$(snmpwalk -v 1 -c $COMMUNITY $HOSTNAME .1.3.6.1.4.1.1588.2.1.1.1.1.22.1.2.$i | sed "s/.*INTEGER:\(.*\)$/\1/")
-        
-        if [ $SENSOR_TYPE -eq 1 ]; then 
+
+        if [ $SENSOR_TYPE -eq 1 ]; then
                 SENSOR_TYPE="C"
         elif [ $SENSOR_TYPE -eq 2 ]; then
                 SENSOR_TYPE="RPM"
@@ -143,10 +145,10 @@ while [ $i -le $NBR_INDEX ]; do
                    perfdata=( ${perfdata[@]}${SENSOR_VALUE}";" )
                 ;;
                 3) warn_array=( ${array[@]} ${SENSOR_INFO}=${SENSOR_VALUE}${SENSOR_TYPE}, "status=below-min" )
-                   perfdata=( ${perfdata[@]}${SENSOR_VALUE}";" )  
+                   perfdata=( ${perfdata[@]}${SENSOR_VALUE}";" )
                 ;;
                 4) array=( ${array[@]} ${SENSOR_INFO}=${SENSOR_VALUE}${SENSOR_TYPE}, )
-                   perfdata=( ${perfdata[@]}${SENSOR_VALUE}";" )  
+                   perfdata=( ${perfdata[@]}${SENSOR_VALUE}";" )
                 ;;
                 5) warn_array=( ${array[@]} ${SENSOR_INFO}=${SENSOR_VALUE}${SENSOR_TYPE}, "status=above-max" )
                    perfdata=( ${perfdata[@]}${SENSOR_VALUE}";" )
@@ -164,7 +166,7 @@ if [ ${#fault_array[@]} != 0 ] ; then
     echo "HARDWARE CRITICAL : "${fault_array[@]}"|"${perfdata[@]}
     exit $STATE_CRITICAL
 elif [ ${#warn_array[@]} != 0 ] ; then
-     echo "HARDWARE WARNING : "${warn_array[@]}"|"${perfdata[@]}  
+     echo "HARDWARE WARNING : "${warn_array[@]}"|"${perfdata[@]}
      exit $STATE_CRITICAL
 else
     echo "HARDWARE OK : "${array[@]}"|"${perfdata[@]}

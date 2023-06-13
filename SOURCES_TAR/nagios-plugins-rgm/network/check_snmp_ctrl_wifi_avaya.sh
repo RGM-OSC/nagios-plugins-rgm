@@ -1,11 +1,13 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 export LANG="en_US.UTF-8"
 
 usage() {
-echo "Usage :check_snmp_ctrl_wifi_avaya.sh 
+echo "Usage :check_snmp_ctrl_wifi_avaya.sh
 	-C Community
 	-H Host target
-        -w Warning min,max 
+        -w Warning min,max
         -c Critical min,max
         -N AP Name
 	-u Username
@@ -64,7 +66,7 @@ if [ -z "`find ${TMPDIR}/AP-Index-list.txt -mmin -60 -print`" ] || [ ! -n "`cat 
 	snmpwalk -c $COMMUNITY -v 2c $HOSTTARGET 1.3.6.1.4.1.45.7.2.1.5.1.2 -On | cut -d' ' -f1,4 | sed 's:"::g' | cut -d'.' -f15- > ${TMPDIR}/AP-Index-list.txt
 fi
 
-if [ "$MODE" = "ManagedAPBytesRecvd" ] || [ "$MODE" = "ManagedAPBytesTransmit" ] || [ "$MODE" = "ManagedAPAuthenticatedClient" ] || [ "$MODE" = "BySSIDConnectedUsers" ]; then 
+if [ "$MODE" = "ManagedAPBytesRecvd" ] || [ "$MODE" = "ManagedAPBytesTransmit" ] || [ "$MODE" = "ManagedAPAuthenticatedClient" ] || [ "$MODE" = "BySSIDConnectedUsers" ]; then
 	APRequiredIndex="`cat ${TMPDIR}/AP-Index-list.txt | grep $APNAME | cut -d' ' -f1`"
 	if [ -z $APRequiredIndex ]; then
 		echo "$APNAME isn't exist in list"
@@ -158,14 +160,14 @@ if [ "$MODE" = "ManagedAPAuthenticatedClient" ]; then
 		else
 			COUNTONEWARNING=1
 		fi
-	fi 
+	fi
 	if [ $AntennTwoUsers -gt $MAXWARNING ]; then
 		if [ $AntennTwoUsers -gt $MAXCRITICAL ]; then
 			COUNTTWOCRITICAL=1
 		else
 			COUNTTWOWARNING=1
 		fi
-	fi 
+	fi
 	if [ $COUNTONECRITICAL -eq 1 ] || [ $COUNTTWOCRITICAL -eq 1 ]; then
 		OUTPUT="Critical: Users on first antenn "$AntennOneUsers", Users on second antenn $AntennTwoUsers"
 		COUNTCRITICAL=1
@@ -186,10 +188,10 @@ if [ "$MODE" = "ManagedAPBytesRecvd" ]; then
 	PastValueRecvd="`cat ${TMPDIR}/AP_Received_$APNAME`"
 	ActualBytesRecvd="`snmpwalk -v 2c -c $COMMUNITY $HOSTTARGET $OIDRecvdBytes.$APRequiredIndex | cut -d' ' -f4`"
 	DiffValueRecvd="`expr $ActualBytesRecvd - $PastValueRecvd`"
-		
+
 	OUTPUT="Last minutes received Bytes : $DiffValueRecvd"
 	PERF="ManagedAPBytesRecvd=$DiffValueRecvd"
-	
+
 	snmpwalk -v 2c -c $COMMUNITY $HOSTTARGET $OIDRecvdBytes.$APRequiredIndex | cut -d' ' -f4 > ${TMPDIR}/AP_Received_$APNAME
 fi
 
@@ -201,13 +203,13 @@ if [ "$MODE" = "ManagedAPBytesTransmit" ]; then
 
 	OUTPUT="Last minutes received Bytes : $DiffValueTransmit"
 	PERF="ManagedAPBytes=$DiffValueTransmit"
-	
+
 	snmpwalk -v 2c -c $COMMUNITY $HOSTTARGET $OIDTransmitBytes.$APRequiredIndex | cut -d' ' -f4 > ${TMPDIR}/AP_Transmit_$APNAME
 fi
 
-if [ "$MODE" = "BySSIDConnectedUsers" ]; then 
+if [ "$MODE" = "BySSIDConnectedUsers" ]; then
 	OIDAPMacAddress=.1.3.6.1.2.1.17.4.3.1.1
-	APMacAddress="`snmpwalk -v 2c -c $COMMUNITY $HOSTTARGET $OIDAPMacAddress.$APRequiredIndex | cut -d' ' -f 4- | sed -e "s/ /:/g" | sed -e "s/:$//g"`" 
+	APMacAddress="`snmpwalk -v 2c -c $COMMUNITY $HOSTTARGET $OIDAPMacAddress.$APRequiredIndex | cut -d' ' -f 4- | sed -e "s/ /:/g" | sed -e "s/:$//g"`"
 	BaseAPMacAddress="`echo $APMacAddress | cut -d':' -f-5`"
 TEST="`(
 		sleep 5
@@ -221,8 +223,8 @@ TEST="`(
 		echo "exit"
 		sleep 1
 		echo "L"
-		) | sshpass -p $PASSWORD ssh -t -t $USERNAME@$HOSTTARGET 2> /dev/null | grep "[1-2] \/ [1-5]" | cut -d' ' -f2,9- > ${TMPDIR}/By_SSID_Connected_Users_$APNAME`" 
-	OUTPUT="`cat ${TMPDIR}/By_SSID_Connected_Users_$APNAME | tr '\r' ' ' |  sed 's:  *: :g' | sed -e 's: $:,:g'`" 
+		) | sshpass -p $PASSWORD ssh -t -t $USERNAME@$HOSTTARGET 2> /dev/null | grep "[1-2] \/ [1-5]" | cut -d' ' -f2,9- > ${TMPDIR}/By_SSID_Connected_Users_$APNAME`"
+	OUTPUT="`cat ${TMPDIR}/By_SSID_Connected_Users_$APNAME | tr '\r' ' ' |  sed 's:  *: :g' | sed -e 's: $:,:g'`"
 
 	PERF=""
 	LIST_SSID="`echo "$OUTPUT" | awk '{print $2}' | tr '\n' ',' | sort -u | tr ' ' '+' | tr ',' ' ' | tr ' ' '\n' | sort -u | tr '\n' ' '`"
@@ -231,10 +233,10 @@ TEST="`(
 		for i in `echo $OUTPUT | tr ',' '\n' | grep ${ssid} | tr ' ' '+' | sed 's:^+::g'`; do
 			antenne_val="`echo $i | sed -e 's:,::g' | cut -d'+' -f3`"
 			current_value="`expr $current_value + $antenne_val`"
-		done 
+		done
 	PERF="$PERF $ssid=$current_value;;;;"
 	done
-fi 
+fi
 
 
 if [ `echo $OUTPUT | tr ',' '\n' | wc -l` -gt 2 ] ;then

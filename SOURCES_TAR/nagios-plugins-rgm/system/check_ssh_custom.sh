@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 # Check custom made by Vincent FRICOU
 # To check ssh port on switch but without mount a critical state
 

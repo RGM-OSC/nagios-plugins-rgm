@@ -1,4 +1,6 @@
 #!/bin/sh
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 # Nagios JMX plugin.
 
 JAVA_CMD=`which java`

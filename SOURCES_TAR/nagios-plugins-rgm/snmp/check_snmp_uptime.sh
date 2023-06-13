@@ -1,4 +1,6 @@
 #! /bin/sh
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 ## 2006-10-23, Ingo Lantschner (based on the work of Fredrik Wanglund)
 ## This Plugin gets the uptime from any host (*nix/Windows) by SNMP
@@ -18,7 +20,7 @@ print_revision() {
 	echo $PROGNAME  - $REVISION
 }
 print_help() {
-	print_revision 
+	print_revision
 	echo ""
 	print_usage
 	echo ""
@@ -63,11 +65,11 @@ if [ $WARN -lt $CRIT ]; then
 ## Now we start checking ...
 if [ $3 -eq 3 ]; then
 	V3="$6"
-else	
+else
 	V3=""
 fi
 
-UPT=$(snmpget -c $2 -v $3 $V3 $1 DISMAN-EVENT-MIB::sysUpTimeInstance) 
+UPT=$(snmpget -c $2 -v $3 $V3 $1 DISMAN-EVENT-MIB::sysUpTimeInstance)
 UPTCALC=`echo $UPT |cut -d "(" -f 2 |cut -d ")" -f 1`
 UPTDISPLAY=`echo $UPT |awk -F ") " '{print $2}'`
 RES=$?
@@ -75,24 +77,24 @@ RES=$?
 UPTMIN=$(expr $(echo $UPTCALC) / 6000 )
 
 if  [ $RES = 0 ]; then
-      if [ $UPTMIN -lt $CRIT ]; then  
+      if [ $UPTMIN -lt $CRIT ]; then
          echo CRITICAL: Systemuptime $UPTDISPLAY.
          exit 2
          fi
 
-      if [ $UPTMIN -lt $WARN ]; then  
+      if [ $UPTMIN -lt $WARN ]; then
          echo WARNING: Systemuptime $UPTDISPLAY.
          exit 1
          fi
 
-      if [ $UPTMIN -ge $WARN ]; then  
+      if [ $UPTMIN -ge $WARN ]; then
          echo OK: Systemuptime $UPTDISPLAY.
          exit 0
          fi
 
    fi
 
-echo $UPT 
+echo $UPT
 exit 3
 
 esac

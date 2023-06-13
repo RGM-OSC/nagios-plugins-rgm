@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 export LANG="en_US.UTF-8"
 
 usage() {
@@ -48,4 +50,4 @@ echo -n "$OUTPUT" | tr ',' ' '
 if [ $COUNTCRITICAL -gt 0 ]; then exit 2 ; fi
 if [ $COUNTWARNING -gt 0 ]; then exit 1 ; fi
 exit 0
-												
+

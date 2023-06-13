@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 LANG="en"
 
@@ -14,7 +16,7 @@ HOST=""
 cd /srv/eyesofnetwork/nagios/plugins/Downtime
 
 for i in `cat ./downtime_list.txt | grep -v "^#" | sed -e 's: ::g'`; do
-	
+
 	DAY="`echo $i | cut -d';' -f3`"
 	TIME="`echo $i | cut -d';' -f4`"
 	DURATION="`echo $i | cut -d';' -f5`"
@@ -33,8 +35,8 @@ for i in `cat ./downtime_list.txt | grep -v "^#" | sed -e 's: ::g'`; do
 		HOUR_DURATION="00"
 		MINUTE_DURATION="01"
 	else
-		HOUR="`echo ${TIME} | cut -d':' -f1`"	
-		MINUTE="`echo ${TIME} | cut -d':' -f2`"	
+		HOUR="`echo ${TIME} | cut -d':' -f1`"
+		MINUTE="`echo ${TIME} | cut -d':' -f2`"
 	fi
 
 
@@ -73,5 +75,5 @@ for i in `cat ./downtime_list.txt | grep -v "^#" | sed -e 's: ::g'`; do
 				fi
 			fi
 		fi
-	done		
+	done
 done

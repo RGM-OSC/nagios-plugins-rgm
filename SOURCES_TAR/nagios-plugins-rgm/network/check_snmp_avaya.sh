@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 export LANG="fr_FR.UTF-8"
 
@@ -80,10 +82,10 @@ if [ "$TYPE" = "STACK" ]; then
                                         OUTPUT="$OUTPUT CRITICAL, "
 				else
                                         OUTPUT="$OUTPUT OK, "
-				fi	
+				fi
 
 			done
-				
+
 fi
 
 
@@ -102,7 +104,7 @@ if [ "$TYPE" = "MEMORY" ]; then
 					CURRENT_ERR="1"
                                         OUTPUT="$OUTPUT -> CRITICAL, "
                                 fi
-				
+
 				if [ $CURRENT_ERR -lt 1 ]; then
                                 	COUNTWARNING="`expr $COUNTWARNING + 1`"
                                 	OUTPUT="$OUTPUT -> WARNING, "
@@ -118,9 +120,9 @@ if [ "$TYPE" = "MEMORY" ]; then
 fi
 
 
-if [ `echo $OUTPUT | tr ',' '\n' | wc -l` -gt 2 ] ;then 
-	if [ $COUNTCRITICAL -gt 0 ] && [ $COUNTWARNING -gt 0 ]; then 
-		echo "CRITICAL: Click for detail, "	
+if [ `echo $OUTPUT | tr ',' '\n' | wc -l` -gt 2 ] ;then
+	if [ $COUNTCRITICAL -gt 0 ] && [ $COUNTWARNING -gt 0 ]; then
+		echo "CRITICAL: Click for detail, "
 	else
 		if [ $COUNTCRITICAL -gt 0 ]; then echo "CRITICAL: Click for detail, " ; fi
 		if [ $COUNTWARNING -gt 0 ]; then echo "WARNING: Click for detail, "; fi

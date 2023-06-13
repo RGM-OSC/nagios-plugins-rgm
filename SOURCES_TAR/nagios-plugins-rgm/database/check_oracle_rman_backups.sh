@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 export LANG="en_US.UTF-8"
 
@@ -15,7 +17,7 @@ echo "Usage :check_oracle_rman_backups.sh
 	-s password
 	-h hostname
         -p port
-        -b database" 
+        -b database"
 exit 2
 }
 
@@ -56,9 +58,9 @@ RequestA="select statut||' -> '||handle_name||' ['|| to_char(completion_time,'YY
 #path="/tmp/error_rman_${HOST}_${DBNAME}.temp"
 getStatus="/srv/eyesofnetwork/nagios/plugins/RmanError/error_rman_${HOST}_${DBNAME}.txt"
 
-echo "${RequestA}" | sqlplus $USER/$PASSWORD'@'$HOST':'$PORT/$DBNAME | egrep 'OK|WARNING|CRITICAL' > $getStatus 
+echo "${RequestA}" | sqlplus $USER/$PASSWORD'@'$HOST':'$PORT/$DBNAME | egrep 'OK|WARNING|CRITICAL' > $getStatus
 
-if [ -s $getStatus ] ; then 
+if [ -s $getStatus ] ; then
   #getStatus=`cat $path | egrep 'OK|WARNING|CRITICAL' `
   #cat $path | egrep 'OK|WARNING|CRITICAL' > $getStatus
 

@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 export LANG="fr_FR.UTF-8"
 
@@ -46,7 +48,7 @@ if [ ! -n "`cat $TMPDIR/snmpwalk_out.txt`" ]; then
 	OUTPUT="$OUTPUT $HOSTTARGET: Could not grab information via SNMP,"
 	COUNTCRITICAL="`expr $COUNTCRITICAL + 1`"
 fi
-	
+
 
 
 
@@ -86,7 +88,7 @@ if [ "$TYPE" = "MEMORY" ]; then
 					CURRENT_ERR="1"
                                         OUTPUT="$OUTPUT -> CRITICAL, "
                                 fi
-				
+
 				if [ $CURRENT_ERR -lt 1 ]; then
                                 	COUNTWARNING="`expr $COUNTWARNING + 1`"
                                 	OUTPUT="$OUTPUT -> WARNING, "
@@ -104,37 +106,37 @@ fi
 
 
 if [ "$TYPE" = "FAN" ]; then
-		snmpwalk -v 2c -c public $HOSTTARGET $OIDFan | cut -d'=' -f2 | cut -d':' -f2 | awk '{printf("%d\n",$1);}'> ${TMPDIR}/snmpwalk_out_fan.txt 
+		snmpwalk -v 2c -c public $HOSTTARGET $OIDFan | cut -d'=' -f2 | cut -d':' -f2 | awk '{printf("%d\n",$1);}'> ${TMPDIR}/snmpwalk_out_fan.txt
 		FanOne=`cat ${TMPDIR}/snmpwalk_out_fan.txt | head -1`
 		FanTwo=`cat ${TMPDIR}/snmpwalk_out_fan.txt | grep -n ^ | grep ^1: | cut -d':' -f2`
 
 	if [ $FanOne == "2" ]; then
 		if [ $FanTwo == "2" ]; then
 			OUTPUT="OK: Fan 1 - Up, Fan 2 - Up"
-		else 
+		else
 			OUTPUT="Warning: Fan 1 - Up, Fan 2 - Down"
 			COUNTWARNING=1
 		fi
-	else 
+	else
 		if [ $FanTwo == "2" ]; then
 			OUTPUT="Warning: Fan 1 - Down, Fan 2 - Up"
 			COUNTWARNING=1
-			
+
 		fi
 	fi
-	
+
 fi
 
 if [ "$TYPE" = "TEMP" ]; then
 		snmpwalk -v 2c -c public $HOSTTARGET $OIDTemp | cut -d'=' -f2 | cut -d':' -f2 | awk '{printf("%d\n",$1);}'> ${TMPDIR}/snmpwalk_out_temp.txt
 		TempOne=`cat ${TMPDIR}/snmpwalk_out_temp.txt | head -1`
 		TempTwo=`cat ${TMPDIR}/snmpwalk_out_temp.txt | head -2 | tail -1 | cut -d':' -f2`
-	
+
 	if [ $TempOne -gt $CRITICAL ]; then
 		if [ $TempTwo -gt $CRITICAL ]; then
 			OUTPUT="Critical: Temp 1 Critical: $TempOne, Temp 2 Critical: $TempTwo"
 			COUNTCRITICAL=1
-		else 
+		else
 			if [ $TempTwo -gt $WARNING ] && [ $TempTwo -lt $CRITICAL ]; then
 				OUTPUT="Critical: Temp 1 Critical: $TempOne, Temp 2 Warning: $TempTwo"
 				COUNTCRITICAL=1
@@ -148,7 +150,7 @@ if [ "$TYPE" = "TEMP" ]; then
 		if [ $TempOne -gt $CRITICAL ]; then
 			OUTPUT="Critical: Temp 1 Critical: $TempOne, Temp 2 Critical: $TempTwo"
 			COUNTCRITICAL=1
-		else 
+		else
 			if [ $TempOne -gt $WARNING ] && [ $TempOne -lt $CRITICAL ]; then
 				OUTPUT="Critical: Temp 1 Warning: $TempOne, Temp 2 Critical: $TempTwo"
 				COUNTCRITICAL=1
@@ -163,7 +165,7 @@ if [ "$TYPE" = "TEMP" ]; then
 		if [ $TempTwo -gt $CRITICAL ]; then
 			OUTPUT="Critical: Temp 1 Warning: $TempOne, Temp 2 Critical: $TempTwo"
 			COUNTCRITICAL=1
-		else 
+		else
 			if [ $TempTwo -gt $WARNING ] && [ $TempTwo -lt $CRITICAL ]; then
 				OUTPUT="Warning: Temp 1 Warning: $TempOne, Temp 2 Warning: $TempTwo"
 				COUNTWARNING=1
@@ -172,13 +174,13 @@ if [ "$TYPE" = "TEMP" ]; then
 				COUNTWARNING=1
 			fi
 		fi
-		
+
 	fi
 	if [ $TempTwo -gt $WARNING ] && [ $TempTwo -lt $CRITICAL ]; then
 		if [ $TempOne -gt $CRITICAL ]; then
 			OUTPUT="Critical: Temp 1 Critical: $TempOne, Temp 2 Warning: $TempTwo"
 			COUNTCRITICAL=1
-		else 
+		else
 			if [ $TempOne -gt $WARNING ] && [ $TempOne -lt $CRITICAL ]; then
 				OUTPUT="Warning: Temp 1 Warning: $TempOne, Temp 2 Warning: $TempTwo"
 				COUNTWARNING=1
@@ -187,7 +189,7 @@ if [ "$TYPE" = "TEMP" ]; then
 				COUNTWARNING=1
 			fi
 		fi
-		
+
 	fi
 
 	if [ $COUNTCRITICAL -eq 0 ] && [ $COUNTWARNING -eq 0 ] ; then
@@ -198,7 +200,7 @@ fi
 
 
 if [ "$TYPE" = "POWER" ]; then
-		snmpwalk -v 2c -c public $HOSTTARGET $OIDPowerState | cut -d'=' -f2 | cut -d':' -f2 | awk '{printf("%d\n",$1);}'> ${TMPDIR}/snmpwalk_out_pow.txt 
+		snmpwalk -v 2c -c public $HOSTTARGET $OIDPowerState | cut -d'=' -f2 | cut -d':' -f2 | awk '{printf("%d\n",$1);}'> ${TMPDIR}/snmpwalk_out_pow.txt
 		PowerStateOne="`cat ${TMPDIR}/snmpwalk_out_pow.txt | head -1`"
 		PowerStateTwo="`cat ${TMPDIR}/snmpwalk_out_pow.txt | grep -n ^ | grep ^1: | cut -d':' -f2`"
 		PowerStateThree="`cat ${TMPDIR}/snmpwalk_out_pow.txt |  head -3 | tail -1 | cut -d':' -f2`"
@@ -283,14 +285,14 @@ if [ "$TYPE" = "POWER" ]; then
                                 COUNTCRITICAL="`expr $COUNTCRITICAL + 1`"
 			fi
 		fi
-		
+
 		OUTPUT="$OUT1 , $OUT2 , $OUT3"
-fi	
+fi
 
 
-if [ `echo $OUTPUT | tr ',' '\n' | wc -l` -gt 2 ] ;then 
-	if [ $COUNTCRITICAL -gt 0 ] && [ $COUNTWARNING -gt 0 ]; then 
-		echo "CRITICAL: Click for detail, "	
+if [ `echo $OUTPUT | tr ',' '\n' | wc -l` -gt 2 ] ;then
+	if [ $COUNTCRITICAL -gt 0 ] && [ $COUNTWARNING -gt 0 ]; then
+		echo "CRITICAL: Click for detail, "
 	else
 		if [ $COUNTCRITICAL -gt 0 ]; then echo "CRITICAL: Click for detail, " ; fi
 		if [ $COUNTWARNING -gt 0 ]; then echo "WARNING: Click for detail, "; fi

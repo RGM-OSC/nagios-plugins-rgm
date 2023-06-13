@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 export LANG="fr_FR.UTF-8"
 
@@ -6,7 +8,7 @@ usage() {
 echo "Usage :check_ConnectedAP.sh
        -H Hostname to check
 	-C Community SNMP
-        -w Warning (mens maximun number of ConnectedAP) 
+        -w Warning (mens maximun number of ConnectedAP)
         -c Critical (means minimum number of ConnectedAP)"
 exit2
 }
@@ -28,7 +30,7 @@ if [ ! -d /tmp/tmp-control-wifi-check_5/${HOSTTARGET} ]; then mkdir -p /tmp/tmp-
 TMPDIR="/tmp/tmp-control-wifi-check_5/${HOSTTARGET}"
 
 
-snmpwalk -v 2c -c $COMMUNITY $HOSTTARGET -O 0qv .1.3.6.1.4.1.45.7.7.1.3.1.2 | sed -e 's: "$:":g' && snmpwalk -v 2c -c $COMMUNITY $HOSTTARGET -O 0qv .1.3.6.1.4.1.45.7.2.1.5.1.2 | sed -e 's: "$:":g' | sort -k2 > $TMPDIR/snmpwalk_out.txt 
+snmpwalk -v 2c -c $COMMUNITY $HOSTTARGET -O 0qv .1.3.6.1.4.1.45.7.7.1.3.1.2 | sed -e 's: "$:":g' && snmpwalk -v 2c -c $COMMUNITY $HOSTTARGET -O 0qv .1.3.6.1.4.1.45.7.2.1.5.1.2 | sed -e 's: "$:":g' | sort -k2 > $TMPDIR/snmpwalk_out.txt
 
 
 
@@ -37,7 +39,7 @@ snmpwalk -v 2c -c $COMMUNITY $HOSTTARGET -O 0qv .1.3.6.1.4.1.45.7.7.1.3.1.2 | se
 #snmpwalk -v 2c -c $COMMUNITY $HOSTTARGET -O 0qv .1.3.6.1.4.1.45.7.7.1.3.1.2 | sed -e 's: "$:":g' | print $1; | snmpwalk -v 2c -c $COMMUNITY $HOSTTARGET -O 0qv .1.3.6.1.4.1.45.7.2.1.5.1.2 | print $2; > $TMPDIR/snmpwalk_out.txt
 
 
-if [ "`cat $TMPDIR/snmpwalk_out.txt | head -1`" = "" ]; then 
+if [ "`cat $TMPDIR/snmpwalk_out.txt | head -1`" = "" ]; then
 	echo "CRITICAL: Interogation Controleur WIFI impossible."
 #	rm -rf ${TMPDIR}
 	exit 2
@@ -51,7 +53,7 @@ LOAD="`cat $TMPDIR/snmpwalk_out.txt`"
 
 if [ $LOAD -lt $CRITICAL ]; then
 	echo "CRITICAL: less than $CRITICAL Bytes Received:$LOAD  :$LIST"
-#	rm -rf ${TMPDIR}	
+#	rm -rf ${TMPDIR}
 	exit 2
 fi
 if [ $LOAD -gt $WARNING ]; then

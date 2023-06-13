@@ -1,8 +1,10 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
-# This script use the command NRPE 
+# This script use the command NRPE
 # check_nrpe -H XXXXXX -t60 -n -c check_agents_CTRLM
-# Then build a list in 
+# Then build a list in
 
 export LANG=en_US
 
@@ -30,9 +32,9 @@ else
 	if [ ! -s ${TMPDIR}.tmp ]; then
 		scp nagios@${HOSTCTMCS}:/home/nagios/check_agents_CTRLM/Current_State_agstat_Ready ${TMPDIR}.tmp >> ${TMPDIR}_scplog.txt 2>&1
 		# DEBUG PURPOSE ONLY
-			echo "`date` Fic 0 detected. Redo the copy. Thank's Oracle. " >> ${TMPDIR}.debug	
+			echo "`date` Fic 0 detected. Redo the copy. Thank's Oracle. " >> ${TMPDIR}.debug
 		#
-		
+
 	fi
 	touch ${TMPDIR}.running
 	cat ${TMPDIR}.tmp > ${TMPDIR}

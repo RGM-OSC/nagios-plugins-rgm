@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 export LANG="fr_FR.UTF-8"
 
@@ -7,11 +9,11 @@ echo "Usage :check_gedemat.sh
        	-H Host target
         -w Warning Free space available (min:max)
         -c Critical Free space available (min:max)
-	-p port 
+	-p port
 	-I Could be SpaceStore, UserStore, ContentStore, ConnectionPool, OpenOffice
-	-n ONLY with ContentStore, 
-		NameSpace could be 
-			content for /alf_data/documents/contentstore 
+	-n ONLY with ContentStore,
+		NameSpace could be
+			content for /alf_data/documents/contentstore
 			alfresco for /tmp/Alfresco
 			deleted for /alf_data/documents/audits/contentstore.deleted
 		"
@@ -40,7 +42,7 @@ COUNTCRITICAL=0
 
 OUTPUT=" "
 VARINFO=''
-	
+
 if [ -n ${NAMESPACE} ]; then
 	if [ ${NAMESPACE} = "CONTENT" ];then NAMESPACEREQUIRED="/alf_data/documents/contentstore";fi
 	if [ ${NAMESPACE} = "ALFRESCO" ];then NAMESPACEREQUIRED="/tmp/Alfresco";fi
@@ -110,16 +112,16 @@ fi
 if [ "${INFO}" == "CONTENTSTORE" ];then
 	valuelimit
 	if [ ! -n ${NAMESPACE} ]; then usage ;fi
-	
+
 	VARINFO=`echo get -b $ContentStore | java -jar $JMXLocation/jmxterm-1.0-alpha-4-uber.jar -lservice:jmx:rmi://ignored/jndi/rmi://$HOSTTARGET:$PORT/alfresco/jmxrmi -p change_asap -u controlRole -v silent -n | tr '\n' ';' | cut -d';' -f1,4 | tr ';' '\n'`
 	SpaceTotal=`echo $VARINFO | cut -d' ' -f3`
 	SpaceFree=`echo $VARINFO | cut -d' ' -f6`
-	
+
 	PctFree=`echo $SpaceFree $SpaceTotal | awk '{printf("%d",(($1*100)/$2));}' | cut -d',' -f1`
 	if [ ${PctFree} -lt ${CRITICALONE} ];then
 		OUTPUT="Critical : Space left on $NAMESPACEREQUIRED : $PctFree%"
 		COUNTCRITICAL=1
-	else 
+	else
 		if [ ${PctFree} -lt ${WARNINGONE} ];then
 			OUTPUT="Warning : Space left on $NAMESPACEREQUIRED : $PctFree%"
 			COUNTWARNING=1
@@ -133,11 +135,11 @@ fi
 if [ "${INFO}" == "CONNECTIONPOOL" ];then
 	valuelimit
         if [ ! -n ${WARNINGONE} ] || [ ! -n ${WARNINGTWO} ]; then usage;fi
-	
+
 	VARINFO=`echo get -b $ConnectionPool | java -jar $JMXLocation/jmxterm-1.0-alpha-4-uber.jar -lservice:jmx:rmi://ignored/jndi/rmi://$HOSTTARGET:$PORT/alfresco/jmxrmi -p change_asap -u controlRole -v silent -n | tr '\n' ';' | cut -d';' -f1,4 | tr ';' '\n'`
 	NumActive=`echo $VARINFO | cut -d' ' -f3`
         NumIdle=`echo $VARINFO | cut -d' ' -f6`
-	
+
 	if [ ${NumActive} -gt ${CRITICALONE} ] || [ ${NumIdle} -gt ${CRITICALTWO} ] ; then
                 OUTPUT="Active connection $NumActive : Limit $CRITICALONE,Idle connection $NumIdle : Limit $CRITICALTWO"
                 COUNTCRITICAL=1
@@ -155,19 +157,19 @@ fi
 if [ "${INFO}" == "OPENOFFICE" ];then
 	VARINFO=`echo get -b $OpenOffice | java -jar $JMXLocation/jmxterm-1.0-alpha-4-uber.jar -lservice:jmx:rmi://ignored/jndi/rmi://$HOSTTARGET:$PORT/alfresco/jmxrmi -p change_asap -u controlRole -v silent -n | tr '\n' ';' | cut -d';' -f1,4 | tr ';' '\n'`
 	OOOState=`echo $VARINFO | cut -d' ' -f3`
-	
+
 	if [ ${OOOState} == "false" ]; then
 		OUTPUT="OpenOffice : Unavailable"
 		COUNTCRITICAL=1
 	else
 		OUTPUT="OpenOffice : Available"
 	fi
-		
+
 fi
 
-if [ `echo $OUTPUT | tr ',' '\n' | wc -l` -gt 2 ] ;then 
-	if [ $COUNTCRITICAL -gt 0 ] && [ $COUNTWARNING -gt 0 ]; then 
-		echo "CRITICAL: Click for detail, "	
+if [ `echo $OUTPUT | tr ',' '\n' | wc -l` -gt 2 ] ;then
+	if [ $COUNTCRITICAL -gt 0 ] && [ $COUNTWARNING -gt 0 ]; then
+		echo "CRITICAL: Click for detail, "
 	else
 		if [ $COUNTCRITICAL -gt 0 ]; then echo "CRITICAL: Click for detail, " ; fi
 		if [ $COUNTWARNING -gt 0 ]; then echo "WARNING: Click for detail, "; fi

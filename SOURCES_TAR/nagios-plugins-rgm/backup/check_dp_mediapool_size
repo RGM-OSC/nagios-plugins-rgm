@@ -1,4 +1,7 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
+
 # Script: check_dp_mediapool_size
 # Version: 0.1
 # License: GPL

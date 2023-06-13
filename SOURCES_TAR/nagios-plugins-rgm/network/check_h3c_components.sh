@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 # bash script to check various components in an HP/H3C S51xx switch
 # Can check IRF-connected stacks too.
 # lajo@kb.dk / 20120724

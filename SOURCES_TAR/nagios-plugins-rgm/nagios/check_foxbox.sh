@@ -1,5 +1,6 @@
 #!/bin/bash
-
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 export LANG="fr_FR.UTF-8"
 
@@ -22,7 +23,7 @@ out() {
 	if [ $COUNTCRITICAL -ge 1 ] ; then
 		echo "Critical : click for details,"
 		echo -n "$OUTPUT," | tr ',' '\n'
-		exit 2 
+		exit 2
 	fi
 	echo "Ok : click for details,"
 	echo -n "$OUTPUT," | tr ',' '\n'
@@ -63,7 +64,7 @@ TESTTS=$(date -d "${SQL}" +"%s")
 NOW=$(date +"%s")
 
 if [ ${NOW} -gt $(expr ${TESTTS} + 7200) ]
-then 
+then
 	OUTPUT="Test is older than 2 hour, Last ${SQL}"
 	COUNTWARNING=$(expr ${COUNTWARNING} + 1 )
 elif [ ${NOW} -gt $(expr ${TESTTS} + 10800) ]

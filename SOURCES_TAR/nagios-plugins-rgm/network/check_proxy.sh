@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 PROXY_HOST="$3"
 PROXY_PORT="$4"
@@ -19,7 +21,7 @@ if [ ! -z "${RETURN}" ];
 then
 	echo "Ok : Page bloquée"
 	exit 0
-else 
+else
 	echo "Critical : Page non bloquée. Filtrage non fonctionnel."
 	exit 2
 fi

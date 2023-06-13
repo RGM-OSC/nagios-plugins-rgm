@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 CHECKNAME="check_cisco_repoperstatus.sh"
 REVISION="0.1"
@@ -22,7 +24,7 @@ out() {
 	if [ $COUNTCRITICAL -ge 1 ] ; then
 		echo "Critical : click for details,"
 		echo -n "$OUTPUT," | tr ',' '\n'
-		exit 2 
+		exit 2
 	fi
 	echo "Ok : click for details,"
 	echo -n "$OUTPUT," | tr ',' '\n'
@@ -59,7 +61,7 @@ else
 	IFNUM=1
 	INDEXINT=$(snmpwalk -On -v ${VERSION} -c ${COMMUNITY} ${HOSTTARGET} ${OIDRepIfOperStatus} | cut -d' ' -f4)
 	for NIF in ${INDEXINT}
-	do 
+	do
 		if [ ${NIF} != "5" ]
 		then
 			COUNTCRITICAL=$(expr ${COUNTCRITICAL} + 1)

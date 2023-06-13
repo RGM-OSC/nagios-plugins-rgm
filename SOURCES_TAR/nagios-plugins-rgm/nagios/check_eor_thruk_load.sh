@@ -1,4 +1,7 @@
 #!/bin/sh
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
+
 #------------------------------------------------------------------------------
 #
 #   PROJECT      :  EyesOfNetwork EyesOfReport load project
@@ -9,7 +12,7 @@
 #
 #   HELP         :  see "usage"
 #
-#   COMMENT      : this plugin test if log nagios has been successfully logged in thruk database. 
+#   COMMENT      : this plugin test if log nagios has been successfully logged in thruk database.
 #
 #------------------------------------------------------------------------------
 export LANG="fr_FR.UTF-8"
@@ -48,7 +51,7 @@ extractend=$(($(date --date="$(date +%Y-%m-%d --date="yesterday")"  +%s) + 86399
 extractdate=$(date +%Y-%m-%d --date="yesterday")
 
 #extractbeg=1466546400
-#extractend=1466632799	
+#extractend=1466632799
 
 time_day_record=$(MYSQL_PWD="nagios" mysql -unagios -h $HOST -e "SELECT time FROM thruk.${BACKEND}_log where time between $extractbeg and $extractend limit 1;")
 

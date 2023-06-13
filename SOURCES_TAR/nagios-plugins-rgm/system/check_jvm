@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 #  This script is Nagios plugin, part of JvmInspector tool
 #  Version 2014101401 (YYYYMMDDxx)
@@ -26,7 +28,7 @@
 ##############################
 ### PATH TO JvmInspector.jar
 
-JVMINSPECTOR="/usr/local/bin/JvmInspector.jar"  
+JVMINSPECTOR="/usr/local/bin/JvmInspector.jar"
 
 ##############################
 
@@ -108,7 +110,7 @@ expr ${PID}  : '[0-9]\+$' >/dev/null || p_unknown "Bug"
 
 TIMEOUT="" ; timeout --version >/dev/null 2>&1 && TIMEOUT="timeout 7"
 JVMDATA="$(${TIMEOUT} java -jar ${JVMINSPECTOR} ${PID} 2>&1)"
-[ $? -ne 0 ] && p_unknown "Can't connect to JVM: ${JVMDATA}" 
+[ $? -ne 0 ] && p_unknown "Can't connect to JVM: ${JVMDATA}"
 
 echo "$JVMDATA" | grep "class count" >/dev/null 2>/dev/null || p_unknown "Can't connect to the JVM: $JVMDATA"
 
@@ -139,10 +141,10 @@ elif [ "${PROPERTY}" = "non-heap" ]; then
         FRESULT=$(echo "${RESULT}" | numfmt --to=iec 2>/dev/null) || FRESULT="${RESULT}"
         PERFDATA="max=${MAX};;; commited=${COMMITED};;; used=${USED};;;"
 elif [ "${PROPERTY}" = "sessions" ]; then
-	RESULT=$(printf "%s" "$JVMDATA" | awk '/^  active sessions/' | sed 's/^.*total\=\([0-9]*\)|.*$/\1/g')	
+	RESULT=$(printf "%s" "$JVMDATA" | awk '/^  active sessions/' | sed 's/^.*total\=\([0-9]*\)|.*$/\1/g')
         FRESULT="${RESULT}"
         PERFDATA="sessions=${RESULT};;;"
-else 
+else
 	p_unknown "Invalid property"
 fi
 
@@ -153,7 +155,7 @@ if [ "${RESULT}" -ge "$CRITICAL" ]; then
 	p_critical "${FRESULT} |${PERFDATA}"
 elif [ "${RESULT}" -ge "$WARNING" ]; then
 	p_warning "${FRESULT} |${PERFDATA}"
-else 
+else
 	p_ok "${FRESULT} |${PERFDATA}"
 fi
 

@@ -1,3 +1,7 @@
+#!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
+
 Perf_CPU=hrSWRunPerfCPU
 Perf_MEM=hrSWRunPerfMem
 NAME_Process=hrSWRunName

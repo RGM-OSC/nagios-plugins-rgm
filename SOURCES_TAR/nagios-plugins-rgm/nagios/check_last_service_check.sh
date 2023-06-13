@@ -1,7 +1,10 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
+
 # Verify the performance of Nagios Active Check in percentual
 # Version 1.0
-# Ver 1.1 Added output for Performance Data 
+# Ver 1.1 Added output for Performance Data
 # Written By Gatti Davide - davidegatti@hotmail.com
 
 NAGIOSTAT=/srv/eyesofnetwork/nagios/bin/nagiostats # <-- Insert here the full path of nagiostat binary

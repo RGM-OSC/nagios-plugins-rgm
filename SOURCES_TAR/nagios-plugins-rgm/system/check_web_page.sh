@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 GetSHA=0
 export LANG=en_US
@@ -43,7 +45,7 @@ fi
 
 SHA="`sha1sum $TMPDIR/page.out.html | awk '{print $1}'`"
 
-if [ ! "$SHA" = "$RETURNSHA" ]; then 
+if [ ! "$SHA" = "$RETURNSHA" ]; then
 	echo "CRITICAL: The required page doesnt match expected checksum. $SHA"
 	rm -rf ${TMPDIR}
 	exit 2

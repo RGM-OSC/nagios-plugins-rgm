@@ -1,7 +1,9 @@
 #!/bin/bash
- 
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
+
 export LANG="fr_FR.UTF-8"
- 
+
 usage() {
 echo "Usage :check_http_gearman.sh
     -H Nagios Host target
@@ -15,24 +17,24 @@ echo "Usage :check_http_gearman.sh
     ARG5= Expected String and options (ex: -s \"Aucun utilisateur\" -w 10 -c 60)"
 exit 2
 }
- 
+
 CHECK_HTTP="/srv/eyesofnetwork/nagios/plugins/check_http"
 MYSQLDB="lilac"
 MYSQLUser="root"
 MYSQLPass="root66"
 
 if [ "${4}" = "" ]; then usage; fi
- 
+
 WARNING=0
 CRITICAL=0
- 
+
 ARGS="`echo $@ |sed -e 's:-[a-Z] :\n&:g' | sed -e 's: ::g'`"
 
 #**************** DEBUG ****************
 #echo "ARGS: " $ARGS
 #***************************************
 
- 
+
 for i in $ARGS; do
         if [ -n "`echo ${i} | grep "^\-H"`" ]; then HostNagios="`echo ${i} | sed -e 's: ::g' | cut -c 3- | tr '[a-z]' '[A-Z]'`"; if [ ! -n "${HostNagios}" ]; then usage;fi;fi
         if [ -n "`echo ${i} | grep "^\-S"`" ]; then ServiceNagios="`echo ${i} | sed -e 's: ::g' | cut -c 3- | tr '[a-z]' '[A-Z]'`"; if [ ! -n "${ServiceNagios}" ]; then usage;fi;fi
@@ -81,7 +83,7 @@ if [ ! -n "${NagiosARG5}" ]; then usage;fi
 
 COUNTWARNING=0
 COUNTCRITICAL=0
- 
+
 PLUG_CMD="$CHECK_HTTP -H $NagiosARG1 -p $NagiosARG2 -u $NagiosARG3"
 
 # DEBUG Purpose Only.....

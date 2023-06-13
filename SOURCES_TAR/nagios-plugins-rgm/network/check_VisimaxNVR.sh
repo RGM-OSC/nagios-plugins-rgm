@@ -1,4 +1,6 @@
 #!/bin/bash
+unset PATH
+export PATH='/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin'
 
 export LANG="fr_FR.UTF-8"
 
@@ -55,7 +57,7 @@ stcam(){
 	CamST=`snmpwalk -v 1 -c ${COMMUNITY} ${HOSTTARGET}:${SNMPPORT} -On $OIDCamState | cut -d' ' -f4`
 	ConvCamST=`echo "obase=2;$CamST" | bc`
 	CamSTBin=`for i in $(seq 1 ${#ConvCamST}); do echo $(echo $ConvCamST | cut -c $i); done | tr '\n' ','`
-	
+
 	NBCamInstance=`snmpwalk -v1 -c ${COMMUNITY} ${HOSTTARGET}:${SNMPPORT} -On $OIDCamNumber | cut -d' ' -f4`
 	VoiceNB=1
 	while [[ $NBCamInstance -ge 1 ]]; do
@@ -71,16 +73,16 @@ stcam(){
 				OUTPUT2=`echo "$OUTPUT2, Cam $NBCamInstance can't be properly verified"`
 			fi
 		fi
-		
+
 
 		NBCamInstance=$(expr $NBCamInstance - 1)
 		VoiceNB=$(expr $VoiceNB + 1)
 	done
-	
+
 	OUTPUT1=`echo $OUTPUT2 | tr ',' '\n' | grep -v properly | sed "/^$/d" | tr '\n' ','`
 	OUTPUTCR=`echo $OUTPUT2 | tr ',' '\n' | grep properly | sed "/^$/d" | tr '\n' ','`
 
-	
+
 	NBVoiceHS=`echo $OUTPUT1 | awk 'BEGIN{FS=OFS=","} {x=x+NF-1} END {print x}' `
 	if [ ${NBVoiceHS} -eq -1 ]; then
 		NBVoiceHS=$(expr $NBVoiceHS + 1)
@@ -89,7 +91,7 @@ stcam(){
 	if [ ${NBVoiceHS} -ge ${WARNING} ]; then
 		COUNTWARNING=1
 		OUTPUTSTCAM="Warning : You have $NBVoiceHS record voice HS and `echo $OUTPUTCR | wc -l` voice can't be properly verified on instance $INSTANCE,$OUTPUT2"
-	else	
+	else
 		OUTPUTSTCAM="Ok : You have only $NBVoiceHS record voice HS and `echo $OUTPUTCR | wc -l` voice can't be properly verified on instance $INSTANCE,$OUTPUT2"
 	fi
 }
@@ -117,7 +119,7 @@ if [ "${TYPE}" == "STRECORDS" ]; then
 	RecordsST=`snmpwalk -v 1 -c ${COMMUNITY} ${HOSTTARGET}:${SNMPPORT} -On $OIDRecordsState | cut -d' ' -f4`
 	ConvRecordsST=`echo "obase=2;$RecordsST" | bc`
 	RecordsSTBin=`for i in $(seq 1 ${#ConvRecordsST}); do echo $(echo $ConvRecordsST | cut -c $i); done | tr '\n' ','`
-	
+
 	NBCamInstance=`snmpwalk -v1 -c ${COMMUNITY} ${HOSTTARGET}:${SNMPPORT} -On $OIDCamNumber | cut -d' ' -f4`
 	VoiceNB=1
 	while [[ $NBCamInstance -ge 1 ]]; do
@@ -129,7 +131,7 @@ if [ "${TYPE}" == "STRECORDS" ]; then
 		NBCamInstance=$(expr $NBCamInstance - 1)
 		VoiceNB=$(expr $VoiceNB + 1)
 	done
-	
+
 	NBVoiceFree=`echo $OUTPUT1 | awk 'BEGIN{FS=OFS=","} {x=x+NF-1} END {print x}' `
 	if [ ${NBVoiceFree} -eq -1 ] || [ ${NBVoiceFree} -eq 0 ]; then
 		NBVoiceFree=$(expr $NBVoiceFree + 1)
@@ -144,13 +146,13 @@ if [ "${TYPE}" == "RECORDSDATE" ]; then
 	do
 		RecordString=`snmpwalk -v 1 -c ${COMMUNITY} ${HOSTTARGET}:${SNMPPORT} -On ${OIDRecordDate}.$VoiceNB | cut -d' ' -f 3-`
 		RecordType=`echo $RecordString | cut -d':' -f1`
-		if [ "${RecordType}" = "STRING" ]; then 
+		if [ "${RecordType}" = "STRING" ]; then
 			RecordDate=`echo $RecordString | cut -d' ' -f2-`
 			RecordStart=`echo $RecordDate | cut -d' ' -f1 | sed "s/\"/ /g"`
 			RecordEnd=`echo $RecordDate | cut -d' ' -f2 | sed "s/\"/ /g"`
 			CamName=`echo $RecordDate | cut -d' ' -f3- | sed s/\"//g`
 			OUTPUT="$OUTPUT, $VoiceNB $CamName:,	Start:$RecordStart ; End:$RecordEnd"
-		else 
+		else
 			OUTPUT="$OUTPUT, $VoiceNB Can't be properly read"
 		fi
 		VoiceNB=`expr $VoiceNB + 1`
@@ -158,7 +160,7 @@ if [ "${TYPE}" == "RECORDSDATE" ]; then
 	stcam
 	if [ $COUNTWARNING -gt 0 ];then
 		OUTPUT="Warning on instance $INSTANCE:,$OUTPUT2,$OUTPUT"
-	else 
+	else
 		OUTPUT="On instance $INSTANCE:,$OUTPUT2,$OUTPUT"
 	fi
 fi
@@ -169,7 +171,7 @@ if [ "${TYPE}" == "STCAM" ] || [ "${TYPE}" == "RECORDSDATE" ]; then
 	echo -n "$OUTPUT" | tr ',' '\n'
 else
 
-	if [ `echo $OUTPUT | tr ',' '\n' | wc -l` -gt 2 ] ;then 
+	if [ `echo $OUTPUT | tr ',' '\n' | wc -l` -gt 2 ] ;then
 		if [ $COUNTWARNING -gt 0 ]; then echo "WARNING: Click for detail, "; fi
 		if [ $COUNTCRITICAL -gt 0 ]; then echo "CRITICAL: Click for detail, "; fi
 		if [ ! $COUNTWARNING -gt 0 ] ; then echo "OK: Click for detail, "; fi
