@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 36.rgm
+Release: 37.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -197,6 +197,9 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Thu Sep 7 2023 Vincent Fricou <vfricou@fr.scc.com> - 1.0-37.rgm
+- Add new check for ES cluster health status
+
 * Wed Jun 14 2023 Vincent Fricou <vfricou@fr.scc.com> - 1.0-36.rgm
 - Force PATH environment in shell scripts
 - Fix backquoted commands
