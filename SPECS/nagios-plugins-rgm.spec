@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 37.rgm
+Release: 38.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -197,6 +197,10 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Mon Oct 23 2023 Vincent Fricou <vfricou@fr.scc.com> - 1.0-38-rgm
+- Updt check_nutanix.pl to add switch to force green on subtype State and Status
+- Updt check_nutanix.pl to add switch to display only failed ressources on all checks
+
 * Thu Sep 7 2023 Vincent Fricou <vfricou@fr.scc.com> - 1.0-37.rgm
 - Add new check for ES cluster health status
 
