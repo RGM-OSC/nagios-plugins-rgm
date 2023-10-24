@@ -14,7 +14,7 @@ sub cluster_list_vm_volumes_info
         return datastore_volumes_info($cluster_view->datastore, $subselect, $blacklist);
 }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 sub datastore_volumes_info
@@ -22,6 +22,7 @@ sub datastore_volumes_info
     my ($datastore) = @_;
     my $state = 0;
     my $actual_state = 0;
+    my $prov_actual_state = 0;
     my $output = '';
     my $tmp_output = '';
     my $tmp_output_error = '';
@@ -48,7 +49,8 @@ sub datastore_volumes_info
     my $volume_type;
     my $uom = "MB";
     my $alertcnt = 0;
-       
+    my $pref_prov_thresholds;
+
     if (defined($subselect) && defined($blacklist) && !defined($isregexp))
        {
        print "Error! Blacklist is supported only in overall check (no subselect) or regexp subcheck!\n";
@@ -60,7 +62,7 @@ sub datastore_volumes_info
        print "Error! Whitelist is supported only in overall check (no subselect) or regexp subcheck!\n";
        exit 2;
        }
-    
+
     if (!defined($usedspace) && defined($perf_free_space))
        {
        print "Error! --perf_free_space only allowed in conjuction with --usedspace!\n";
@@ -75,7 +77,7 @@ sub datastore_volumes_info
        {
        $isregexp = 0;
        }
-               
+
     foreach $ref_store (@{$datastore})
             {
             $store = Vim::get_view(mo_ref => $ref_store, properties => ['summary', 'info']);
@@ -85,7 +87,7 @@ sub datastore_volumes_info
 
             if (!defined($subselect) || ($name eq $subselect) || (($isregexp == 1) && ($name =~ m/$subselect/)))
                {
-               
+
                if (defined($blacklist))
                   {
                   if (isblacklisted(\$blacklist, $isregexp, $name ))
@@ -174,13 +176,32 @@ sub datastore_volumes_info
                            }
                         }
                      }
-                     
+
                   if (($warn_is_percent) || ($crit_is_percent))
                      {
                      if ($usedspace)
                         {
-                        $actual_state = check_against_threshold($space_used_percent);
-                        $state = check_state($state, $actual_state);
+                        if (defined($warning_prov) && defined($critical_prov))
+                            {
+                            if ($space_provisionned_percent >= $warning_prov)
+                            {
+                                if ($space_provisionned_percent >= $critical_prov)
+                                {
+                                    $prov_actual_state = 2;
+                                }
+                                else
+                                {
+                                    $prov_actual_state = 1;
+                                }
+                            }
+                            else
+                            {
+                                $prov_actual_state = 0;
+                            }
+                            }
+                            $actual_state = check_against_threshold($space_used_percent);
+                            $actual_state += $prov_actual_state;
+                            $state = check_state($state, $actual_state);
                         }
                      else
                         {
@@ -258,15 +279,26 @@ sub datastore_volumes_info
                      $perf_thresholds = $warn_out . ";" . $crit_out;
                      }
 
+                  if (defined($warning_prov) && defined($critical_prov))
+                      {
+                      my $warning_prov_threshold = $space_total / 100 * $warning_prov;
+                      my $critical_prov_threshold = $space_total / 100 * $critical_prov;
+                      $pref_prov_thresholds = $warning_prov_threshold . ";" . $critical_prov_threshold;
+                      }
+                  else
+                      {
+                      $pref_prov_thresholds = ";";
+                      }
+
                   if (defined($usedspace) && (!defined($perf_free_space)))
                      {
                      $perfdata = $perfdata . " \'" . $name . "\'=" . $space_used . "$uom;" . $perf_thresholds . ";;" . $space_total;
-                     $perfdata = $perfdata . " \'" . $name . "-provisionned\'=" . $space_provisionned . "$uom;;;;";
+                     $perfdata = $perfdata . " \'" . $name . "-provisionned\'=" . $space_provisionned . "$uom;$pref_prov_thresholds;;";
                      }
                   else
                      {
                      $perfdata = $perfdata . " \'" . $name . "\'=" . $space_free . "$uom;" . $perf_thresholds . ";;" . $space_total;
-                     $perfdata = $perfdata . " \'" . $name . "-provisionned\'=" . $space_provisionned . "$uom;;;;";
+                     $perfdata = $perfdata . " \'" . $name . "-provisionned\'=" . $space_provisionned . "$uom;$pref_prov_thresholds;;";
                      }
 
                   if ($actual_state != 0)
@@ -274,7 +306,7 @@ sub datastore_volumes_info
                      $tmp_output_error = $tmp_output_error . "$name ($volume_type)" . ($usedspace ? " used" : " free");
                      $tmp_output_error = $tmp_output_error . ": ". ($usedspace ? $space_used : $space_free) . " " . $uom;
                      $tmp_output_error = $tmp_output_error . " (" . ($usedspace ? $space_used_percent : $space_free_percent) . "%) / $space_total $uom (100%)";
-                     $tmp_output = $tmp_output . " - provisionned: " . $space_provisionned ." (" . $space_provisionned_percent . "%)";
+                     $tmp_output_error = $tmp_output_error . " - provisionned: " . $space_provisionned ." (" . $space_provisionned_percent . "%)";
                      $tmp_output_error = $tmp_output_error . $multiline;
                      }
                   else
@@ -292,7 +324,7 @@ sub datastore_volumes_info
                   $tmp_output_error = $tmp_output_error . "'$name' is not accessible, ";
                   $alertcnt++;
                   }
-            
+
                if (!$isregexp && defined($subselect) && ($name eq $subselect))
                   {
                   last;
@@ -368,7 +400,7 @@ sub datastore_volumes_info
        return ($state, $output);
     }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 sub dc_list_vm_volumes_info
@@ -378,7 +410,7 @@ sub dc_list_vm_volumes_info
     my $dc;
 
     $dc_views = Vim::find_entity_views(view_type => 'Datacenter', properties => ['datastore']);
-    
+
     if (!defined($dc_views))
        {
        print "There are no Datacenter\n";
@@ -396,7 +428,7 @@ sub dc_list_vm_volumes_info
     return datastore_volumes_info(\@datastores);
     }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 sub dc_runtime_info
@@ -430,8 +462,8 @@ sub dc_runtime_info
     my $vm_state;
     my $vm_views;
     my $vm_cnt = 0;
-    my $vm_bad_cnt = 0;      
-    my $vm_ignored_cnt = 0;       
+    my $vm_bad_cnt = 0;
+    my $vm_ignored_cnt = 0;
     my $guestToolsBlacklisted_cnt = 0;
     my $guestToolsCurrent_cnt = 0;
     my $guestToolsNeedUpgrade_cnt = 0;
@@ -497,7 +529,7 @@ sub dc_runtime_info
           print "Runtime error\n";
           exit 2;
           }
-       
+
        if (!@$vm_views)
           {
           $output = "No VMs";
@@ -514,7 +546,7 @@ sub dc_runtime_info
                      {
                      $isregexp = 0;
                      }
-               
+
                   if (defined($blacklist))
                      {
                      if (isblacklisted(\$blacklist, $isregexp, $vm->name))
@@ -531,7 +563,7 @@ sub dc_runtime_info
                       }
 
                   $vm_state = $vm->runtime->powerState->val;
-               
+
                   if ($vm_state eq "poweredOn")
                      {
                      $poweredon++;
@@ -607,7 +639,7 @@ sub dc_runtime_info
                      {
                      $isregexp = 0;
                      }
-               
+
                   if (defined($blacklist))
                      {
                      if (isblacklisted(\$blacklist, $isregexp, $host->name))
@@ -624,8 +656,8 @@ sub dc_runtime_info
                       }
 
                   $host_state = $host->get_property('runtime.powerState')->val;
-                  
-             
+
+
                   if ($host_state eq "poweredOn")
                      {
                      $hpoweredon++;
@@ -642,7 +674,7 @@ sub dc_runtime_info
                      $state = check_state($state, $actual_state);
                      }
                   }
-   
+
           if ($subselect eq "all")
              {
              $output = $output . " - " . $hpoweredon . "/" . @$host_views . " Hosts powered on - ";
@@ -656,7 +688,7 @@ sub dc_runtime_info
              }
           }
        }
-  
+
     if (($subselect =~ m/listcluster.*$/) || ($subselect eq "all"))
        {
        $true_sub_sel = 0;
@@ -693,7 +725,7 @@ sub dc_runtime_info
                      {
                      $isregexp = 0;
                      }
-               
+
                   if (defined($blacklist))
                      {
                      if (isblacklisted(\$blacklist, $isregexp, $cluster->name))
@@ -761,7 +793,7 @@ sub dc_runtime_info
              }
           }
        }
-    
+
     if (($subselect eq "tools") || ($subselect eq "all"))
        {
        $true_sub_sel = 0;
@@ -780,7 +812,7 @@ sub dc_runtime_info
           exit 2;
           }
 
-       
+
        foreach $vm (@$vm_views)
                {
                $vm_cnt++;
@@ -793,7 +825,7 @@ sub dc_runtime_info
                   {
                   $isregexp = 0;
                   }
-            
+
                if (defined($blacklist))
                   {
                   if (isblacklisted(\$blacklist, $isregexp, $vm->name))
@@ -814,8 +846,8 @@ sub dc_runtime_info
 # VirtualMachineToolsRunningStatus
 # guestToolsExecutingScripts  VMware Tools is starting.
 # guestToolsNotRunning        VMware Tools is not running.
-# guestToolsRunning           VMware Tools is running. 
-       
+# guestToolsRunning           VMware Tools is running.
+
 # VirtualMachineToolsVersionStatus
 # guestToolsBlacklisted       VMware Tools is installed, but the installed version is known to have a grave bug and should be immediately upgraded.
 # Since vSphere API 5.0
@@ -830,7 +862,7 @@ sub dc_runtime_info
 # Since vSphere API 5.0
 # guestToolsTooOld            VMware Tools is installed, but the version is too old.
 # Since vSphere API 5.0
-# guestToolsUnmanaged         VMware Tools is installed, but it is not managed by VMWare. 
+# guestToolsUnmanaged         VMware Tools is installed, but it is not managed by VMWare.
 
                if ($vm->get_property('runtime.powerState')->val eq "poweredOn")
                   {
@@ -1049,7 +1081,7 @@ sub dc_runtime_info
           $output = $output . $tools_out;
           }
        }
-    
+
 
     if (($subselect eq "status") || ($subselect eq "all"))
        {
@@ -1121,8 +1153,8 @@ sub dc_runtime_info
           $output = $output . $vc_gray_cnt . "/" . @$dc_views . " Vcenters gray" . $multiline . $tmp_output;
           }
        }
-    
-    
+
+
     if (($subselect eq "issues") || ($subselect eq "all"))
        {
        $true_sub_sel = 0;
@@ -1153,7 +1185,7 @@ sub dc_runtime_info
                              {
                              $isregexp = 0;
                              }
-                       
+
                           if (defined($blacklist))
                              {
                              $issues_ignored_cnt++;
@@ -1195,7 +1227,7 @@ sub dc_runtime_info
        }
     }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 sub version_lic
@@ -1248,12 +1280,12 @@ sub print_help
     {
     my ($section) = @_;
     my $page;
-    
+
     if (!defined($section))
        {
        $section = "all";
        }
-    
+
     if ($section =~ m/^[a-z].*$/i)
        {
        $section = lc($section);
@@ -1383,6 +1415,9 @@ sub print_help
        print "                                    value in the n% (i.e. 90%). If checking more than a single\n";
        print "                                    with --usedspace volume only percent is allowed as threshold or\n";
        print "                                    --spaceleft must be used.\n";
+       print "-a, --warning_prov=<threshold>      Warning provisionned space threshold in percent without percent symbol.\n";
+       print "-A, --critical_prov=<threshold>     Critical provisionned space threshold in percent without percent symbol.\n";
+       print "\n";
        print "    --spaceleft                     This has to be used in conjunction with thresholds as mentioned above.\n";
        print "                                    The thresholds must be specified as the space left on device and with the\n";
        print "                                    same unit (MB or GB).\n";
@@ -2107,7 +2142,7 @@ sub print_help
        print "\n";
        print "-C, --cluster=<clustername>         ESX or ESXi clustername.\n";
        print "    --sslport=<port>                If a SSL port different from 443 is used.\n";
-   
+
        print "-S, --select=COMMAND\n";
        print "   Specify command type (cpu,mem,net,io,volumes,runtime, ...)\n";
        print "-s, --subselect=SUBCOMMAND\n";
@@ -2176,7 +2211,7 @@ sub print_help
        }
     }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 sub host_cpu_info
@@ -2186,7 +2221,7 @@ sub host_cpu_info
     my $output;
     my $host_view;
     my $value;
-    my $perf_val_error = 1;      # Used as a flag when getting all the values 
+    my $perf_val_error = 1;      # Used as a flag when getting all the values
                                  # with one call won't work.
     my $actual_state;            # Hold the actual state for to be compared
     my $true_sub_sel=1;          # Just a flag. To have only one return at the en
@@ -2196,12 +2231,12 @@ sub host_cpu_info
                                  # 1 -> non existing subselect
 
     $values = return_host_performance_values($host,'cpu', ('wait.summation:*','ready.summation:*', 'usage.average'));
-        
+
     if (defined($values))
        {
        $perf_val_error = 0;
        }
-       
+
     if (!defined($subselect))
        {
        # This means no given subselect. So all checks must be performemed
@@ -2311,13 +2346,13 @@ sub host_cpu_info
 
           if ($subselect eq "all")
              {
-             $output = $output . " - CPU usage=" . $value . "%"; 
+             $output = $output . " - CPU usage=" . $value . "%";
              $perfdata = $perfdata . " \'cpu_usage\'=" . $value . "%;" . $perf_thresholds . ";;";
              }
           else
              {
              $actual_state = check_against_threshold($value);
-             $output = "CPU usage=" . $value . "%"; 
+             $output = "CPU usage=" . $value . "%";
              $perfdata = "\'cpu_usage\'=" . $value . "%;" . $perf_thresholds . ";;";
              $state = check_state($state, $actual_state);
              }
@@ -2349,7 +2384,7 @@ sub host_cpu_info
        }
     }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 sub host_disk_io_info
@@ -2443,7 +2478,7 @@ sub host_disk_io_info
              }
           }
        }
-    
+
     if (($subselect eq "read") || ($subselect eq "all"))
        {
        $true_sub_sel = 0;
@@ -2479,7 +2514,7 @@ sub host_disk_io_info
              }
           }
        }
-    
+
     if (($subselect eq "read_latency") || ($subselect eq "all"))
        {
        $true_sub_sel = 0;
@@ -2515,7 +2550,7 @@ sub host_disk_io_info
              }
           }
        }
-    
+
     if (($subselect eq "write") || ($subselect eq "all"))
        {
        $true_sub_sel = 0;
@@ -2551,7 +2586,7 @@ sub host_disk_io_info
              }
           }
        }
-    
+
     if (($subselect eq "write_latency") || ($subselect eq "all"))
        {
        $true_sub_sel = 0;
@@ -2587,7 +2622,7 @@ sub host_disk_io_info
              }
           }
        }
-    
+
     if (($subselect eq "usage") || ($subselect eq "all"))
        {
        $true_sub_sel = 0;
@@ -2659,7 +2694,7 @@ sub host_disk_io_info
              }
           }
        }
-    
+
     if (($subselect eq "device_latency") || ($subselect eq "all"))
        {
        $true_sub_sel = 0;
@@ -2695,7 +2730,7 @@ sub host_disk_io_info
              }
           }
        }
-    
+
     if (($subselect eq "queue_latency") || ($subselect eq "all"))
        {
        $true_sub_sel = 0;
@@ -2731,7 +2766,7 @@ sub host_disk_io_info
              }
           }
        }
-    
+
     if (($subselect eq "total_latency") || ($subselect eq "all"))
        {
        $true_sub_sel = 0;
@@ -2778,7 +2813,7 @@ sub host_disk_io_info
        }
     }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 sub host_list_vm_volumes_info
@@ -2807,7 +2842,7 @@ sub host_list_vm_volumes_info
     return datastore_volumes_info($host_view->datastore);
     }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 sub host_mem_info
@@ -2822,7 +2857,7 @@ sub host_mem_info
     my $vm_views;
     my @vms = ();
     my $index;
-    my $perf_val_error = 1;      # Used as a flag when getting all the values 
+    my $perf_val_error = 1;      # Used as a flag when getting all the values
                                  # with one call won't work.
     my $actual_state;            # Hold the actual state for to be compared
     my $true_sub_sel=1;          # Just a flag. To have only one return at the en
@@ -2830,14 +2865,14 @@ sub host_mem_info
                                  # no subselect is given we select all
                                  # 0 -> existing subselect
                                  # 1 -> non existing subselect
-    
+
     ($host_view, $values) = return_host_performance_values($host, 'mem', ( 'usage.average', 'consumed.average','swapused.average', 'overhead.average', 'vmmemctl.average'));
-        
+
     if (defined($values))
        {
        $perf_val_error = 0;
        }
-       
+
     if (!defined($subselect))
        {
        # This means no given subselect. So all checks must be performemed
@@ -2866,13 +2901,13 @@ sub host_mem_info
           $value = simplify_number(convert_number($$values[0][0]->value) * 0.01);
           if ($subselect eq "all")
              {
-             $output = "mem usage=" . $value . "%"; 
+             $output = "mem usage=" . $value . "%";
              $perfdata = "\'mem_usage\'=" . $value . "%;" . $perf_thresholds . ";;";
              }
           else
              {
              $actual_state = check_against_threshold($value);
-             $output = "mem usage=" . $value . "%"; 
+             $output = "mem usage=" . $value . "%";
              $perfdata = "\'mem_usage\'=" . $value . "%;" . $perf_thresholds . ";;";
              $state = check_state($state, $actual_state);
              }
@@ -2880,11 +2915,11 @@ sub host_mem_info
        else
           {
           $actual_state = 3;
-          $output = "mem usage=Not available"; 
+          $output = "mem usage=Not available";
           $state = check_state($state, $actual_state);
           }
        }
-       
+
     if (($subselect eq "consumed") || ($subselect eq "all"))
        {
        $true_sub_sel = 0;
@@ -2969,7 +3004,7 @@ sub host_mem_info
              if ($actual_state != 0)
                 {
                 $vm_views = Vim::find_entity_views(view_type => 'VirtualMachine', begin_entity => $$host_view[0], properties => ['name', 'runtime.powerState']);
-   
+
                 if (defined($vm_views))
                    {
                    if (@$vm_views)
@@ -2982,7 +3017,7 @@ sub host_mem_info
                                  push(@vms, $vm);
                                  }
                               }
-                   
+
                       $values = generic_performance_values(\@vms, 'mem', ('swapped.average'));
                       if (defined($values))
                          {
@@ -2999,7 +3034,7 @@ sub host_mem_info
                                  }
                          }
                       }
-      
+
                    }
                 }
              $state = check_state($state, $actual_state);
@@ -3106,7 +3141,7 @@ sub host_mem_info
              if ($actual_state != 0)
                 {
                 $vm_views = Vim::find_entity_views(view_type => 'VirtualMachine', begin_entity => $$host_view[0], properties => ['name', 'runtime.powerState']);
-   
+
                 if (defined($vm_views))
                    {
                    if (@$vm_views)
@@ -3119,7 +3154,7 @@ sub host_mem_info
                                  }
                               }
                       $values = generic_performance_values(\@vms, 'mem', ('vmmemctl.average'));
-         
+
                       if (defined($values))
                          {
                          foreach $index (0..@vms-1)
@@ -3164,7 +3199,7 @@ sub host_mem_info
        }
     }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 sub host_mounted_media_info
@@ -3180,7 +3215,7 @@ sub host_mounted_media_info
     my $match;
     my $displayname;
     my $devices;
-   
+
     $host_view = Vim::find_entity_view(view_type => 'HostSystem', filter => $host, properties => ['name', 'runtime.inMaintenanceMode']);
     if (!defined($host_view))
        {
@@ -3202,17 +3237,17 @@ sub host_mounted_media_info
        exit 2;
        }
     $output = '';
-      
+
     foreach $vm (@$vm_views)
             {
             # change get_property to {} to avoid infinite loop
             $istemplate = $vm->{'config.template'};
-            
+
             if ($istemplate && ($istemplate eq 'true'))
                {
                next;
                }
-            
+
             $match = 0;
             $displayname = $vm->name;
 
@@ -3224,7 +3259,7 @@ sub host_mounted_media_info
                {
                $isregexp = 0;
                }
-               
+
             if (defined($blacklist))
                {
                if (isblacklisted(\$blacklist, $isregexp, $displayname))
@@ -3294,7 +3329,7 @@ sub host_mounted_media_info
     return ($state, $output);
     }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 # Notice for further development of this module:
@@ -3324,14 +3359,14 @@ sub host_net_info
                                  # no subselect is given we select all
                                  # 0 -> existing subselect
                                  # 1 -> non existing subselect
-        
+
     if (!defined($subselect))
        {
        # This means no given subselect. So all checks must be performemed
        # Therefore with all set no threshold check can be performed
        $subselect = "all";
        $true_sub_sel = 0;
-       
+
        if ( $perf_thresholds ne ";")
           {
           print "Error! Thresholds are only allowed with subselects!\n";
@@ -3369,7 +3404,7 @@ sub host_net_info
           $state = check_state($state, $actual_state);
           }
        }
-   
+
     if (($subselect eq "receive") || ($subselect eq "all"))
        {
        $true_sub_sel = 0;
@@ -3394,18 +3429,18 @@ sub host_net_info
           if ($subselect eq "all")
              {
              $actual_state = 3;
-             $output = $output . " net receive=Not available"; 
+             $output = $output . " net receive=Not available";
              $state = check_state($state, $actual_state);
              }
           else
              {
              $actual_state = 3;
-             $output = "net receive=Not available"; 
+             $output = "net receive=Not available";
              $state = check_state($state, $actual_state);
              }
           }
        }
-  
+
     if (($subselect eq "send") || ($subselect eq "all"))
        {
        $true_sub_sel = 0;
@@ -3414,13 +3449,13 @@ sub host_net_info
           $value = simplify_number(convert_number($$values[0][2]->value));
           if ($subselect eq "all")
              {
-             $output =$output . ", net send=" . $value . " KBps"; 
+             $output =$output . ", net send=" . $value . " KBps";
              $perfdata = $perfdata . " \'net_send\'=" . $value . ";" . $perf_thresholds . ";;";
              }
           else
              {
              $actual_state = check_against_threshold($value);
-             $output = "net send=" . $value . " KBps"; 
+             $output = "net send=" . $value . " KBps";
              $perfdata = "\'net_send\'=" . $value . ";" . $perf_thresholds . ";;";
              $state = check_against_threshold($value);
              }
@@ -3430,13 +3465,13 @@ sub host_net_info
           if ($subselect eq "all")
              {
              $actual_state = 3;
-             $output =$output . ", net send=Not available"; 
+             $output =$output . ", net send=Not available";
              $state = check_state($state, $actual_state);
              }
           else
              {
              $actual_state = 3;
-             $output = "net send=Not available"; 
+             $output = "net send=Not available";
              $state = check_state($state, $actual_state);
              }
           }
@@ -3452,13 +3487,13 @@ sub host_net_info
           print "Host " . $$host{"name"} . " does not exist\n";
           exit 2;
           }
-       
+
        if (uc($host_view->get_property('runtime.inMaintenanceMode')) eq "TRUE")
           {
           print "Notice: " . $host_view->name . " is in maintenance mode, check skipped\n";
           exit 0;
           }
- 
+
        $network_system = Vim::get_view(mo_ref => $host_view->get_property('configManager.networkSystem') , properties => ['networkInfo']);
        $network_system->update_view_data(['networkInfo']);
        $network_config = $network_system->networkInfo;
@@ -3503,7 +3538,7 @@ sub host_net_info
                                      {
                                      $isregexp = 0;
                                      }
-                                     
+
                                   if (defined($blacklist))
                                      {
                                      if (isblacklisted(\$blacklist, $isregexp, $NIC{$nic_key}->device))
@@ -3512,7 +3547,7 @@ sub host_net_info
                                         next;
                                         }
                                      }
-                   
+
                                   if (!defined($NIC{$nic_key}->linkSpeed))
                                      {
                                      if ($output_nic)
@@ -3553,7 +3588,7 @@ sub host_net_info
        }
    }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 sub host_runtime_info
@@ -3637,7 +3672,7 @@ sub host_runtime_info
        print "Error! --listsensors only allowed whith -s health!\n";
        exit 2;
        }
-       
+
     $host_view = Vim::find_entity_view(view_type => 'HostSystem', filter => $host, properties => ['name', 'runtime', 'overallStatus', 'configIssue']);
 
     if (!defined($host_view))
@@ -3695,7 +3730,7 @@ sub host_runtime_info
                      {
                      $isregexp = 0;
                      }
-               
+
                   if (defined($blacklist))
                      {
                      if (isblacklisted(\$blacklist, $isregexp, $vm->name))
@@ -3712,7 +3747,7 @@ sub host_runtime_info
                       }
 
                   $vm_state = $vm->runtime->powerState->val;
-               
+
                   if ($vm_state eq "poweredOn")
                      {
                      $poweredon++;
@@ -3810,7 +3845,7 @@ sub host_runtime_info
                         print "Critical! No result from CIM server.CIM server is probably not running or not running correctly! Please restart!\n";
                         exit 2;
                         }
-                        
+
                      $itemref = {
                                 name => $_->name,
                                 summary => $_->status->summary
@@ -3842,7 +3877,7 @@ sub host_runtime_info
                            {
                            $isregexp = 0;
                            }
-                  
+
                         if (defined($blacklist))
                            {
                            if (isblacklisted(\$blacklist, $isregexp, $_->name, "Storage"))
@@ -3850,7 +3885,7 @@ sub host_runtime_info
                               next;
                               }
                            }
-     
+
                         if (defined($whitelist))
                            {
                            if (isnotwhitelisted(\$whitelist, $isregexp, $_->name, "Storage"))
@@ -3858,14 +3893,14 @@ sub host_runtime_info
                               next;
                               }
                            }
-   
+
                         $actual_state = check_health_state($_->status->key);
                         $itemref = {
                                    name => $_->name,
                                    summary => $_->status->summary
                                    };
                         push(@{$components->{$actual_state}{Storage}}, $itemref);
-                        
+
                         if ($actual_state != 0)
                            {
                            $state = check_state($state, $actual_state);
@@ -3891,7 +3926,7 @@ sub host_runtime_info
                         {
                         $isregexp = 0;
                         }
-               
+
                      if (defined($blacklist))
                         {
                         if (isblacklisted(\$blacklist, $isregexp, $_->name, "Memory"))
@@ -3899,7 +3934,7 @@ sub host_runtime_info
                            next;
                            }
                         }
-  
+
                      if (defined($whitelist))
                         {
                         if (isnotwhitelisted(\$whitelist, $isregexp, $_->name, "Memory"))
@@ -3907,14 +3942,14 @@ sub host_runtime_info
                            next;
                            }
                         }
-                     
+
                      $actual_state = check_health_state($_->status->key);
                      $itemref = {
                                 name => $_->name,
                                 summary => $_->status->summary
                                 };
                      push(@{$components->{$actual_state}{Memory}}, $itemref);
-                     
+
                      if ($actual_state != 0)
                         {
                         $state = check_state($state, $actual_state);
@@ -3940,14 +3975,14 @@ sub host_runtime_info
                      #print ", Current Reading = " . $_->currentReading;
                      #print ", Unit Modifier = " . $_->unitModifier;
                      #print ", Baseunits  = " . $_->baseUnits . "\n";
-                    
+
                      # Filter out software components. Doesn't make sense here
                      if ( $_->sensorType eq "Software Components" )
                         {
                         next;
                         }
 
-                     # Filter out sensors which have not valid data. Often a sensor is reckognized by vmware 
+                     # Filter out sensors which have not valid data. Often a sensor is reckognized by vmware
                      # but has not the ability to report something senseful. So it can be skipped.
                      if (( $_->healthState->label =~ m/unknown/i ) && ( $_->healthState->summary  =~ m/Cannot report/i ))
                         {
@@ -3962,7 +3997,7 @@ sub host_runtime_info
                         {
                         $isregexp = 0;
                         }
-               
+
                      if (defined($blacklist))
                         {
                         if (isblacklisted(\$blacklist, $isregexp, $_->name, $_->sensorType))
@@ -3970,7 +4005,7 @@ sub host_runtime_info
                            next;
                            }
                         }
-  
+
                      if (defined($whitelist))
                         {
                         if (isnotwhitelisted(\$whitelist, $isregexp, $_->name, $_->sensorType))
@@ -3978,7 +4013,7 @@ sub host_runtime_info
                            next;
                            }
                      }
-                     
+
                      $actual_state = check_health_state($_->healthState->key);
                      $itemref = {
                                 name => $_->name,
@@ -3986,7 +4021,7 @@ sub host_runtime_info
                                 label => $_->healthState->label
                                 };
                      push(@{$components->{$actual_state}{$_->sensorType}}, $itemref);
-                     
+
                      if ($actual_state != 0)
                         {
                         if (($actual_state == 3) && (!defined($ignoreunknown)))
@@ -4033,9 +4068,9 @@ sub host_runtime_info
                    {
                    $output = "$AlertCount health issue(s) found in " . ($AlertCount + $OKCount) . " checks: ";
                    }
-                
+
                 $AlertIndex = 0;
-                
+
                 if ($subselect ne "all")
                    {
                    foreach $fstate (reverse(sort(keys(%$components))))
@@ -4116,7 +4151,7 @@ sub host_runtime_info
                     {
                     $isregexp = 0;
                     }
-               
+
                 if (defined($blacklist))
                    {
                    if (isblacklisted(\$blacklist, $isregexp, $_->name))
@@ -4131,11 +4166,11 @@ sub host_runtime_info
                       next;
                       }
                 }
-                 
+
                 $actual_state = check_health_state($_->status->key);
                 $sensortype = $_->name;
                 $components->{$actual_state}{"Storage"}{$_->name} = $_->status->summary;
-                 
+
                 if ($actual_state != 0)
                    {
                    $state = check_state($state, $actual_state);
@@ -4199,7 +4234,7 @@ sub host_runtime_info
                         {
                         next;
                         }
-                     
+
                      if (defined($isregexp))
                         {
                         $isregexp = 1;
@@ -4208,7 +4243,7 @@ sub host_runtime_info
                         {
                         $isregexp = 0;
                         }
-               
+
                      if (defined($blacklist))
                         {
                         if (isblacklisted(\$blacklist, $isregexp, $_->name))
@@ -4223,7 +4258,7 @@ sub host_runtime_info
                            next;
                            }
                         }
-                     
+
                      $actual_state = check_health_state($_->healthState->key);
                      $_->name =~ m/(.*?)\s-.*$/;
                      $itemref = {
@@ -4243,7 +4278,7 @@ sub host_runtime_info
                         {
                         $OKCount++;
                         }
-                        
+
                      if (exists($base_units{$itemref->{unit}}))
                         {
                         $perfdata = $perfdata . " \'" . $itemref->{name} . "\'=" . ($itemref->{value} * 10 ** $itemref->{power10}) . $base_units{$itemref->{unit}} . ";;;;";
@@ -4278,7 +4313,7 @@ sub host_runtime_info
                   {
                   $output = "All $OKCount temperature checks are GREEN." . $multiline . $output;
                   $state = 0;
-                  }                               
+                  }
           }
        else
           {
@@ -4307,7 +4342,7 @@ sub host_runtime_info
                       {
                       $isregexp = 0;
                       }
-            
+
                   if (defined($blacklist))
                      {
                      if (isblacklisted(\$blacklist, $isregexp, $_->fullFormattedMessage))
@@ -4338,9 +4373,9 @@ sub host_runtime_info
           {
           $actual_state = 0;
           }
-       
+
        $state = check_state($state, $actual_state);
-          
+
        if ($subselect eq "all")
           {
           $output = $output . " - " . $issue_cnt . " config issues  - " . $issues_ignored_cnt  . " config issues ignored";
@@ -4361,7 +4396,7 @@ sub host_runtime_info
        }
     }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 sub host_service_info
@@ -4405,7 +4440,7 @@ sub host_service_info
                {
                $isregexp = 0;
                }
-               
+
             if (defined($blacklist))
                {
                if (isblacklisted(\$blacklist, $isregexp, $service_name))
@@ -4444,14 +4479,14 @@ sub host_service_info
        {
        $state = 0;
        }
-       
+
     $output = "Checked services:(" . $service_count . ") Services up:(" . ($service_count - $alert_count) . ") Services down:(" . $alert_count . ")" . $output;
 
 
     return ($state, $output);
     }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 sub host_storage_info
@@ -4514,7 +4549,7 @@ sub host_storage_info
     my $mpath_error_output = " ";
     my $this_mpath_error = 0;             # Flag.
                                           # 0: ok
-                                          # 1: one or more the paths has an error 
+                                          # 1: one or more the paths has an error
 
     my $output = " ";
     my $lun_ok_output = " ";
@@ -4542,7 +4577,7 @@ sub host_storage_info
        print "Notice: " . $host_view->name . " is in maintenance mode, check skipped\n";
        exit 1;
        }
-   
+
     if (!defined($subselect))
        {
        # This means no given subselect. So all checks must be performemed
@@ -4608,8 +4643,8 @@ sub host_storage_info
                      $ignored++;
                      next;
                      }
-                  }                    
- 
+                  }
+
                if ($dev->status eq "online")
                   {
                   $count++;
@@ -4643,7 +4678,7 @@ sub host_storage_info
 
        # Remove the leading blank
        $output =~ s/^ //;
-       
+
        if ($subselect eq "all")
           {
           $output = "Adapters:" . $count++ . " Ignored:" . $ignored++ . " Online:" . $no_online . " Offline:" . $no_offline . " Unbound:" . $no_unbound . " Unknown:" . $no_unknown . $multiline;
@@ -4794,7 +4829,7 @@ sub host_storage_info
              $output = $output . $multiline . $lun_error_output . $lun_warn_output . $lun_ok_output;
              }
           }
-       
+
        # Remove the last \n or <br>
        $output =~ s/$multiline$//;
        }
@@ -4813,7 +4848,7 @@ sub host_storage_info
                           {
                           $scsi_id = $path->lun;
                           $scsi_id =~ s/^.*-//;
-                          
+
                           if (defined($isregexp))
                              {
                              $isregexp = 1;
@@ -4847,7 +4882,7 @@ sub host_storage_info
                                    }
                                 }
                              }
-           
+
                           if ($scsi_id ne $scsi_id_old)
                              {
                              # If we are here we have a new multipath
@@ -4876,13 +4911,13 @@ sub host_storage_info
                                 $multipathState = $path->state;
                                 if (($multipathState eq "active") || ($multipathState eq "disabled"))
                                    {
-                                   $mpath_tmp_output = $mpath_tmp_output . "Mpath State: " . $multipathState . $multiline; 
+                                   $mpath_tmp_output = $mpath_tmp_output . "Mpath State: " . $multipathState . $multiline;
                                    $actual_state = 0;
                                    $state = check_state($state, $actual_state);
                                    }
                                 if ($multipathState eq "dead")
                                    {
-                                   $mpath_tmp_output = $mpath_tmp_output . "Mpath State: " . $multipathState . $multiline; 
+                                   $mpath_tmp_output = $mpath_tmp_output . "Mpath State: " . $multipathState . $multiline;
                                    $actual_state = 2;
                                    $state = check_state($state, $actual_state);
                                    $this_mpath_error = 1;
@@ -4890,7 +4925,7 @@ sub host_storage_info
                                    }
                                 if ($multipathState eq "standby")
                                    {
-                                   $mpath_tmp_output = $mpath_tmp_output . "Mpath State: " . $multipathState . $multiline; 
+                                   $mpath_tmp_output = $mpath_tmp_output . "Mpath State: " . $multipathState . $multiline;
                                    if (defined($standbyok))
                                       {
                                       $actual_state = 0;
@@ -4906,7 +4941,7 @@ sub host_storage_info
                                    }
                                 if ($multipathState eq "unknown")
                                    {
-                                   $mpath_tmp_output = $mpath_tmp_output . "Mpath State: " . $multipathState . $multiline; 
+                                   $mpath_tmp_output = $mpath_tmp_output . "Mpath State: " . $multipathState . $multiline;
                                    $actual_state = 3;
                                    $state = check_state($state, $actual_state);
                                    $this_mpath_error = 1;
@@ -4943,13 +4978,13 @@ sub host_storage_info
 
                              if (($pathState eq "active") || ($pathState eq "standby") || ($pathState eq "disabled"))
                                 {
-                                $mpath_tmp_output = $mpath_tmp_output . $multiline . "State: " . $pathState . $multiline; 
+                                $mpath_tmp_output = $mpath_tmp_output . $multiline . "State: " . $pathState . $multiline;
                                 $actual_state = 0;
                                 $state = check_state($state, $actual_state);
                                 }
                              if ($pathState eq "dead")
                                 {
-                                $mpath_tmp_output = $mpath_tmp_output . $multiline . "State: " . $pathState . $multiline; 
+                                $mpath_tmp_output = $mpath_tmp_output . $multiline . "State: " . $pathState . $multiline;
                                 $actual_state = 2;
                                 $state = check_state($state, $actual_state);
                                 $this_mpath_error = 1;
@@ -4957,7 +4992,7 @@ sub host_storage_info
                                 }
                              if ($pathState eq "unknown")
                                 {
-                                $mpath_tmp_output = $mpath_tmp_output . $multiline . "State: " . $pathState . $multiline; 
+                                $mpath_tmp_output = $mpath_tmp_output . $multiline . "State: " . $pathState . $multiline;
                                 $actual_state = 1;
                                 $state = check_state($state, $actual_state);
                                 $this_mpath_error = 1;
@@ -5013,7 +5048,7 @@ sub host_storage_info
        }
     }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 sub host_uptime_info
@@ -5038,7 +5073,7 @@ sub host_uptime_info
    return ($state, $output);
    }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 sub get_key_metrices
@@ -5097,7 +5132,7 @@ sub generic_performance_values
        $perfMgr = Vim::get_view(mo_ref => Vim::get_service_content()->perfManager, properties => [ 'perfCounter' ]);
        $perfargs->{perfCounter} = $perfMgr;
        }
-     
+
     $metrices = get_key_metrices($perfMgr, $group, @list);
 
     @perf_query_spec = ();
@@ -5184,7 +5219,7 @@ sub return_host_vmware_performance_values
     my $values;
     my $vmname = shift(@_);
     my $vm_view;
-        
+
     $vm_view = Vim::find_entity_views(view_type => 'VirtualMachine', filter => {name => "$vmname"}, properties => [ 'name', 'runtime.powerState' ]);
 
     if (!defined($vm_view))
@@ -5237,7 +5272,7 @@ sub return_cluster_performance_values
        print "Cluster " . $cluster_name . " does not exist\n";
        exit 2;
        }
-        
+
     $values = generic_performance_values($cluster_view, @_);
 
     if ($@)
@@ -5251,7 +5286,7 @@ sub return_cluster_performance_values
     }
 
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 sub vm_cpu_info
@@ -5260,7 +5295,7 @@ sub vm_cpu_info
     my $state = 0;
     my $output;
     my $value;
-    my $perf_val_error = 1;      # Used as a flag when getting all the values 
+    my $perf_val_error = 1;      # Used as a flag when getting all the values
                                  # with one call won't work.
     my $actual_state;            # Hold the actual state for to be compared
     my $true_sub_sel=1;          # Just a flag. To have only one return at the en
@@ -5268,14 +5303,14 @@ sub vm_cpu_info
                                  # no subselect is given we select all
                                  # 0 -> existing subselect
                                  # 1 -> non existing subselect
- 
+
     $values = return_host_vmware_performance_values($vmname,'cpu', ('wait.summation:*','ready.summation:*', 'usage.average'));
-        
+
     if (defined($values))
        {
        $perf_val_error = 0;
        }
-       
+
     if (!defined($subselect))
        {
        # This means no given subselect. So all checks must be performemed
@@ -5384,13 +5419,13 @@ sub vm_cpu_info
              }
           if ($subselect eq "all")
              {
-             $output = $output . " - CPU usage=" . $value . "%"; 
+             $output = $output . " - CPU usage=" . $value . "%";
              $perfdata = $perfdata . " \'cpu_usage\'=" . $value . "%;" . $perf_thresholds . ";;";
              }
           else
              {
              $actual_state = check_against_threshold($value);
-             $output = "CPU usage=" . $value . "%"; 
+             $output = "CPU usage=" . $value . "%";
              $perfdata = "\'cpu_usage\'=" . $value . "%;" . $perf_thresholds . ";;";
              $state = check_state($state, $actual_state);
              }
@@ -5422,7 +5457,7 @@ sub vm_cpu_info
        }
     }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 sub vm_disk_io_info
@@ -5439,7 +5474,7 @@ sub vm_disk_io_info
                                  # 1 -> non existing subselect
 
     $values = return_host_vmware_performance_values($vmname, 'disk', ('usage.average:*', 'read.average:*', 'write.average:*'));
-    
+
     if (!defined($subselect))
        {
        # This means no given subselect. So all checks must be performemed
@@ -5480,7 +5515,7 @@ sub vm_disk_io_info
           $state = check_state($state, $actual_state);
           }
        }
-    
+
     if (($subselect eq "read") || ($subselect eq "all"))
        {
        $true_sub_sel = 0;
@@ -5552,7 +5587,7 @@ sub vm_disk_io_info
              }
           }
        }
-       
+
     if ($true_sub_sel == 1)
        {
        get_me_out("Unknown VM IO subselect");
@@ -5563,7 +5598,7 @@ sub vm_disk_io_info
        }
     }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 sub vm_mem_info
@@ -5572,7 +5607,7 @@ sub vm_mem_info
     my $state = 0;
     my $output;
     my $value;
-    my $perf_val_error = 1;      # Used as a flag when getting all the values 
+    my $perf_val_error = 1;      # Used as a flag when getting all the values
                                  # with one call won't work.
     my $actual_state;            # Hold the actual state for to be compared
     my $true_sub_sel=1;          # Just a flag. To have only one return at the en
@@ -5582,12 +5617,12 @@ sub vm_mem_info
                                  # 1 -> non existing subselect
 
     $values = return_host_vmware_performance_values($vmname, 'mem', ('usage.average', 'consumed.average', 'overhead.average', 'active.average', 'vmmemctl.average'));
-        
+
     if (defined($values))
        {
        $perf_val_error = 0;
        }
-       
+
     if (defined($values))
        {
        $perf_val_error = 0;
@@ -5596,7 +5631,7 @@ sub vm_mem_info
        {
        $perf_val_error = 1;
        }
-       
+
     if (!defined($subselect))
        {
        # This means no given subselect. So all checks must be performemed
@@ -5625,13 +5660,13 @@ sub vm_mem_info
           $value = simplify_number(convert_number($$values[0][0]->value) * 0.01);
           if ($subselect eq "all")
              {
-             $output = "mem usage=" . $value . "%"; 
+             $output = "mem usage=" . $value . "%";
              $perfdata ="\'mem_usage\'=" . $value . "%;" . $perf_thresholds . ";;";
              }
           else
              {
              $actual_state = check_against_threshold($value);
-             $output = "mem usage=" . $value . "%"; 
+             $output = "mem usage=" . $value . "%";
              $perfdata ="\'mem_usage\'=" . $value . "%;" . $perf_thresholds . ";;";
              $state = check_state($state, $actual_state);
              }
@@ -5639,11 +5674,11 @@ sub vm_mem_info
        else
           {
           $actual_state = 3;
-          $output = "mem usage=Not available"; 
+          $output = "mem usage=Not available";
           $state = check_state($state, $actual_state);
           }
        }
-    
+
     if (($subselect eq "consumed") || ($subselect eq "all"))
        {
        $true_sub_sel = 0;
@@ -5693,7 +5728,7 @@ sub vm_mem_info
              }
           }
        }
-    
+
     if (($subselect eq "overhead") || ($subselect eq "all"))
        {
        $true_sub_sel = 0;
@@ -5743,7 +5778,7 @@ sub vm_mem_info
              }
           }
        }
-    
+
     if (($subselect eq "active") || ($subselect eq "all"))
        {
        $true_sub_sel = 0;
@@ -5854,7 +5889,7 @@ sub vm_mem_info
        }
     }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 sub vm_net_info
@@ -5893,13 +5928,13 @@ sub vm_net_info
           $value = simplify_number(convert_number($$values[0][0]->value));
           if ($subselect eq "all")
              {
-             $output = "net usage=" . $value . " KBps"; 
+             $output = "net usage=" . $value . " KBps";
              $perfdata = $perfdata . " \'net_usage\'=" . $value . ";" . $perf_thresholds . ";;";
              }
           else
              {
              $actual_state = check_against_threshold($value);
-             $output = "net usage=" . $value . " KBps"; 
+             $output = "net usage=" . $value . " KBps";
              $perfdata = "\'net_usage\'=" . $value . ";" . $perf_thresholds . ";;";
              $state = check_state($state, $actual_state);
              }
@@ -5907,7 +5942,7 @@ sub vm_net_info
        else
           {
           $actual_state = 3;
-          $output = "net usage=Not available"; 
+          $output = "net usage=Not available";
           $state = check_state($state, $actual_state);
           }
        }
@@ -5920,13 +5955,13 @@ sub vm_net_info
           $value = simplify_number(convert_number($$values[0][1]->value));
           if ($subselect eq "all")
              {
-             $output = $output . ", net receive=" . $value . " KBps"; 
+             $output = $output . ", net receive=" . $value . " KBps";
              $perfdata = $perfdata . " \'net_receive\'=" . $value . ";" . $perf_thresholds . ";;";
              }
           else
              {
              $actual_state = check_against_threshold($value);
-             $output = "net receive=" . $value . " KBps"; 
+             $output = "net receive=" . $value . " KBps";
              $perfdata = "\'net_receive\'=" . $value . ";" . $perf_thresholds . ";;";
              $state = check_against_threshold($value);
              }
@@ -5936,13 +5971,13 @@ sub vm_net_info
           if ($subselect eq "all")
              {
              $actual_state = 3;
-             $output = $output . " net receive=Not available"; 
+             $output = $output . " net receive=Not available";
              $state = check_state($state, $actual_state);
              }
           else
              {
              $actual_state = 3;
-             $output = "net receive=Not available"; 
+             $output = "net receive=Not available";
              $state = check_state($state, $actual_state);
              }
           }
@@ -5956,13 +5991,13 @@ sub vm_net_info
           $value = simplify_number(convert_number($$values[0][2]->value));
           if ($subselect eq "all")
              {
-             $output =$output . ", net send=" . $value . " KBps"; 
+             $output =$output . ", net send=" . $value . " KBps";
              $perfdata = $perfdata . " \'net_send\'=" . $value . ";" . $perf_thresholds . ";;";
              }
           else
              {
              $actual_state = check_against_threshold($value);
-             $output = "net send=" . $value . " KBps"; 
+             $output = "net send=" . $value . " KBps";
              $perfdata = "\'net_send\'=" . $value . ";" . $perf_thresholds . ";;";
              $state = check_against_threshold($value);
              }
@@ -5972,13 +6007,13 @@ sub vm_net_info
           if ($subselect eq "all")
              {
              $actual_state = 3;
-             $output =$output . ", net send=Not available"; 
+             $output =$output . ", net send=Not available";
              $state = check_state($state, $actual_state);
              }
           else
              {
              $actual_state = 3;
-             $output = "net send=Not available"; 
+             $output = "net send=Not available";
              $state = check_state($state, $actual_state);
              }
           }
@@ -5994,7 +6029,7 @@ sub vm_net_info
        }
     }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 sub vm_runtime_info
@@ -6017,7 +6052,7 @@ sub vm_runtime_info
                                  # no subselect is given we select all
                                  # 0 -> existing subselect
                                  # 1 -> non existing subselect
-    
+
     my $vm_view = Vim::find_entity_view(view_type => 'VirtualMachine', filter => {name => $vmname}, properties => ['name', 'runtime', 'overallStatus', 'guest', 'configIssue']);
 
     if (!defined($vm_view))
@@ -6128,7 +6163,7 @@ sub vm_runtime_info
                 if ($vm_view->guest->toolsRunningStatus ne "guestToolsExecutingScripts")
                    {
                    $vm_guestState = $vm_view->guest->guestState;
-            
+
                    if ($vm_guestState eq "running")
                       {
                       $actual_state = 0;
@@ -6193,8 +6228,8 @@ sub vm_runtime_info
        # VirtualMachineToolsRunningStatus
        # guestToolsExecutingScripts  VMware Tools is starting.
        # guestToolsNotRunning        VMware Tools is not running.
-       # guestToolsRunning           VMware Tools is running. 
-       
+       # guestToolsRunning           VMware Tools is running.
+
        # VirtualMachineToolsVersionStatus
        # guestToolsBlacklisted       VMware Tools is installed, but the installed version is known to have a grave bug and should be immediately upgraded.
        # Since vSphere API 5.0
@@ -6209,7 +6244,7 @@ sub vm_runtime_info
        # Since vSphere API 5.0
        # guestToolsTooOld            VMware Tools is installed, but the version is too old.
        # Since vSphere API 5.0
-       # guestToolsUnmanaged         VMware Tools is installed, but it is not managed by VMWare. 
+       # guestToolsUnmanaged         VMware Tools is installed, but it is not managed by VMWare.
 
        if (exists($vm_view->guest->{toolsVersionStatus}) && defined($vm_view->guest->toolsVersionStatus) && exists($vm_view->guest->{toolsRunningStatus}) && defined($vm_view->guest->toolsRunningStatus))
           {
@@ -6346,7 +6381,7 @@ sub vm_runtime_info
        }
     }
 
-# A module always must end with a returncode of 1. So placing 1 at the end of a module 
+# A module always must end with a returncode of 1. So placing 1 at the end of a module
 # is a common method to ensure this.
 1;
 #!/usr/bin/perl -w
@@ -6394,7 +6429,7 @@ sub vm_runtime_info
 #            }
 #            $perfdata = $perfdata . " adapters=" . $count . ";"$perf_thresholds . ";;";
 #
-#           # M.Fuerstenau - changed the output a little bit 
+#           # M.Fuerstenau - changed the output a little bit
 #           $output .= $count . " of " . @{$storage->storageDeviceInfo->hostBusAdapter} . " defined/possible adapters online, ";
 #
 # - 30 Mar 2012 M.Fuerstenau
@@ -6601,7 +6636,7 @@ sub vm_runtime_info
 #     with return
 #
 # - 19 Mar 2013 M.Fuerstenau version 0.7.16
-#   - Reformatted and cleaned up a lot of code. Variable definitions are now at the beginning of each 
+#   - Reformatted and cleaned up a lot of code. Variable definitions are now at the beginning of each
 #     subroutine instead of defining them "on the fly" as needed with "my". Especially using "my" for
 #     definition in a loop is not goog coding style
 #
@@ -6614,9 +6649,9 @@ sub vm_runtime_info
 #   - Removed timeshift, interval and maxsamples. If needed use original program from op5.
 #
 # - 25 Mar 2013 M.Fuerstenau version 0.7.19
-#   - Removed $defperfargs because no values will be handled over. Only performance check that needed another 
+#   - Removed $defperfargs because no values will be handled over. Only performance check that needed another
 #     another sampling invel was cluster. This is now fix with 3000.
-#     
+#
 # - 11 Apr 2013 M.Fuerstenau version 0.7.20
 #   - Rewritten and cleaned subroutine host_mem_info. Removed $value1 - $value5. Stepwise completion of $output makes
 #     this unsophisticated construct obsolete.
@@ -6630,7 +6665,7 @@ sub vm_runtime_info
 #     this unsophisticated construct obsolete.
 #
 # - 24 Apr 2013 M.Fuerstenau version 0.7.22
-#   - Because there is a lot of different performance counters for memory in vmware we ave changed something to be 
+#   - Because there is a lot of different performance counters for memory in vmware we ave changed something to be
 #     more specific.
 #     - Enhenced explanations in help.
 #     - Changed swap to swapUSED in host_mem_info().
@@ -6638,10 +6673,10 @@ sub vm_runtime_info
 #     - Removed overall in host_mem_info(). After reading the documentation carefully the addition of consumed.average + overhead.average
 #       seems a little bit senseless because consumed.average includes overhead.average.
 #     - Changed usageMB to CONSUMED in vm_mem_info(). Same for variables.
-#     - Removed swapIN and swapOUT in vm_mem_info(). Not so sensefull for Nagios alerting because it is hard to find 
+#     - Removed swapIN and swapOUT in vm_mem_info(). Not so sensefull for Nagios alerting because it is hard to find
 #       valid thresholds
 #     - Removed swap in vm_mem_info(). From the vmware documentation:
-#       "Current amount of guest physical memory swapped out to the virtual machine's swap file by the VMkernel. Swapped 
+#       "Current amount of guest physical memory swapped out to the virtual machine's swap file by the VMkernel. Swapped
 #        memory stays on disk until the virtual machine needs it. This statistic refers to VMkernel swapping and not
 #        to guest OS swapping. swapped = swapin + swapout"
 #
@@ -6649,9 +6684,9 @@ sub vm_runtime_info
 #       it is not possible to do any alerting here because (especially with vmotion) you have no thresholds.
 #     - Removed OVERHEAD in vm_mem_info(). From the vmware documentation:
 #       "Amount of machine memory used by the VMkernel to run the virtual machine."
-#       So using this we have a useless information about a virtual machine because we have no valid context and we 
+#       So using this we have a useless information about a virtual machine because we have no valid context and we
 #       have no valid thresholds. More important is overhead for the host system. And if we are running in problems here
-#       we have to look which machine must be moved to another host. 
+#       we have to look which machine must be moved to another host.
 #     - As a result of this overall in vm_mem_info() makes no sense.
 #
 # - 25 Apr 2013 M.Fuerstenau version 0.7.23
@@ -6695,8 +6730,8 @@ sub vm_runtime_info
 #     With the variable set to all we can decide wether to leave the function after a subselect section
 #     has been processed or stay and enhance $output and $perfdata. So the code is more clear and
 #     has nearly half the lines of code left.
-#   - Removed KBps as unit in performance data. This unit is not specified in the plugin developer 
-#     guide. Performance data is now just a number without a unit. Adding the unit has to be done 
+#   - Removed KBps as unit in performance data. This unit is not specified in the plugin developer
+#     guide. Performance data is now just a number without a unit. Adding the unit has to be done
 #     in the graphing tool (like pnp4nagios).
 #   - Removed the number of NICs as performance data. A little bit senseless to have those data here.
 #
@@ -6724,8 +6759,8 @@ sub vm_runtime_info
 #
 # - 11 Jun 2013 M.Fuerstenau version 0.7.31
 #   - Changed select option for datastore from vmfs to volumes because we will have volumes on nfs AND vmfs on local or
-#     SAN disks. 
-#   - Changed output for datastore check to use the option --multiline. This will add a \n (unset -> default) for 
+#     SAN disks.
+#   - Changed output for datastore check to use the option --multiline. This will add a \n (unset -> default) for
 #     every line of output. If set it will use HTML tag <br>.
 #
 #     The option --multiline sets a <br> tag instead of \n. This must be filtered out
@@ -6778,10 +6813,10 @@ sub vm_runtime_info
 # - 24 Jun 2013 M.Fuerstenau version 0.7.36
 #   - Changed all .= (for example $output .= $xxx.....) to = $var... (for example $output = $output . $xxx...). .= is shorter
 #     but the longer form of notification is better readable. The probability of overlooking the dot (especially for older eyes
-#     like mine) is smaller. 
+#     like mine) is smaller.
 #
 # - 07 Aug 2013 M.Fuerstenau version 0.8.0
-#   - Changed "eval { require VMware::VIRuntime };" to "use VMware::VIRuntime;".  The eval construct 
+#   - Changed "eval { require VMware::VIRuntime };" to "use VMware::VIRuntime;".  The eval construct
 #     made no sense. If the module isn't available the program will crash with a compile error.
 #
 #   - Removed own subroutine format_uptime() only used by host_uptime_info(). The complete work of this function
@@ -6792,13 +6827,13 @@ sub vm_runtime_info
 #        $output =  "uptime=" . duration_exact($value);
 #
 #   - Removed perfdata from host_uptime_info(). Perfdata for uptime seems senseless. Same for threshold.
-#   - Started modularization of the plugin. The reason is that it is much more easier to 
+#   - Started modularization of the plugin. The reason is that it is much more easier to
 #     patch modules than to patch a large file.
 #   - Variables used in that functions which are defined on the top level
 #     with "my" must now be defined with "our".
 #
 #     BEWARE! Using "our" with unknown modules can lead to curious results if
-#     in this functions are variables with the same name. But in this 
+#     in this functions are variables with the same name. But in this
 #     case it is no risk because the modules are not generic. We have only
 #     broken the plugin in handy pieces.
 #
@@ -6852,8 +6887,8 @@ sub vm_runtime_info
 #       can contain upper and lower letters. Fixed.
 #     - datastore_volumes_info.pm had  my ($datastore, $subselect) = @_; as second line
 #       This was incorrect because "global" variables (defined as our in the main program)
-#       are not handled over via function call. (Yes - may be handling over maybe more ok 
-#       in the sense of structured programming. But really - does handling over and giving back 
+#       are not handled over via function call. (Yes - may be handling over maybe more ok
+#       in the sense of structured programming. But really - does handling over and giving back
 #       a variable makes the code so much clearer? More a kind of philosophy :-)) )
 #
 # - 27 Oct 2013 M.Fuerstenau version 0.8.5
@@ -6873,7 +6908,7 @@ sub vm_runtime_info
 #     Affected subroutine:
 #     host_net_info().
 #   - Bug fixed in generic_performance_values(). Unfortunaltely I had moved
-#     my @values = () to main function. Therefore instead of containing a 
+#     my @values = () to main function. Therefore instead of containing a
 #     new array reference with each run the new references were added to the array
 #     but only the first one was processed. Thanks to Timo Weber for discovering this bug.
 #
@@ -6910,7 +6945,7 @@ sub vm_runtime_info
 #       notResponding  VirtualCenter is not receiving heartbeats from the server
 #                    . The state automatically changes to connected once
 #                      heartbeats are received again. This state is typically
-#                      used to trigger an alarm on the host. 
+#                      used to trigger an alarm on the host.
 #
 #       In the past the presset of returncode was 2. It was set to 0 in case of a
 #       connected. But disconnected doesn' mean a critical error. It means main-
@@ -6918,7 +6953,7 @@ sub vm_runtime_info
 #       notResonding will cause a 2 for critical.
 #     - Kicked out maintenance info in runtime summary and as subselect. In the beginning of
 #       the function is a check for maintenance. In the original program in this case
-#       the program will be left with a die which caused a red alert in Nagios. Now an info 
+#       the program will be left with a die which caused a red alert in Nagios. Now an info
 #       is displayed and a return code of 1 (warning) is deliverd because a maintenance is
 #       regular work. Although monitoring should take notice of it. Therefore a warning.
 #       Therefor the maintenence check in the else tree was scrap. It was never reached.
@@ -6976,7 +7011,7 @@ sub vm_runtime_info
 #
 #     if (uc($host_view->get_property('runtime.inMaintenanceMode')) eq "TRUE")
 #
-#     This is quite stupid. runtime.inMaintenanceMode is xsd:boolean wich means true or false (in 
+#     This is quite stupid. runtime.inMaintenanceMode is xsd:boolean wich means true or false (in
 #     lower cas letters. So a uc() make no sense. Removed
 #
 #   - Bypass SSL certificate validation - thanks Robert Karliczek for the hint
@@ -7012,7 +7047,7 @@ sub vm_runtime_info
 #     - Parameter usedspace was ignored on volume checks because a local variable defined with my instead of a more global
 #       one. Changed it from my to our fixed it. Thanks to dgoetz for reporting (and fixing) this.
 #     - Capacity is now displayed and deliverd as perfdata
-#   - Main selection - GetOptions. Unce upon a time I had kicked out $timeout unintended. Fixed now. Thanks to 
+#   - Main selection - GetOptions. Unce upon a time I had kicked out $timeout unintended. Fixed now. Thanks to
 #     Andreas Daubner for the hint.
 #
 # - 12 Dec 2013 M.Fuerstenau version 0.8.17
@@ -7034,10 +7069,10 @@ sub vm_runtime_info
 #     - Added working blacklist/whitelist.
 #       - Blacklist: blacklisted adapters will not be displayed.
 #       - Whitelist: only whitelisted adapters will be displayed.
-#     - Removed perfdata for the number of hostbusadapters. These perfdata was absolutely senseless.     
+#     - Removed perfdata for the number of hostbusadapters. These perfdata was absolutely senseless.
 #     - Status for hostbusadapters was not checked correctly. The check was only done for online and unknown but NOT(!!)
 #       for offline and unbound.
-#     - LUN states were not correct. UNKNOWN is not a valid state. Not all states different from unknown are 
+#     - LUN states were not correct. UNKNOWN is not a valid state. Not all states different from unknown are
 #       supposed to be critical. From the docs:
 #
 #       degraded             One or more paths to the LUN are down, but I/O is still possible. Further
@@ -7057,7 +7092,7 @@ sub vm_runtime_info
 #       displayed. So using the freely configurable DisplayName is senseless. The device name is formed from the
 #       path (/vmfs/devices/disks/) followed by the canonical name. So it is either senseless.
 #     - The real numeric LUN number wasn'nt display. Fixed. Output is now LUN, canonical name, everything from
-#       the display name not equal canonical name and status.  
+#       the display name not equal canonical name and status.
 #     - Complete rewrite of the paths part. Only the state of the multipath was checked but not the state of the
 #       paths. So a multipath can be "Active" which is ok but the second line is dead. So if the active path becomes
 #       dead the failover won't work.There must be an alarm for a standby path too. It is now grouped in the output.
@@ -7071,7 +7106,7 @@ sub vm_runtime_info
 #       poweredOn => UP
 #       poweredOff => DOWN
 #       suspended => SUSPENDED
-#       This suggested a machine state but it is only a powerstate. All other than UP caused a critical. But this is 
+#       This suggested a machine state but it is only a powerstate. All other than UP caused a critical. But this is
 #       not true. A power off machine can also be ok. But to be sure that it is noticed we will have a warning for
 #       powerd off and suspended
 #     - Perfdata changed.
@@ -7091,7 +7126,7 @@ sub vm_runtime_info
 #       poweredOn => UP
 #       poweredOff => DOWN
 #       suspended => SUSPENDED
-#       This suggested a machine state but it is only a powerstate. All other than UP caused a critical. But this is 
+#       This suggested a machine state but it is only a powerstate. All other than UP caused a critical. But this is
 #       not true. A power off machine can also be ok. But to be sure that it is noticed we will have a warning for
 #       powerd off and suspended
 #     - Changed guest to gueststate. This is more descriptive.
@@ -7187,7 +7222,7 @@ sub vm_runtime_info
 #       - Added --multiline here
 #     - listhosts
 #       - %host_state_strings was mostly nonsense. The mapped poser states from
-#         for virtual machines were used. Hash removed. Using now the orginal 
+#         for virtual machines were used. Hash removed. Using now the orginal
 #         power states from the system (from the docs):
 #         - poweredOff -> The host was specifically powered off by the user
 #                         through VirtualCenter. This state is not a certain
@@ -7203,7 +7238,7 @@ sub vm_runtime_info
 #                         to power off.
 #         - unknown    -> If the host is disconnected, or notResponding, we can
 #                         not possibly have knowledge of its power state. Hence,
-#                         the host is marked as unknown. 
+#                         the host is marked as unknown.
 #       - Added working blacklist/whitelist with the ability to use regular
 #         expressions
 #       - Added --alertonly here
@@ -7322,17 +7357,17 @@ sub vm_runtime_info
 #     same PID as before. Unfortunately Nagios sends a SIGINT or SIGTERM to the plugins. This causes the plugin
 #     to terminate without removing the lockfile.
 #     - So we have to catch several signals now
-#       - SIGINT and SIGTERM. One of this will be send from Nagios 
+#       - SIGINT and SIGTERM. One of this will be send from Nagios
 #       - SIGALRM. Caused by alarm(). Now with output usable in Nagios.
 #     - Instead of generating an empty file as lock file we write the process identifier of the running plugin
-#       process into the lock file. If a session crashes for some reason an a lock file is left we are in a 
+#       process into the lock file. If a session crashes for some reason an a lock file is left we are in a
 #       situation where signal processing won't help. But here the next run of the plugin reads the PID and checks
 #       for the process. If there is no process anymore it will remove the lock file and create a new one.
 #       Thanks to Simon Meggle, Consol, for the idea.
 #   - Removed "die" for opening the authfile or the session lock file with an unless construct. The plugin will
 #     report an "understandable" message to the monitor instead of causing an internal error code.
 #   - vm_cpu_info() and host_cpu_info()
-#     - Removed threshold for ready and wait. Therefore thresholds are no possible 
+#     - Removed threshold for ready and wait. Therefore thresholds are no possible
 #       without subselect.
 #
 # - 26 Feb 2014 M.Fuerstenau version 0.9.10
@@ -7405,7 +7440,7 @@ sub vm_runtime_info
 #       when also doing a check with -S runtime -s storagehealth for the same
 #       host.
 #   - dc_runtime_info()
-#     - changed 
+#     - changed
 #       if (($subselect eq "listcluster") || ($subselect eq "all"))
 #       to
 #       if (($subselect =~ m/listcluster.*$/) || ($subselect eq "all"))
@@ -7426,7 +7461,7 @@ sub vm_runtime_info
 #
 # - 20 Jul 2014 M.Fuerstenau version 0.9.17
 #   - Removing the last multiline character (\n or <br>) was moved
-#     from several subroutines to the main exit in check_vmware_esx.pl. 
+#     from several subroutines to the main exit in check_vmware_esx.pl.
 #     This was based this was implemented based on a proposal of Dietmar Eberth
 #     Affected subroutines:
 #     - vm_runtime_info()
@@ -7435,13 +7470,13 @@ sub vm_runtime_info
 #     - dc_runtime_info()
 #     -datastore_volumes_info()
 #   - Fixed a bug on line 139 and 172. Thanks for fixing it to Dietmar Eberth.
-#     - Instead of 
-#     
+#     - Instead of
+#
 #       if ( $state >= 0 )
 #          {
 #          $alertcnt++;
 #          }
-#         
+#
 #       it must be:
 #
 #       if ( $alertcnt > 0 )
@@ -7454,7 +7489,7 @@ sub vm_runtime_info
 #     to Dietmar Eberth.
 #
 # - 21 Jul 2014 M.Fuerstenau version 0.9.17a
-#   - Bugfix line 139 and 172 (now 140 and 173). It must be 
+#   - Bugfix line 139 and 172 (now 140 and 173). It must be
 #
 #     if ( $actual_state > 0 )
 #
@@ -7463,21 +7498,21 @@ sub vm_runtime_info
 #     if ( $alertcnt > 0
 #
 # - 25 Jul 2014 M.Fuerstenau version 0.9.18
-#   - New option --perf_free_space for checking volumes. It must be used 
-#     with --usedspace. In versions prior to 0.9.18 perfdata was always 
+#   - New option --perf_free_space for checking volumes. It must be used
+#     with --usedspace. In versions prior to 0.9.18 perfdata was always
 #     deliverd as free space even if --usedspace was selected. From 0.9.18
 #     on when using --usedspace perfdata is recorded as used space. To prevent
 #     old perfdata use this option.
 #   - Cluster - removed checks for CPU and MEM
 #     - Both checks were senseless for alarming because there are no thresholds.
-#       A cluster or resource group is a group of Vmware hosts. Not a logical 
+#       A cluster or resource group is a group of Vmware hosts. Not a logical
 #       construct taking parts of the hosts in a resource group in a manner
 #       that several clusters are using the same hosts. So the amount of CPU
 #       and memory of all hosts is the CPU and memory of the cluster. Monitoring
 #       this makes no sense because there are no thresholds for alerting. For
 #       example 50% CPU usage of a cluster can be one host with 90%, and two
 #       with 30% each. With an average of 50% everything seems to be ok but one
-#       machine has definetely a problem. Same for memory. 
+#       machine has definetely a problem. Same for memory.
 #
 # - 21 Aug 2014 M.Fuerstenau version 0.9.19
 #   - host_runtime_info()
@@ -7498,7 +7533,7 @@ sub vm_runtime_info
 # - 24 Aug 2014 M.Fuerstenau version 0.9.20
 #   - datastore_volumes_info(). Some improvements.
 #     - Output. Because it was hard to see an alerting volume within the mass of others
-#       the output is now grouped so that all alerting volumes are listed on top with 
+#       the output is now grouped so that all alerting volumes are listed on top with
 #       a leading comment. Second are the volumes with no errors. Theses volumes are
 #       seperated by a line and also introduced by a comment.
 #     - New commandline switch --spaceleft.  When checking multiple volumes the threshold
@@ -7539,7 +7574,7 @@ sub vm_runtime_info
 #       See Readme.
 #     - Added test for session file directory. Thanks Simon.
 #     - Replaced variable $plugin_cache with $sessionfile_dir_def. $plugin_cache was copied from
-#       another plugin of me. But this plugin doesn't  store any data. it was only used to store the 
+#       another plugin of me. But this plugin doesn't  store any data. it was only used to store the
 #       session files (and session file lock files) and therefore the name was misleading.
 #   - host_storage_info()
 #     - Bugfix: Fixed bug in host storage adapter whitelisting.(Simon Meggle)
@@ -7554,13 +7589,13 @@ sub vm_runtime_info
 #     - New option --showall. Without this only the tool status of machines with problems is listed.
 #     -  Bugfix: "Installed,running,supported and newer than the version available on the host." was set
 #        to warning but this is quit ok.
-#      - In case of a complete runtime check the output is shorted. 
+#      - In case of a complete runtime check the output is shorted.
 #   - vm_net_info()
 #     - Bugfix: Fixed missing semicolon between some perf values and warning threshold.(Simon Meggle)
 #
 # - 31 May 2015 M.Fuerstenau version 0.9.24
 #   - check_vmware_esx.pl:
-#     - Option --statelabels changed from a switch to handing over a value (y or n). This was done as mentioned 
+#     - Option --statelabels changed from a switch to handing over a value (y or n). This was done as mentioned
 #       earlier to fulfill to have the label OK, CRITICAL etc. in plugin output to
 #       fulfill the rules of the plugin developer guidelines. This was proposed by Simon Meggle.
 #       See Readme.
@@ -7568,7 +7603,7 @@ sub vm_runtime_info
 #
 # - 3 Jun 2015 M.Fuerstenau version 0.9.25
 #   - check_vmware_esx.pl:and dc_runtime_info()
-#     - New optione --open-vm-tools to signalize that Open VM Tools are used and that the 
+#     - New optione --open-vm-tools to signalize that Open VM Tools are used and that the
 #       version of the tools on the host is obsolete.
 #   - dc_runtime_info()
 #     - "VMware Tools is installed, but it is not managed by VMWare" will except the previous point
@@ -7598,7 +7633,7 @@ use Time::HiRes qw(usleep);
 
 # Prevent SSL certificate validation
 
-$ENV{'PERL_LWP_SSL_VERIFY_HOSTNAME'} = 0; 
+$ENV{'PERL_LWP_SSL_VERIFY_HOSTNAME'} = 0;
 
 if ( $@ )
    {
@@ -7613,7 +7648,7 @@ if ( $@ )
 $SIG{ALRM} = 'catch_alarm';
 $SIG{INT}  = 'catch_intterm';
 $SIG{TERM} = 'catch_intterm';
- 
+
 
 #--- Start presets and declarations -------------------------------------
 # 1. Define variables
@@ -7624,7 +7659,7 @@ our $prog_version = '0.9.26';                  # Contains the program version nu
 our $ProgName = basename($0);
 
 my  $PID = $$;                                 # Stores the process identifier of the actual run. This will be
-                                               # be stored in the lock file. 
+                                               # be stored in the lock file.
 my  $PID_exists;                               # For testing for the process that wrote the lock file the last time
 my  $PID_old;                                  # PID read from lock file
 
@@ -7670,18 +7705,20 @@ my  $select;
 our $subselect;
 
 our $warning;                                  # Warning threshold.
+our $warning_prov;                                  # Warning threshold.
 our $critical;                                 # Critical threshold.
+our $critical_prov;                                 # Critical threshold.
 our $reverse_threshold;                        # Flag. Needed if critical must be smaller than warning
 
 our $crit_is_percent;                          # Flag. If it is set to one critical threshold is percent.
 our $warn_is_percent;                          # Flag. If it is set to one warning threshold is percent.
 my  $thresholds_given = 0;                     # During checking the threshold it will be set to one. Only if
                                                # it is set we will check the threshold against warning or critical
-                                        
+
 our $spaceleft;                                # This is used for datastore volumes. When checking multiple volumes
                                                # the threshol must be given in either percent or space left on device.
 my  $sessionfile_dir_def="/tmp/";              # Directory for caching the session files and sessionfile lock files
-                                               # Good idea to use a tmpfs because it speeds up operation    
+                                               # Good idea to use a tmpfs because it speeds up operation
 
 our $listsensors;                              # This flag set in conjunction with -l runtime -s health or -s sensors
                                                # will list all sensors
@@ -7689,7 +7726,7 @@ our $usedspace;                                # Show used spaced instead of fre
 our $gigabyte;                                 # Output in gigabyte instead of megabyte
 our $perf_free_space;                          # To display perfdata as free space instead of used when using
                                                # --usedspace
-                                               
+
 our $alertonly;                                # vmfs - list only alerting volumes
 
 our $blacklist;                                # Contains the blacklist
@@ -7740,7 +7777,7 @@ our $openvmtools;                              # Signalize that you use Open VM 
 my  $trace;
 
 
-# 2. Define arrays and hashes  
+# 2. Define arrays and hashes
 
 # The same as in Nagios::plugin::functions but it is ridiculous to buy a truck for a
 # "one time one box" transportations job.
@@ -7767,6 +7804,8 @@ GetOptions
 	 "D=s" => \$datacenter,          "datacenter=s"     => \$datacenter,
 	 "w=s" => \$warning,             "warning=s"        => \$warning,
 	 "c=s" => \$critical,            "critical=s"       => \$critical,
+	 "a=s" => \$warning_prov,        "warning_prov=s"   => \$warning_prov,
+	 "A=s" => \$critical_prov,       "critical_prov=s"  => \$critical_prov,
 	 "N=s" => \$vmname,              "name=s"           => \$vmname,
 	 "u=s" => \$username,            "username=s"       => \$username,
 	 "p=s" => \$password,            "password=s"       => \$password,
@@ -7886,7 +7925,7 @@ if (defined($warning))
       if ($warning =~ m/^[0-9]+$/)
          {
          $thresholds_given = 1;
-         
+
          # If percent check a valid range
          if ($warn_is_percent eq 1)
             {
@@ -7964,7 +8003,7 @@ if (defined($authfile))
          print "Unable to open auth file \"$authfile\"\n";
          exit 3;
          }
-   
+
    while ( <AUTH_FILE> )
          {
          if (s/^[ \t]*username[ \t]*=//)
@@ -8041,19 +8080,19 @@ if (!defined($nosession))
          $sessionfile_name = $host . "_session";
          }
       }
-      
-   
+
+
    # Set default best location for sessionfile_dir_def in this environment
-   if ( $ENV{OMD_ROOT}) 
+   if ( $ENV{OMD_ROOT})
       {
       $sessionfile_dir_def = $ENV{OMD_ROOT} . "/var/check_vmware_esx/";
-      if ( ! -d $sessionfile_dir_def ) 
+      if ( ! -d $sessionfile_dir_def )
          {
-         unless (mkdir $sessionfile_dir_def) 
+         unless (mkdir $sessionfile_dir_def)
             {
             die(sprintf "UNKNOWN: Unable to create sessionfile_dir_def directory %s.", $sessionfile_dir_def);
             }
-         } 
+         }
       }
 
    if (defined($sessionfile_dir))
@@ -8066,18 +8105,18 @@ if (!defined($nosession))
       {
       $sessionfile_name = $sessionfile_dir_def . $sessionfile_name;
       }
-   
-   unless (-d $sessionfile_dir_def) 
+
+   unless (-d $sessionfile_dir_def)
           {
           die(sprintf "UNKNOWN: sessionfile_dir_def directory %s does not exist.", $sessionfile_dir_def);
           }
 
    $sessionlockfile = $sessionfile_name . "_locked";
-   
+
    if ( -e $sessionfile_name )
       {
       usleep(int(rand($ms_ts)) * 1000);
-      
+
       if ( -e $sessionlockfile )
          {
          # Session locked? First open the lock file for reading
@@ -8091,32 +8130,32 @@ if (!defined($nosession))
               {
               $PID_old = $_;
               }
-         close (SESSION_LOCK_FILE);    
-      
+         close (SESSION_LOCK_FILE);
+
          # Third - check for the process which wrote the lock file the last time
          $PID_exists = kill 0, $PID_old;
-         
+
          # Fourth - if the process is not available any more remove the lock file
          if ( !$PID_exists )
             {
             unlink $sessionlockfile;
             }
          }
-   
+
       # Now we are sure that we have no dead lock file and we will wait for free session
       while ( -e $sessionlockfile )
             {
             usleep(int(rand($ms_ts)) * 1000);
             }
-   
+
       unless(open SESSION_LOCK_FILE, '>', $sessionlockfile)
             {
             print "Unable to create session lock file \"$sessionlockfile\"\n";
             exit 3;
             }
-      print SESSION_LOCK_FILE "$PID\n"; 
-      close (SESSION_LOCK_FILE);    
-   
+      print SESSION_LOCK_FILE "$PID\n";
+      close (SESSION_LOCK_FILE);
+
       eval {Vim::load_session(session_file => $sessionfile_name)};
       if ($@ ne '')
          {
@@ -8137,9 +8176,9 @@ if (!defined($nosession))
             print "Unable to create session lock file \"$sessionlockfile\"\n";
             exit 3;
             }
-      print SESSION_LOCK_FILE "$PID\n"; 
-      close (SESSION_LOCK_FILE);    
-   
+      print SESSION_LOCK_FILE "$PID\n";
+      close (SESSION_LOCK_FILE);
+
 
 #print "url3: $url2connect\n";
       Util::connect($url2connect, $username, $password);
@@ -8243,8 +8282,8 @@ else
    {
    $statelabels = $statelabels_def;
    }
-   
-   
+
+
 if ( $result == 0 )
    {
    if ($statelabels eq "y")
@@ -8386,10 +8425,10 @@ sub main_select
 
     if (defined($host))
        {
-       # The following if black is only needed if we check a ESX server via the 
+       # The following if black is only needed if we check a ESX server via the
        # the datacenten (vsphere server) instead of doing it directly.
        # Directly is better
-       
+
        my $esx_server;
        if (defined($datacenter))
           {
@@ -8529,12 +8568,12 @@ sub main_select
        }
     get_me_out("You should never end here. Totally unknown anything.");
     }
-    
+
 sub check_against_threshold
     {
     my $check_result = shift(@_);
     my $return_state = 0;
- 
+
 
     if ((defined($warning)) && (defined($critical)))
        {
@@ -8581,7 +8620,7 @@ sub check_against_threshold
        }
     return $return_state;
     }
-    
+
 sub check_state
     {
     if (grep { $_ == 2 } @_)
@@ -8637,7 +8676,7 @@ sub convert_number
           $value = pop(@vals);
           $value =~ s/^\s+//;
           $value =~ s/\s+$//;
-          
+
           if (defined($value) && $value ne '')
              {
              if ($value >= 0)
@@ -8667,7 +8706,7 @@ sub check_health_state
        {
        $state = 1;
        }
- 
+
     if (lc($actual_state) eq "red")
        {
        $state = 2;
@@ -8735,7 +8774,7 @@ sub soap_check
     {
     my $output = 'Fatal error: could not connect to the VMWare SOAP API.';
     my $state = Vim::get_vim_service();
-    
+
     if (defined($state))
        {
        $state=0;
@@ -8755,7 +8794,7 @@ sub isblacklisted
     my @blacklist;
     my $blacklist;
     my $hitcount = 0;
-    
+
     if (!defined $$blacklist_ref)
        {
        return 0;
@@ -8831,7 +8870,7 @@ sub get_me_out
     print_help();
     exit 2;
     }
-    
+
 # Catching some signals
 sub catch_alarm
     {
@@ -8845,16 +8884,16 @@ sub catch_intterm
     unlink $sessionlockfile;
     exit 3;
     }
- 
+
 #=====================================================================| Cluster |============================================================================#
 
 sub cluster_cluster_info
 {
         my ($cluster) = @_;
-         
+
         my $state = 2;
         my $output = 'CLUSTER clusterServices Unknown error';
-        
+
         if (defined($subselect))
         {
                 if ($subselect eq "effectivecpu")
@@ -8864,7 +8903,7 @@ sub cluster_cluster_info
                         {
                                 my $value = simplify_number(convert_number($$values[0][0]->value) * 0.01);
                                 $perfdata = $perfdata . " effective cpu=" . $value . "Mhz;" . $perf_thresholds . ";;";
-                                $output = "effective cpu=" . $value . "%"; 
+                                $output = "effective cpu=" . $value . "%";
                                 $state = check_against_threshold($value);
                         }
                 }
