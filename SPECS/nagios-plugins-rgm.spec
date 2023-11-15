@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 39.rgm
+Release: 40.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -197,6 +197,12 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Wed Nov 15 2023 Vincent Fricou <vfricou@fr.scc.com> - 1.0-40-rgm
+- Add check_scality_cluster_state.sh
+- Add check_scality_disk_state.sh
+- Add check_scality_rings_state.sh
+- Add check_scality_servers_state.sh
+
 * Tue Oct 24 2023 Vincent Fricou <vfricou@fr.scc.com> - 1.0-39-rgm
 - Updt check_vmware_esx.pl to add hability to specify threshold on provisionned space for datastore
 
