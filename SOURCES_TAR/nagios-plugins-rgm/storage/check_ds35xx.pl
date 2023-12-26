@@ -45,11 +45,11 @@
 #       on what's detected, output as long text (ie. visible if you click on
 #       the check to get to the "Service State Information" screen)
 #       [2013-04-12 rafamiga]
-# v1.6 - a patch from for 10.86 firmware by Ian Clancy <ian.  clancy@ valeo 
+# v1.6 - a patch from for 10.86 firmware by Ian Clancy <ian.  clancy@ valeo
 #       dot com> and Niklas Edmundsson < Niklas. Edmundsson at hpc2n. umu
-#       # .se > and a patch for 07.84.44 firmware in the DS3500 with 
-#       Enhanced FlashCopy features by Maciej Bogucki <macbogucki as gmail. 
-#       com>. The script continue to work with DS3400 and Dell MD3660 
+#       # .se > and a patch for 07.84.44 firmware in the DS3500 with
+#       Enhanced FlashCopy features by Maciej Bogucki <macbogucki as gmail.
+#       com>. The script continue to work with DS3400 and Dell MD3660
 #       arrays running the 10.84 firmware. [2014-02-27 mbogucki]
 # v1.6a - added non-standard (DSTEST_ALL) test category, mainly to
 #       accomodate additional tests (consistency_groups_status,
@@ -57,7 +57,7 @@
 #       consistency_groups_member_logical_drives_status and
 #       repository_logical_drives_status) added by Maciej Bogucki in 1.6;
 #       just add "-t all" to the command line. [2014-02-28 rafamiga]
-  
+
 # NOTES:
 
 # [Debian] You need to install nagios-plugins-basic package to get it
@@ -78,6 +78,7 @@ use strict;
 require 5.6.0;
 use lib '/usr/lib64/nagios/plugins';
 use lib '/usr/lib/nagios/plugins';
+use lib "/srv/rgm/nagios/plugins/";
 use utils qw(%ERRORS $TIMEOUT &print_revision &support &usage);
 use Getopt::Long;
 use vars qw/$exit $opt_version $opt_timeout $opt_help $opt_command $opt_host $opt_verbose $res
@@ -124,7 +125,7 @@ my %known_tests = (
 	"repository_logical_drives_status" =>	[ \&repository_logical_drives_status, $DSTEST_ALL ],
 	"drivechannel_status" =>		[ \&dc_status, $DSTEST_STD ]
 );
-                                                                                        
+
 sub update_res {
     my $res_ref=shift;
     my $data_ref=shift;
@@ -164,9 +165,9 @@ sub match_data {
     my $skip=shift;
     my $optional=shift||0;
     my $collecting_data=0;
-    
+
     my @m=();
-    
+
   LINE: foreach (@$lines_ref) {
       unless($collecting_data) {
 	  next LINE unless( m/$match_start/);
@@ -174,7 +175,7 @@ sub match_data {
       } else {
 	  last LINE if( m/$match_end/);
       }
-      
+
       if(defined($skip)) {
 	  next LINE if ( m/$skip/);
       }
@@ -214,7 +215,7 @@ sub system_status_helper {
         $fline=$m[0];
         $n=$1 if ($fline =~ /\s*([0-9]*)\s*$regexp/i);
         }
-        
+
     if ($n eq 0 && !$optional) {
 	&update_res(\$local_res,\$local_data, "WARNING",
 	  "Could not parse number of elements detected: $regexp");
@@ -430,7 +431,7 @@ sub ctrl_asset_status {
               $optional = 1;
               $l = substr($l,1);
               }
-        
+
         if ($line =~ m/$l/i) { # found asset
           print "asset_found=$l ctrl_enc=$ctrl_enc ctrl_slot=$ctrl_slot\n" if ($opt_debug);
 
@@ -450,7 +451,7 @@ sub ctrl_asset_status {
           if ( $line =~ m/$s\s*([^\s]+(\s+[^\s]+)?)/i ) { # found status
 #            print "v1='$1' v2='$2'\n" if ($opt_debug);
             $v = $1; $is_ok = 0;
-            
+
             $is_ok = 1 if ($v =~ m/up/i);
             $is_ok = 1 if ($v =~ m/optimal/i);
 
@@ -498,7 +499,7 @@ sub controller_status {
 
     # Find number of logical stuff.
     my $n = 0;
-    
+
     foreach my $line (@m) {
 	$n= $1 if ( $line =~ /Number of controllers:\s*([0-9]+)/i );
     }
@@ -764,7 +765,7 @@ sub consistency_groups_member_logical_drives_status {
 
     foreach (@m) {
 	$cgmld_name = $1 if ( m/Member Logical Drive \"\s*([^\s]*)\"/i );
-        
+
 
 	if ($_ =~ /Status:\ \ \s*([^\s]*)/) {
 	    $cgmld_status = $1;
@@ -821,7 +822,7 @@ sub repository_logical_drives_status {
 
     foreach (@m) {
 	$rld_name = $1 if ( m/Repository Logical Drive \"\s*([^\s]*)\"/i );
-        
+
 
 	if ($_ =~ /Status:\ \ \s*([^\s]*)/) {
 	    $rld_status = $1;
@@ -1042,7 +1043,7 @@ $test_name =~ s/^, //;
 # LONG TEXT LINE N | PERFDATA LINE 2
 # PERFDATA LINE 3
 # ...
-# PERFDATA LINE N 
+# PERFDATA LINE N
 #
 sub error_exit {
     $data="" if(!defined($data));
@@ -1054,7 +1055,7 @@ sub error_exit {
     # just the facts, ma'am
       print "$res $data|\n";
     }
- 
+
     foreach (sort keys %stats) {
     	print "$_: $stats{$_}\n";
     }
@@ -1081,7 +1082,7 @@ sub process_options {
 		                                 'stdin'       => \$opt_stdin,
                                                  'binary:s'	=> \$opt_binary,
 		 );
-      
+
       if (defined($opt_version)) { local_print_revision(); exit(255); }
       if (defined($opt_help)) { &print_help(); exit(255); }
 
@@ -1097,7 +1098,7 @@ sub process_options {
           exit(255);
           }
 
-      # check that the login file exists 
+      # check that the login file exists
       if (defined($opt_login)) {
           unless (-e $opt_login) {
           &print_help("ERROR: Supplied login file does not exist or is not readable.");
@@ -1153,7 +1154,7 @@ sub print_help {
 	-v, --verbose
 		print extra debugging information
         -b, --binary=PATH
-                path to SMCli binary. 
+                path to SMCli binary.
 	-h, --help
 		print this help message
         -o, --timeout=TIMEOUT
@@ -1165,7 +1166,7 @@ sub print_help {
 	-H, --hostname=HOST
 		name or IP address of enclosure to check if doing out-of-band monitoring
         -L, --login=PATH
-                path to the login file to access the array      
+                path to the login file to access the array
 	-t, --test=TEST_NAME
 		test to run, can be applied multiple times to run multiple tests
 		NOTE: -t all runs _ALL_ the tests, including non-standard tests
@@ -1180,10 +1181,10 @@ sub print_help {
 
 NOTES:
         Switches -n and -w are mutually exclusive.
-        If doing out-of-band monitoring, you may use switch -H only.        
+        If doing out-of-band monitoring, you may use switch -H only.
 
         Requires IBM DS Storage Manager CLI ($opt_binary) version 10.77 or newer.
-        
+
 AVAILABLE TESTS:
 
 EOT

@@ -18,6 +18,7 @@ use vars qw($opt_V $opt_h $opt_t $opt_u $opt_n $opt_s
 			$opt_p $opt_l $opt_o $opt_m $opt_e);
 use vars qw($PROGNAME);
 use lib "/usr/lib/nagios/plugins";
+use lib "/srv/rgm/nagios/plugins/";
 use utils qw($TIMEOUT %ERRORS &print_revision &support &usage);
 use LWP::UserAgent;
 use HTTP::Request::Common qw(POST GET);
@@ -104,7 +105,7 @@ else
 }
 
 sub print_usage () {
-	print "Usage: $PROGNAME -u <internet site> -p <proxy> -l <port proxy> -e"; 
+	print "Usage: $PROGNAME -u <internet site> -p <proxy> -l <port proxy> -e";
 	print "<return http code> \n";
 }
 

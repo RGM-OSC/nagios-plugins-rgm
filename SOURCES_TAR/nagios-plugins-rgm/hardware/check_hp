@@ -28,7 +28,7 @@
 my $libexec;
 
 BEGIN {
-  my @lib_folders = qw(/usr/local/nagios/libexec/ /usr/lib/nagios/plugins/ /usr/lib64/nagios/plugins/ /srv/eyesofnetwork/nagios/plugins);
+  my @lib_folders = qw(/usr/local/nagios/libexec/ /usr/lib/nagios/plugins/ /usr/lib64/nagios/plugins/ /srv/rgm/nagios/plugins/);
   foreach my $lib (@lib_folders) {
     if (-d $lib)  {
       $libexec = $lib;

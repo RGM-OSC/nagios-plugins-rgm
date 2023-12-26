@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#    
+#
 #  (c) 2007  Martin Dag Nilsson <martin.dag.nilsson@axis.com>
 #            AXIS Communications AB
 #
@@ -23,13 +23,14 @@
 # on Cisco PIX/ASA clusters using SNMP
 #
 # Version: 0.1
-# Changelog: 
+# Changelog:
 # 	2007-01-02: Initial version created
 
 use strict;
 use Net::SNMP;
 use Getopt::Long;
 use lib '/usr/lib/nagios/plugins';
+use lib "/srv/rgm/nagios/plugins/";
 use utils qw (%ERRORS $TIMEOUT);
 
 my $hostname;
@@ -122,7 +123,7 @@ sub status_request () {
 	foreach my $key (keys %snmp_string) {
 		$status{$key} = $result->{$snmp_string{$key}};
 	}
-	unless (defined ($status{primary}) && defined ($status{secondary})) { 
+	unless (defined ($status{primary}) && defined ($status{secondary})) {
 		print "Error: Check timed out\n";
 		exit ($ERRORS{UNKNOWN});
 	}

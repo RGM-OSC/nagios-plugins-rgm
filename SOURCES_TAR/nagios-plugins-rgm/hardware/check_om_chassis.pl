@@ -11,7 +11,7 @@
 # Germany
 #
 # Published under the Genral Public License, Version 2.
-# 
+#
 # Author: Gunther Schlegel <schlegel@riege.com>
 #
 # V0.0.1  20050824 gs	new script, reused some parts from
@@ -28,7 +28,7 @@
 use strict;
 use Getopt::Long;
 use File::Basename;
-use lib qw(/usr/local/nagios/libexec /usr/lib/nagios/plugins);
+use lib qw(/usr/local/nagios/libexec /usr/lib/nagios/plugins /srv/rgm/nagios/plugins/);
 use utils qw (%ERRORS);
 
 # untaint Environment
@@ -73,7 +73,7 @@ if ( -x $om ) {
 				if ( $result{'status'} ne 'Ok' ) {
 					if ( $result{'status'} eq 'Noncritical' ) {
 						$result=addresult($result,$ERRORS{'WARNING'});
-					} else {	
+					} else {
 						$result=addresult($result,$ERRORS{'CRITICAL'});
 					}
 					push @messages, "$result{'name'} is $result{'status'} ($result{'value'})";
@@ -81,7 +81,7 @@ if ( -x $om ) {
 					$result=addresult($result,$ERRORS{'OK'});
 				}
 			}
-		}	
+		}
 	}
 } else {
 	push @messages,"Error: $om not found\n\n";
@@ -105,7 +105,7 @@ sub addresult {
 	}
 
 	return $oldresult;
-}	
+}
 
 sub writemessages {
 	my @messages = @_;
@@ -114,7 +114,7 @@ sub writemessages {
 
 	foreach (keys %ERRORS) {
 		unshift @messages, "$_" if $ERRORS{$_} == $result;
-	}	
+	}
 
 	push @messages, ']' if $#messages > 0;
 
@@ -131,12 +131,12 @@ sub usage {
 	print "  --verbose: run script in debug mode.\n";
 	exit $ERRORS{'UNKNOWN'};
 }
-	
+
 sub exitmessage {
 	my $result=shift @_;
 
 	print join ' ',@messages."\n";
-	exit $result; 
-}	
+	exit $result;
+}
 
 # vim: autoindent number ts=4

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-#  __ __ _______ ___ ___ _______ 
+#  __ __ _______ ___ ___ _______
 # |__|__|    ___|   |   |    ___|
 # |  |  |    ___|\     /|    ___|
 # |__|__|_______| |___| |_______|
@@ -34,6 +34,7 @@
 use POSIX;
 use strict;
 use lib "/usr/lib/nagios/plugins" ;
+use lib "/srv/rgm/nagios/plugins/";
 use utils qw($TIMEOUT %ERRORS &print_revision &support);
 use DBI;
 
@@ -55,7 +56,7 @@ my $perfdata = "";
 my $crit = "";
 my $warn = "";
 
-my $hostname; 
+my $hostname;
 my $username;
 my $password;
 my $port;
@@ -97,8 +98,8 @@ if ( $database ) { $dsn .= "database=$database;"; }
 
 my $dbh = DBI->connect($dsn,$username,$password, { PrintError => 0 } );
 if (!$dbh) {
-    print "CRITICAL - Unable to connect to mysql://$username\@$hostname/$database - $DBI::errstr\n"; 
-    exit $ERRORS{"CRITICAL"};   
+    print "CRITICAL - Unable to connect to mysql://$username\@$hostname/$database - $DBI::errstr\n";
+    exit $ERRORS{"CRITICAL"};
 }
 
 # Fetch Version
@@ -106,7 +107,7 @@ my $sth=$dbh->prepare("SELECT VERSION()");
 if (!$sth->execute()) {
     print "CRITICAL - Unable to execute 'SELECT VERSION()' on mysql://$username\@$hostname/$database - $DBI::errstr\n";
     exit $ERRORS{"CRITICAL"};
-}            
+}
 my ($mysql_version)=$sth->fetchrow_array();
 $sth->finish();
 
@@ -122,7 +123,7 @@ if (!$sth->execute()) {
 }
 while (my ($key,$value)=$sth->fetchrow_array()) {
     $key =~ tr/[A-Z]/[a-z]/ ;
-    $values{$key} = $value; 
+    $values{$key} = $value;
 }
 $sth->finish();
 
@@ -138,7 +139,7 @@ if ( $opt_s ) {
     my @arr_s = split( /,/ , lc $opt_s );
     my @arr_w = split( /,/ , lc $opt_w );
     my @arr_c = split( /,/ , lc $opt_c );
-    
+
     for (my $i=0; $i < @arr_s; $i++) {
         if ($arr_w[$i] < $arr_c[$i] ) {
             if ($values{$arr_s[$i]} > $arr_c[$i]) {
@@ -192,14 +193,14 @@ sub print_help (){
 	printf "   -p (--password)   Password, Default: none\n";
 	printf "   -P (--port)       Port, Default: 3306\n";
 	printf "   -D (--database)   Database, Default: none\n";
-	
+
 	printf "   -s (--status)     Status values to check\n";
 	printf "   -w (--warning)    Warning threshold\n";
 	printf "   -c (--critical)   Critical threshold\n";
 	printf "   -d (--perfdata)   Status values to print as perfdata\n";
-	
+
 	printf "   -o (--old)        Use MySQL pre 5.0 Syntax.\n";
-	
+
 	printf "   -t (--timeout)    seconds before the plugin times out (default=$TIMEOUT)\n";
 	printf "   -V (--version)    Plugin version\n";
 	printf "   -h (--help)       usage help \n\n";
@@ -213,14 +214,14 @@ sub process_arguments() {
 	   "p=s" => \$password, "password=s" => \$password,
 	   "P=i" => \$port,     "port=i"     => \$port,
 	   "D=s" => \$database, "database=s" => \$database,
-	   
+
 	   "s=s" => \$opt_s,    "status=s"   => \$opt_s,
 	   "w=s" => \$opt_w,    "warning=s"  => \$opt_w,
 	   "c=s" => \$opt_c,    "critical=s" => \$opt_c,
 	   "d=s" => \$opt_d,    "perfdata=s" => \$opt_d,
-	   
+
 	   "o"   => \$opt_o,    "old"        => \$opt_o,
-	   
+
 	   "t=i" => \$timeout,  "timeout=i"  => \$timeout,
 	   "V"   => \$opt_V,    "version"    => \$opt_V,
 	   "h"   => \$opt_h,    "help"       => \$opt_h,
@@ -264,6 +265,6 @@ sub process_arguments() {
 	unless ( defined $database ) {
 	   $database = '';
 	}
-	
+
 	return 0;
 }

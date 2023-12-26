@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
-#    
+#
 #  (c) 2008  Marc Patino Gómez (marcpatino at gmail dot com)
-#            
+#
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -23,13 +23,14 @@
 # on Cisco ASA clusters using SNMP
 #
 # Version: 0.1
-# Changelog: 
+# Changelog:
 # 	2008-06-09: Initial version created
 
 use strict;
 use Net::SNMP;
 use Getopt::Long;
 use lib '/usr/lib/nagios/plugins';
+use lib "/srv/rgm/nagios/plugins/";
 use utils qw (%ERRORS $TIMEOUT);
 
 my $hostname;
@@ -119,7 +120,7 @@ sub status_request () {
 	foreach my $key (keys %snmp_string) {
 		$status{$key} = $result->{$snmp_string{$key}};
 	}
-	unless (defined ($status{sessions})) { 
+	unless (defined ($status{sessions})) {
 		print "Error: Check timed out\n";
 		exit ($ERRORS{UNKNOWN});
 	}
@@ -142,10 +143,10 @@ if ($sessions < $warnning) {
 	print "OK - Cisco ASA sessions:$sessions\n";
 	exit ($ERRORS{OK});
 } elsif ($sessions > $warnning && $sessions < $critical) {
-	print "Warning -Cisco ASA sessions:$sessions\n"; 
+	print "Warning -Cisco ASA sessions:$sessions\n";
 	exit ($ERRORS{WARNING});
 } elsif ($sessions > $critical) {
-	print "Critical - Cisco ASA sessions:$sessions\n"; 
+	print "Critical - Cisco ASA sessions:$sessions\n";
 	exit ($ERRORS{CRITICAL});
 } else {
 	print "Unknown - Cisco ASA $sessions\n";
