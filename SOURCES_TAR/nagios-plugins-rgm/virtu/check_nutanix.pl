@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #########################################################################
-# Description:  Checks Nutanix via SNMP.					
+# Description:  Checks Nutanix via SNMP.
 #
 # Date : April 12 2016
 # Version 1.0
@@ -21,7 +21,7 @@ chomp $PROGNAME;
 sub Print_Usage() {
 	print <<USAGE;
 
-Usage: $PROGNAME -H <host> [-C <community>|-a <authProtocol> -u secName -A authPassword -x privProtocol -X privPassword] -t <type> [-s <subtype>[,<subtype2>]] [-T <timeout>] [-r <pattern> [-e]] [ -w <<subtype>=<warning>[,<subtype2>=<warning2>]...][-c <subtype>=<critical>[,<subtype2>=<critical2>]...] [-S]
+Usage: $PROGNAME -H <host> [-C <community>|-a <authProtocol> -u secName -A authPassword -x privProtocol -X privPassword] -t <type> [-s <subtype>[,<subtype2>]] [-T <timeout>] [-r <pattern> [-e]] [ -w <<subtype>=<warning>[,<subtype2>=<warning2>]...][-c <subtype>=<critical>[,<subtype2>=<critical2>]...] [-S] [-f]
 USAGE
 }
 
@@ -185,7 +185,11 @@ HELP
             -w citUsedCapacity=80,citIOBandwidth=10
         -r <pattern> : regex pattern to filter items
         -e : use pattern above to exclude items
-        -S : short output. Don't print details.
+        -S : short output. Don't print details
+        -f : Force green strate for subtype *State* or *Status
+        -l :
+          For subtype *State* or *Status* : Force check to keep green state
+          For others subtype : Display only faulted
 
 HELP
 
@@ -195,7 +199,7 @@ exit 1;
 #-----------------------------------------------------
 # Get user-given variables
 #-----------------------------------------------------
-my ($host, $authprotocol, $secname, $authpassword, $privprotocol, $privpassword, $type, $subtypes, $pattern, $exclude, $warning, $critical, $help, $debug, $short,  $timeout);
+my ($host, $authprotocol, $secname, $authpassword, $privprotocol, $privpassword, $type, $subtypes, $pattern, $exclude, $warning, $critical, $help, $debug, $short,  $timeout, $display_limit, $force_green);
 Getopt::Long::Configure ("bundling");
 GetOptions (
 'H=s' => \$host,
@@ -213,6 +217,8 @@ GetOptions (
 'c=s' => \$critical,
 'e' => \$exclude,
 'r=s' => \$pattern,
+'l' => \$display_limit,
+'f' => \$force_green,
 'h' => \$help
 );
 
@@ -255,7 +261,7 @@ for my $subtype (@subtype_array)
        }
     }
 }
- 
+
 #-----------------------------------------------------
 # SNMP request
 #-----------------------------------------------------
@@ -270,7 +276,7 @@ else
     # snmptable does not work or  thre is not table name. We build ourself a 'snmptable-like' output
     my @keys=("clusterName","clusterTotalStorageCapacity",grep {!/key/} keys %{$SUBTYPES{'Cluster'}});
     $output=join(";",@keys)."\n";
-    my @values; 
+    my @values;
     for my $key (@keys)
     {
          $command="snmpwalk -v 3 -l authPriv -a $authprotocol -A $authpassword -u $secname -x $privprotocol -X $privpassword -Oqv -m +NUTANIX-MIB $host $key";
@@ -278,14 +284,14 @@ else
     }
     map{s/\n//} @values;
     $output.=join(";",@values)."\n";
-} 
+}
 
 print $output if($debug);
 print "No result." and exit $STATE_UNKNOWN if ($?!=0);
 
 my @result_array=split(/\n/,$output);
 
-# Array of object names 
+# Array of object names
 my $l=shift @result_array;
 chomp $l;
 my @columns=split(/;/,$l);
@@ -328,13 +334,13 @@ for my $subtype (@subtype_array)
         {
             if ($exclude)
             {
-                next if ($item =~ /$pattern/);   
+                next if ($item =~ /$pattern/);
             }
             else
             {
-                next unless ($item =~ /$pattern/);   
+                next unless ($item =~ /$pattern/);
             }
-        }        
+        }
 
         my $warning=$thresholds{$subtype}{'warning'};
         my $critical=$thresholds{$subtype}{'critical'};
@@ -352,24 +358,24 @@ for my $subtype (@subtype_array)
             my $result="'".$subtype." ".$item;
             if ($results{$subtype}{$item} !~ /on|Up|started/i)
             {
-                $critstate=1;
+                $critstate=1 if (! $force_green);
                 push @failed, $result."' is ".$results{$subtype}{$item};
                 push @details, $result."' is ".$results{$subtype}{$item};
                 $state=0;
             }
             else
             {
-                push @details, $result."' is ".$results{$subtype}{$item};
+                push @details, $result."' is ".$results{$subtype}{$item} if (! $display_limit);
                 $state=1;
             }
 	    push  @perfs, $result."'=".$state;
         }
-        # Numerical subtypes 
-        else 
+        # Numerical subtypes
+        else
         {
             my $value, my $comparator_nok=">", my $comparator_ok="<";
 
-            #  For Capacity subtypes, the value is the calculated percentage of usage  
+            #  For Capacity subtypes, the value is the calculated percentage of usage
             if ($subtype =~ /Capacity/)
             {
                 my ($prefix,$suffix)=($subtype=~/(.*)Used(.*Capacity)/);
@@ -391,7 +397,7 @@ for my $subtype (@subtype_array)
             {
                 $value=$results{$subtype}{$item};
             }
-             
+
             $value=sprintf("%.1f",$value);
             my $result="'".$subtype." ".$item."'=".$value.$unity;
             if (($value>$critical && $subtype !~ /FreeBytes|FreeInodes/) || ($value<$critical && $subtype =~ /FreeBytes|FreeInodes/))
@@ -408,11 +414,11 @@ for my $subtype (@subtype_array)
             }
             else
             {
-                push @details, $result."(".$comparator_ok."=".$warning.$unity.")";
+                push @details, $result."(".$comparator_ok."=".$warning.$unity.")" if (! $display_limit);
             }
 	    push  @perfs, $result.";".$warning.";".$critical.$limits;
         }
-    } 
+    }
 }
 #
 print "No result." and exit $STATE_UNKNOWN if ($#details<0);
