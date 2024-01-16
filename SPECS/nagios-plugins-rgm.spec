@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 40.rgm
+Release: 41.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -197,6 +197,9 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Tue Jan 16 2024 Vincent Fricou <vfricou@fr.scc.com> - 1.0-41-rgm
+- Add check_airwave
+
 * Wed Nov 15 2023 Vincent Fricou <vfricou@fr.scc.com> - 1.0-40-rgm
 - Add check_scality_cluster_state.sh
 - Add check_scality_disk_state.sh
