@@ -148,6 +148,8 @@ if [ "$TYPE" == "DHCPSERVER" ]; then
 		if [ "$TEST" != "1" ]; then
 			OUTPUT="Critical: DHCP Server Failed"
 			COUNTCRITICAL=1
+    else
+      OUTPUT="Ok: DHCP Server Activated"
 		fi
 	else
 		if [ "$TEST" != "1" ];then
