@@ -307,7 +307,7 @@ def main():
             - clients : Check clients on access points Virtual Controller (Require -w and -c to define thresholds)
             - new : Check new access point pending approval (Require -w and -c to define, and REQUIRE Access Point approval right in Airwave)
             - version : Check AP version (Require -c option to specify target version as regexp — Example '8.10.0.*')
-        
+
         """,
         choices=["clients", "bw", "mismatch", "version", "apstatus", "new"],
         type=str,
@@ -357,10 +357,35 @@ def main():
 
         # Execute subtype check for clients
         if args.subtype and args.subtype.upper() == "CLIENTS":
-            folders_list = airwave.get_folders()
-            for folder in folders_list:
-                f_name = folder["name"]
-                f_client_count = int(folder["client_count"])
+            if isinstance(folders_list, list):
+                for folder in folders_list:
+                    f_name = folder["name"]
+                    f_client_count = int(folder["client_count"])
+
+                    if f_client_count >= int(args.warning):
+                        if f_client_count >= int(args.critical):
+                            countcritical = countcritical + 1
+                        else:
+                            countwarning = countwarning + 1
+
+                    if not args.exclude or not re.search(args.exclude, folder["name"]):
+                        output = (
+                            "{output}, Folder {f_name} - Clients : {f_client_count}".format(
+                                output=output,
+                                f_name=f_name,
+                                f_client_count=f_client_count,
+                            )
+                        )
+                    perf = "{perf}clients_{f_name}={f_client_count};{warning};{critical} ".format(
+                        perf=perf,
+                        f_name=f_name,
+                        f_client_count=f_client_count,
+                        warning=args.warning,
+                        critical=args.critical,
+                    )
+            else:
+                f_name = folders_list["name"]
+                f_client_count = int(folders_list["client_count"])
 
                 if f_client_count >= int(args.warning):
                     if f_client_count >= int(args.critical):
@@ -368,7 +393,7 @@ def main():
                     else:
                         countwarning = countwarning + 1
 
-                if not args.exclude or not re.search(args.exclude, folder["name"]):
+                if not args.exclude or not re.search(args.exclude, folders_list["name"]):
                     output = (
                         "{output}, Folder {f_name} - Clients : {f_client_count}".format(
                             output=output,
@@ -385,13 +410,32 @@ def main():
                 )
         # Execute subtype check for bandwidth
         elif args.subtype and args.subtype.upper() == "BW":
-            folders_list = airwave.get_folders()
-            for folder in folders_list:
-                f_name = folder["name"]
-                f_bandwidth_in = folder["bandwidth_in"]
-                f_bandwidth_out = folder["bandwidth_out"]
+            if isinstance(folders_list, list):
+                for folder in folders_list:
+                    f_name = folder["name"]
+                    f_bandwidth_in = folder["bandwidth_in"]
+                    f_bandwidth_out = folder["bandwidth_out"]
 
-                if not args.exclude or not re.search(args.exclude, folder["name"]):
+                    if not args.exclude or not re.search(args.exclude, folder["name"]):
+                        output = "{output}, Folder {f_name} - Bandwidth in : {f_bandwidth_in} Bandwidth out : {f_bandwidth_out}".format(
+                            output=output,
+                            f_name=f_name,
+                            f_bandwidth_in=f_bandwidth_in,
+                            f_bandwidth_out=f_bandwidth_out,
+                        )
+
+                    perf = "{perf}bw_in_{f_name}={f_bandwidth_in};;;; bw_out_{f_name}={f_bandwidth_out};;;; ".format(
+                        perf=perf,
+                        f_name=f_name,
+                        f_bandwidth_in=f_bandwidth_in,
+                        f_bandwidth_out=f_bandwidth_out,
+                    )
+            else:
+                f_name = folders_list["name"]
+                f_bandwidth_in = folders_list["bandwidth_in"]
+                f_bandwidth_out = folders_list["bandwidth_out"]
+
+                if not args.exclude or not re.search(args.exclude, folders_list["name"]):
                     output = "{output}, Folder {f_name} - Bandwidth in : {f_bandwidth_in} Bandwidth out : {f_bandwidth_out}".format(
                         output=output,
                         f_name=f_name,
@@ -407,9 +451,35 @@ def main():
                 )
         # Execute subtype check for mismatch AP in folder
         elif args.subtype and args.subtype.upper() == "MISMATCH":
-            for folder in folders_list:
-                f_name = folder["name"]
-                f_mismatch = int(folder["mismatch"])
+            if isinstance(folders_list, list):
+                for folder in folders_list:
+                    f_name = folder["name"]
+                    f_mismatch = int(folder["mismatch"])
+
+                    if f_mismatch >= int(args.warning):
+                        if f_mismatch >= int(args.critical):
+                            countcritical = countcritical + 1
+                        else:
+                            countwarning = countwarning + 1
+
+                    if not args.exclude or not re.search(args.exclude, folder["name"]):
+                        output = (
+                            "{output}, Folder {f_name} - Mismatch ap : {f_mismatch}".format(
+                                output=output,
+                                f_name=f_name,
+                                f_mismatch=f_mismatch,
+                            )
+                        )
+                    perf = "{perf}ap_mismatch_{f_name}={f_mismatch};{warning};{critical} ".format(
+                        perf=perf,
+                        f_name=f_name,
+                        f_mismatch=f_mismatch,
+                        warning=args.warning,
+                        critical=args.critical,
+                    )
+            else:
+                f_name = folders_list["name"]
+                f_mismatch = int(folders_list["mismatch"])
 
                 if f_mismatch >= int(args.warning):
                     if f_mismatch >= int(args.critical):
@@ -417,7 +487,7 @@ def main():
                     else:
                         countwarning = countwarning + 1
 
-                if not args.exclude or not re.search(args.exclude, folder["name"]):
+                if not args.exclude or not re.search(args.exclude, folders_list["name"]):
                     output = (
                         "{output}, Folder {f_name} - Mismatch ap : {f_mismatch}".format(
                             output=output,
@@ -434,12 +504,49 @@ def main():
                 )
         # No subtype execute global check
         elif args.subtype and args.subtype.upper() == "APSTATUS":
-            for folder in folders_list:
-                f_name = folder["name"]
-                f_up = int(folder["up"])
-                f_down = int(folder["down"])
+            if isinstance(folders_list, list):
+                for folder in folders_list:
+                    f_name = folder["name"]
+                    f_up = int(folder["up"])
+                    f_down = int(folder["down"])
 
-                total_ap_in_folder = f_up + f_down + int(folder["mismatch"])
+                    total_ap_in_folder = f_up + f_down + int(folder["mismatch"])
+
+                    if total_ap_in_folder > 0:
+                        folder_pct_down = (f_down / total_ap_in_folder) * 100
+                    else:
+                        folder_pct_down = 0.0
+
+                    if folder_pct_down >= float(args.warning):
+                        if folder_pct_down >= float(args.critical):
+                            countcritical = countcritical + 1
+                        else:
+                            countwarning = countwarning + 1
+
+                    if not args.exclude or not re.search(args.exclude, folder["name"]):
+                        output = (
+                            "{output}, Folder {f_name} - Up : {f_up} Down: {f_down}".format(
+                                output=output,
+                                f_name=f_name,
+                                f_up=f_up,
+                                f_down=f_down,
+                            )
+                        )
+                    perf = "{perf}ap_up_{f_name}={f_up};; ap_down_{f_name}={f_down};; pct_ap_down_{f_name}={f_pct_down};{warning};{critical} ".format(
+                        perf=perf,
+                        f_name=f_name,
+                        f_up=f_up,
+                        f_down=f_down,
+                        f_pct_down=folder_pct_down,
+                        warning=args.warning,
+                        critical=args.critical,
+                    )
+            else:
+                f_name = folders_list["name"]
+                f_up = int(folders_list["up"])
+                f_down = int(folders_list["down"])
+
+                total_ap_in_folder = f_up + f_down + int(folders_list["mismatch"])
 
                 if total_ap_in_folder > 0:
                     folder_pct_down = (f_down / total_ap_in_folder) * 100
@@ -452,7 +559,7 @@ def main():
                     else:
                         countwarning = countwarning + 1
 
-                if not args.exclude or not re.search(args.exclude, folder["name"]):
+                if not args.exclude or not re.search(args.exclude, folders_list["name"]):
                     output = (
                         "{output}, Folder {f_name} - Up : {f_up} Down: {f_down}".format(
                             output=output,
