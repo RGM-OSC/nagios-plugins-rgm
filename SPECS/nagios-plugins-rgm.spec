@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 39.rgm
+Release: 40.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -125,6 +125,7 @@ cp -afv azure %{buildroot}%{rgmdatadir}/
 cp -afv backup %{buildroot}%{rgmdatadir}/
 cp -afv business %{buildroot}%{rgmdatadir}/
 cp -afv citrix %{buildroot}%{rgmdatadir}/
+cp -afv clearpass %{buildroot}%{rgmdatadir}/
 cp -afv database %{buildroot}%{rgmdatadir}/
 cp -afv downtime %{buildroot}%{rgmdatadir}/
 cp -afv hardware %{buildroot}%{rgmdatadir}/
@@ -197,6 +198,11 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Fri Jan 28 2024 Vincent Fricou <vfricou@fr.scc.com> - 1.0-40.rgm
+- Add fixes on check_airwave
+- Add fixes on check_ucopia
+- Add fixes on check_systime
+
 * Tue Jan 16 2024 Vincent Fricou <vfricou@fr.scc.com> - 1.0-39.rgm
 - Add check airwave
 
