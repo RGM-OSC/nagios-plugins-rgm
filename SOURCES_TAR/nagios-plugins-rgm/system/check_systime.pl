@@ -12,9 +12,9 @@
 #
 # BUGS & PATCHES
 # 	mailto: joshyost@gmail.com
-# 
+#
 # VERSIONS
-# 1.0.5 
+# 1.0.5
 # 	- switched to Getopt::Long
 # 	- all non-zero snmpget exits are UNKNOWN, bad usage is UNKNOWN
 # 	- added SNMPv3 options
@@ -31,6 +31,7 @@ use File::Basename;
 use Getopt::Long;
 use Time::Local;
 use lib "/usr/nagios/libexec";
+use lib "/srv/rgm/nagios/plugins/";
 use utils qw ( %ERRORS $TIMEOUT );
 
 our $snmpget = '/usr/bin/snmpget';
@@ -174,7 +175,7 @@ else{
 #### Actual syscall
 # .1.3.6.1.2.1.25.1.2.0 = hrSystemDate.0
 alarm $timeout;
-my $oid    = '.1.3.6.1.2.1.25.1.2.0'; 
+my $oid    = '.1.3.6.1.2.1.25.1.2.0';
 
 print "debug >> syscall - $syscall $host $oid 2>&1\n" if $DEBUG;
 
@@ -189,13 +190,13 @@ if ($state != 0){
 	exit $ERRORS{'UNKNOWN'};
 }
 else{
-  # STRING: 2006-7-19,18:16:28.0,-5:0 
+  # STRING: 2006-7-19,18:16:28.0,-5:0
   if ($output =~ /STRING\s*:\s*(\d\d\d\d)-(\d+)-(\d+),(\d+):(\d+):(\d{1,2})/){
     my $ctime = localtime();
     my ($t_epoch, $l_epoch) = (timelocal($6,$5,$4,$3,$2-1,$1-1900),time);
     my $t_ctime = sprintf "%02d-%02d-%d, %02d:%02d:%02d",$2,$3,$1,$4,$5,$6;
     my $abs_time  = abs($l_epoch - $t_epoch);
-	  
+
     if ($DEBUG){
       print "debug >>\n",
             "  sec:\t$6\n  min:\t$5\n  hr:\t$4\n  day:\t$3\n  mon:\t",$2-1," ($2)\n  yr:\t",$1-1900, " ($1)\n",
@@ -204,8 +205,8 @@ else{
 	    "debug >> target epoch       : $t_epoch\n",
             "debug >> allowed difference : $diff sec\tactual diff: $abs_time sec\n",
             "--\n";
-    } 
-	
+    }
+
     # Test epoch times
     if ($abs_time > ($diff*10)){
       print "CRITICAL - System time is off by $abs_time sec ($t_ctime).\n";
