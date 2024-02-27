@@ -36,7 +36,6 @@ class ElasticsearchClusterChecker:
         cluster_state = response_json.get("status")
         active_shards = response_json.get("active_shards")
 
-        message = ""
         output_data = ""
         exit_code = 0
         if cluster_state == "green":
