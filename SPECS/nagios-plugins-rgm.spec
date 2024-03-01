@@ -198,7 +198,7 @@ rm -rf %{buildroot}
 
 %changelog
 * Tue Jan 16 2024 Vincent Fricou <vfricou@fr.scc.com> - 1.0-41-rgm
-- Add check_airwave
+- Add option on service.py to reverse the response : OK if service is not running
 
 * Wed Nov 15 2023 Vincent Fricou <vfricou@fr.scc.com> - 1.0-40-rgm
 - Add check_scality_cluster_state.sh
