@@ -1,7 +1,7 @@
 Summary: Nagios plugins for RGM
 Name: nagios-plugins-rgm
 Version: 1.0
-Release: 40.rgm
+Release: 41.rgm
 Source: %{name}-%{version}.tar.gz
 Group: Applications/System
 License: GPL
@@ -198,6 +198,9 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Fri Mar 1 2024 Alex Rocher <arocher@fr.scc.com> - 1.0-41.rgm
+- Add option on service.py to reverse the response : OK if service is not running
+
 * Fri Jan 28 2024 Vincent Fricou <vfricou@fr.scc.com> - 1.0-40.rgm
 - Add fixes on check_airwave
 - Add fixes on check_ucopia
